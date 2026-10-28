@@ -1,0 +1,14 @@
+# Files that must never be uploaded to the build servers (EAS reads this instead of .gitignore).
+.env
+.env.*
+!.env.example
+android/
+ios/
+.expo/
+node_modules/
+dist/
+*.keystore
+*.jks
+*.p8
+*.p12
+*.mobileprovision
