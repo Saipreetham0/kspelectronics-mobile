@@ -38,10 +38,10 @@ export default function AppSplashScreen({ isAppReady, onFinish }: SplashScreenPr
       }),
     ]).start();
 
-    // Minimum display time for brand impression
+    // Minimum display time for brand impression (kept short: it is time the shopper waits)
     const timer = setTimeout(() => {
       setMinTimePassed(true);
-    }, 900);
+    }, 600);
 
     return () => clearTimeout(timer);
   }, [logoOpacity, logoScale]);

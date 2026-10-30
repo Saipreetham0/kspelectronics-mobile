@@ -57,28 +57,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const chain = React.useRef<Promise<unknown>>(Promise.resolve());
   const waiting = React.useRef(0);
 
-  // Restore the saved login and cart on launch, side by side (one slow answer no longer holds up the other).
+  // Restore the saved login and cart on launch. The app opens from what is saved on the phone (the signed-in name, the cart's token) and checks both with the
+  // store in the background: waiting for the network here kept shoppers on the start screen for seconds, or up to 25 s on a bad connection.
   // Offline at launch (or the store down) keeps you signed in with the name saved last time; only an expired login (401) signs you out.
   useEffect(() => {
     (async () => {
-      const [auth, ct, g] = await Promise.all([storage.get(AUTH_KEY).catch(() => null), storage.get(CART_KEY).catch(() => null), storage.get(GUEST_KEY).catch(() => null)]);
+      const [auth, ct, g, savedUser] = await Promise.all([storage.get(AUTH_KEY).catch(() => null), storage.get(CART_KEY).catch(() => null), storage.get(GUEST_KEY).catch(() => null), storage.get(USER_KEY).catch(() => null)]);
       if (g) setGuest(true);
-      const restoreUser = async () => {
-        if (!auth) return;
-        setAuthToken(auth);
+      const verifyUser = async () => {
         try { const u = (await api<{ user: { name: string; email?: string } }>('/api/auth/me?lite=1')).user; setUser(u); storage.set(USER_KEY, JSON.stringify(u)).catch(() => {}); }
         catch (e) {
-          if (e instanceof ApiError && e.status === 401) { setAuthToken(null); await storage.del(AUTH_KEY); await storage.del(USER_KEY).catch(() => {}); return; } // expired login
-          try { const v = await storage.get(USER_KEY); if (v) setUser(JSON.parse(v)); } catch { /* no saved name: shown the login screen */ }
+          if (e instanceof ApiError && e.status === 401) { setAuthToken(null); setUser(null); await storage.del(AUTH_KEY); await storage.del(USER_KEY).catch(() => {}); } // expired login
+          // any other failure: keep the saved name
         }
       };
-      const restoreCart = async () => {
-        if (!ct) return;
-        setCartToken(ct);
-        try { setCart(await api<Cart>('/api/cart', { cartToken: ct, pin: await pinHeader() })); } catch { /* shown as empty until the next refresh */ }
-      };
-      await Promise.all([restoreUser(), restoreCart()]);
+      let shown = false;
+      if (auth) { setAuthToken(auth); try { if (savedUser) { setUser(JSON.parse(savedUser)); shown = true; } } catch { /* no usable saved name */ } }
+      if (auth && !shown) await verifyUser(); // no saved name to show yet (rare): ask once, so the login form does not flash
+      if (ct) setCartToken(ct);
       setReady(true);
+      if (auth && shown) verifyUser();
+      if (ct) api<Cart>('/api/cart', { cartToken: ct, pin: await pinHeader() }).then(setCart).catch(() => { /* shown as empty until the next refresh */ });
     })();
   }, []);
 
