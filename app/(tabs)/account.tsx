@@ -1,5 +1,6 @@
 import React from 'react';
 import { Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
 import { Text } from '@/components/Text';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -79,6 +80,12 @@ export default function Account() {
         <Section>
           <Row Glyph={SignOut} label="Log out" danger onPress={logout} last />
         </Section>
+
+        <View style={{ alignItems: 'center', marginTop: 18, marginBottom: 8 }}>
+          <Text style={{ fontSize: 12, color: c.muted }}>
+            KSP Electronics v{Constants.expoConfig?.version ?? '1.0.0'}
+          </Text>
+        </View>
       </View>
     </ScrollView>
   );
