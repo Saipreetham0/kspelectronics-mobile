@@ -15,7 +15,7 @@ const anonId = () => (id ??= (async () => {
   return n;
 })());
 
-export type Event = 'screen' | 'search' | 'add_to_cart' | 'begin_checkout' | 'purchase' | 'login' | 'register' | 'skip_login' | 'location_set';
+export type Event = 'screen' | 'search' | 'add_to_cart' | 'begin_checkout' | 'purchase' | 'login' | 'register' | 'skip_login' | 'location_set' | 'onboarding_complete' | 'onboarding_skip';
 export async function track(event: Event, props: Record<string, string | number | boolean> = {}) {
   if (!KEY || __DEV__) return;
   try {

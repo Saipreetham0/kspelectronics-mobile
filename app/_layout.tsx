@@ -39,7 +39,7 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
 // The login screen comes first, but can be skipped: until the shopper signs in or chooses "continue without an account", only the login screen exists; after that, everything else does.
 // Until the saved login is restored, a spinner (no flash of the login form).
 function RootStack() {
-  const { ready, user, guest } = useStore();
+  const { ready, user, guest, onboarded } = useStore();
   const cfg = useAppConfig();
   const inApp = Boolean(user) || guest;
   const path = usePathname();
@@ -57,8 +57,9 @@ function RootStack() {
   );
   return (
     <Stack screenOptions={{ headerTintColor: c.text, headerTitleStyle: { fontFamily: 'Inter_700Bold' }, contentStyle: { backgroundColor: c.bg }, animation: 'slide_from_right' }}>
-      <Stack.Protected guard={!inApp}><Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} /></Stack.Protected>
-      <Stack.Protected guard={inApp}>
+      <Stack.Protected guard={!onboarded}><Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} /></Stack.Protected>
+      <Stack.Protected guard={onboarded && !inApp}><Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} /></Stack.Protected>
+      <Stack.Protected guard={onboarded && inApp}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               {/* A product rises in from the bottom while fading, then its sections stagger in (see the product screen). */}
               <Stack.Screen name="product/[slug]" options={{ title: '', animation: 'slide_from_bottom' }} />

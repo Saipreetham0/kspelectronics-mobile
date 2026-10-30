@@ -11,10 +11,13 @@ const AUTH_KEY = 'ksp_auth_token';
 const CART_KEY = 'ksp_cart_token';
 const GUEST_KEY = 'ksp_guest'; // the shopper chose "continue without an account": the login screen isn't shown again until they log out or ask for it
 const USER_KEY = 'ksp_user'; // the signed-in shopper's name and email, kept so an offline launch still knows who they are
+const ONBOARDED_KEY = 'ksp_onboarded'; // the shopper has seen or skipped the first-install onboarding carousel
 
 type Variation = { attribute: string; value: string }[];
 type Ctx = {
   ready: boolean;
+  onboarded: boolean;
+  completeOnboarding: () => void;
   user: { name: string; email?: string } | null;
   guest: boolean; // skipped the login screen
   skipLogin: () => void;
@@ -47,6 +50,7 @@ const pinHeader = async () => { const l = await getLoc().catch(() => null); retu
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
   const [user, setUser] = useState<Ctx['user']>(null);
   const [guest, setGuest] = useState(false);
   const [cart, setCart] = useState<Cart | null>(null);
@@ -62,8 +66,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Offline at launch (or the store down) keeps you signed in with the name saved last time; only an expired login (401) signs you out.
   useEffect(() => {
     (async () => {
-      const [auth, ct, g, savedUser] = await Promise.all([storage.get(AUTH_KEY).catch(() => null), storage.get(CART_KEY).catch(() => null), storage.get(GUEST_KEY).catch(() => null), storage.get(USER_KEY).catch(() => null)]);
+      const [auth, ct, g, savedUser, onb] = await Promise.all([
+        storage.get(AUTH_KEY).catch(() => null),
+        storage.get(CART_KEY).catch(() => null),
+        storage.get(GUEST_KEY).catch(() => null),
+        storage.get(USER_KEY).catch(() => null),
+        storage.get(ONBOARDED_KEY).catch(() => null),
+      ]);
       if (g) setGuest(true);
+      if (onb || auth || g) setOnboarded(true);
       const verifyUser = async () => {
         try { const u = (await api<{ user: { name: string; email?: string } }>('/api/auth/me?lite=1')).user; setUser(u); storage.set(USER_KEY, JSON.stringify(u)).catch(() => {}); }
         catch (e) {
@@ -102,6 +113,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await signIn((await api<{ token: string }>('/api/auth/otp/verify', { method: 'POST', body: { phone, code } })).token);
     track('login');
   };
+  const completeOnboarding = useCallback(() => {
+    setOnboarded(true);
+    storage.set(ONBOARDED_KEY, '1').catch(() => {});
+  }, []);
   const skipLogin = () => { track('skip_login'); setGuest(true); storage.set(GUEST_KEY, '1').catch(() => {}); };
   const showLogin = () => { setGuest(false); storage.del(GUEST_KEY).catch(() => {}); };
   const logout = async () => { setAuthToken(null); setUser(null); setGuest(false); await Promise.all([storage.del(AUTH_KEY), storage.del(GUEST_KEY).catch(() => {}), storage.del(USER_KEY).catch(() => {}), clearAddresses(), clearLoc(), ...['ksp_recent_searches', 'ksp_recent_products', 'ksp_wishlist', 'ksp_messages', 'ksp_cart_prices'].map((k) => storage.del(k).catch(() => {}))]); };
@@ -156,9 +171,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const clearLocalCart = async () => { setCart(null); setCartToken(null); await storage.del(CART_KEY); };
 
   const itemCount = cart?.items?.reduce((n, i) => n + i.quantity, 0) ?? 0;
-  const value = useMemo<Ctx>(() => ({ ready, user, guest, skipLogin, showLogin, requestOtp, loginOtp, login, register, logout, account, cart, cartToken, itemCount, busy, syncing, addItem, refresh, updateItem, removeItem, applyCoupon, removeCoupon, quoteShipping, setCart, clearLocalCart }),
+  const value = useMemo<Ctx>(() => ({ ready, onboarded, completeOnboarding, user, guest, skipLogin, showLogin, requestOtp, loginOtp, login, register, logout, account, cart, cartToken, itemCount, busy, syncing, addItem, refresh, updateItem, removeItem, applyCoupon, removeCoupon, quoteShipping, setCart, clearLocalCart }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ready, user, guest, cart, cartToken, busy, syncing, refresh]);
+    [ready, onboarded, completeOnboarding, user, guest, cart, cartToken, busy, syncing, refresh]);
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }
 
