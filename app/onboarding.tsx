@@ -320,3 +320,4 @@ const s = StyleSheet.create({
   },
   nextBtnText: { color: '#ffffff', fontSize: 16, fontWeight: '800' },
 });
+
