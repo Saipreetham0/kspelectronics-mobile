@@ -172,14 +172,14 @@ export default function Checkout() {
     if (!cartToken || !pinOk) { setQuote(null); return; }
     let live = true; setQuoting(true);
     const t = setTimeout(() => {
-      api<Cart>('/api/cart/shipping', { method: 'POST', body: { token: cartToken, state: form.state, postcode: form.pincode, city: form.city } })
+      api<Cart>('/api/cart/shipping', { method: 'POST', body: { token: cartToken, state: form.state, postcode: form.pincode, city: form.city, lat: dropLat, lng: dropLng } })
         .then((q) => live && setQuote(q)).catch(() => live && setQuote(null)).finally(() => live && setQuoting(false));
     }, 500);
     return () => { live = false; clearTimeout(t); };
-  }, [cartToken, pinOk, form.state, form.pincode, form.city]);
+  }, [cartToken, pinOk, form.state, form.pincode, form.city, dropLat, dropLng]);
   const pickRate = async (packageId: number | string, rateId: string) => {
     setQuoting(true);
-    try { setQuote(await api<Cart>('/api/cart/shipping', { method: 'POST', body: { token: cartToken, packageId, rateId } })); } catch { /* keep the previous quote */ }
+    try { setQuote(await api<Cart>('/api/cart/shipping', { method: 'POST', body: { token: cartToken, packageId, rateId, postcode: form.pincode, lat: dropLat, lng: dropLng } })); } catch { /* keep the previous quote */ }
     setQuoting(false);
   };
 
@@ -221,7 +221,7 @@ export default function Checkout() {
   const showSummary = !editing && detailsOk;
   const t = (quote ?? cart)!.totals; const m = t.currency_minor_unit;
   const rates = quote?.shipping_rates?.[0];
-  const sameDay = Boolean(rates?.shipping_rates.some((x) => /same-day/i.test(x.name))); // the store offers its same-day method for this cart: the only way a rider is booked
+  const sameDay = Boolean(rates?.shipping_rates.some((x) => x.quick)); // the server offers Quick for this cart (a rider can come and every item is tagged): the only way a rider is booked
   const mrp = items.reduce((n, i) => n + Number(i.prices.regular_price || i.prices.price) * i.quantity, 0);
   const itemsNow = items.reduce((n, i) => n + Number(i.prices.price) * i.quantity, 0);
   const saved = Math.max(0, mrp - itemsNow) + withTax(t.total_discount, t.total_discount_tax);
@@ -313,7 +313,7 @@ export default function Checkout() {
               <Text style={{ flex: 1, fontWeight: '700' }}>{form.drop ? 'Drop location pinned' : 'Pin your drop location (optional)'}</Text>
               <Text style={{ color: c.accent, fontWeight: '800' }}>{form.drop ? 'Change' : 'Set'}</Text>
             </Pressable>
-            {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Text style={{ fontSize: 18 }}>🛵</Text><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: '#444', fontSize: 12 }}>Choose “Same-Day Delivery” under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
+            {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Text style={{ fontSize: 18 }}>🛵</Text><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: '#444', fontSize: 12 }}>Choose the ⚡ Quick option under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
           </Card>
         ) : (
           <>
@@ -333,7 +333,7 @@ export default function Checkout() {
             </View>
             <Text style={{ color: c.accent, fontWeight: '800' }}>{form.drop ? 'Change' : 'Set'}</Text>
           </Pressable>
-          {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Text style={{ fontSize: 18 }}>🛵</Text><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: '#444', fontSize: 12 }}>Choose “Same-Day Delivery” under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
+          {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Text style={{ fontSize: 18 }}>🛵</Text><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: '#444', fontSize: 12 }}>Choose the ⚡ Quick option under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
           {user ? (() => {
             const ship = fromWc(acct?.shipping);
             return (
@@ -402,7 +402,7 @@ export default function Checkout() {
             {rates!.shipping_rates.map((x) => (
             <Pressable key={x.rate_id} onPress={() => pickRate(rates.package_id, x.rate_id)} style={s.rate}>
               <View style={[s.radio, x.selected && { borderColor: c.accent }]}>{x.selected && <View style={s.radioDot} />}</View>
-              <Text style={{ flex: 1 }}>{decodeHtml(x.name)}</Text><Text style={{ fontWeight: '700' }}>{Number(x.price) > 0 ? minorToInr(x.price, m) : 'Free'}</Text>
+              <Text style={{ flex: 1 }}>{x.quick ? '⚡ ' : ''}{decodeHtml(x.name)}</Text><Text style={{ fontWeight: '700' }}>{Number(x.price) > 0 ? minorToInr(x.price, m) : 'Free'}</Text>
             </Pressable>
             ))}
           </Card>

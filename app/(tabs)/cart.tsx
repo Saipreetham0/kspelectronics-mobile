@@ -42,7 +42,7 @@ export default function CartScreen() {
       // A saved location with no delivery quote yet (app restarted, or the cart is new): quote it now, so Delivery and the total are real.
       const x = latest.current;
       const key = `${x.cartToken}|${l?.pin}`;
-      if (l && x.cartToken && (x.quotable || quoted.current !== key) && /^\d{6}$/.test(l.pin)) { quoted.current = key; x.quoteShipping(l.stateCode, l.pin, l.city).then(refresh).catch(() => {}); }
+      if (l && x.cartToken && (x.quotable || quoted.current !== key) && /^\d{6}$/.test(l.pin)) { quoted.current = key; x.quoteShipping(l.stateCode, l.pin, l.city, { lat: l.lat, lng: l.lng }).then(refresh).catch(() => {}); }
     }).catch(() => {});
     refresh();
   }, [refresh])); // also pick up changes made elsewhere
@@ -172,6 +172,7 @@ export default function CartScreen() {
                 <Pressable onPress={() => slug && router.push({ pathname: '/product/[slug]', params: { slug } })} disabled={!slug} accessibilityRole="link" accessibilityLabel={`Open ${name}`}>
                   <Text numberOfLines={2} style={s.name}>{name}</Text>
                 </Pressable>
+                {stock.data?.find((p) => p.id === item.id)?.quick ? <View style={s.qk}><Ionicons name="flash" size={11} color={c.accent} /><Text style={s.qkT}>Quick</Text></View> : null}
                 {item.variation?.length ? <Text style={s.var}>{item.variation.map((v) => v.value).join(' / ')}</Text> : null}
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
                   <Text style={s.price}>{minorToInr(line, cur)}</Text>
@@ -250,7 +251,7 @@ export default function CartScreen() {
       <LocationSheet visible={pinOpen} onClose={() => setPinOpen(false)} onChange={(l) => {
         setLoc(l);
         // Quote delivery for the new place right away, so the Delivery row and the total match it (not the address quoted last time).
-        if (cartToken && /^\d{6}$/.test(l.pin)) quoteShipping(l.stateCode, l.pin, l.city).catch(() => refresh());
+        if (cartToken && /^\d{6}$/.test(l.pin)) quoteShipping(l.stateCode, l.pin, l.city, { lat: l.lat, lng: l.lng }).catch(() => refresh());
         else refresh();
       }} />
     </View>
@@ -290,6 +291,8 @@ const s = StyleSheet.create({
   qb: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   qt: { fontSize: 16, fontWeight: '700', color: c.text },
   h: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
+  qk: { flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start', marginTop: 3 },
+  qkT: { color: c.accent, fontWeight: '800', fontSize: 11.5 },
   save: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36, paddingHorizontal: 10, borderRadius: r.sm, borderWidth: 1, borderColor: c.line },
   saveT: { color: c.accent, fontWeight: '700', fontSize: 12.5 },
   coupon: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },

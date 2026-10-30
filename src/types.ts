@@ -8,6 +8,7 @@ export type Product = {
   average_rating: string; review_count: number; prices: Prices; images: Img[]; attributes: Attribute[]; has_options: boolean;
   variations: { id: number; attributes: { name: string; value: string }[] }[]; categories: { id: number; name: string; slug: string }[];
   low_stock_remaining?: number | null; // set by WooCommerce when only a few are left
+  quick?: boolean; // tagged "quick" in WooCommerce: a rider can bring it
 };
 export type Category = { id: number; name: string; slug: string; count: number; image: { src: string } | null };
 export type CartItem = {
@@ -16,7 +17,7 @@ export type CartItem = {
   quantity_limits?: { minimum: number; maximum: number; multiple_of: number };
   permalink?: string; low_stock_remaining?: number | null;
 };
-export type Rate = { rate_id: string; name: string; price: string; selected: boolean };
+export type Rate = { rate_id: string; name: string; price: string; selected: boolean; quick?: boolean }; // quick: the rider method, offered only when a rider can bring this cart
 export type Cart = {
   items: CartItem[]; items_count: number; needs_shipping?: boolean;
   totals: { total_items: string; total_items_tax?: string; total_discount: string; total_discount_tax?: string; total_shipping: string; total_shipping_tax?: string; total_tax: string; total_price: string; currency_minor_unit: number; currency_symbol: string };

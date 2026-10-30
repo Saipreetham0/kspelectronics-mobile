@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Clock, Heart, Star } from 'phosphor-react-native';
+import { Heart, Lightning, Star } from 'phosphor-react-native';
 import type { Product } from '@/types';
 import { decodeHtml, minorToInr } from '@/format';
 import { useWishlist } from '@/wishlist';
@@ -28,7 +28,7 @@ export default function ProductCard({ product: p, width, index = 0 }: { product:
   const { has, toggle } = useWishlist();
   const saved = has(p.id);
   const bought = useBought().has(p.id);
-  const sameDay = useMode().mode === 'quick'; // "Same-day" is promised only in Quick mode, where a rider brings it
+  const quick = Boolean(p.quick); // tagged "quick": a rider can bring it (no time is promised: the real ETA is not known yet)
   // WooCommerce reports the remaining stock once it is low; 0 is ignored (it also shows up on items that can still be ordered).
   const left = p.is_in_stock && p.low_stock_remaining && p.low_stock_remaining > 0 && p.low_stock_remaining <= 5 ? p.low_stock_remaining : 0;
   const hint = p.variations.length ? `${p.variations.length} options` : p.has_options ? 'Options' : '';
@@ -56,10 +56,10 @@ export default function ProductCard({ product: p, width, index = 0 }: { product:
         {p.review_count > 0 && (
           <View style={s.eta}><Star size={12} weight="fill" color={c.deal} /><Text style={s.etaT}>{Number(p.average_rating).toFixed(1)} ({p.review_count})</Text></View>
         )}
-        {(sameDay || left > 0) && (
+        {(quick || left > 0) && (
           <View style={s.eta}>
-            {sameDay && <><Clock size={12} weight="fill" color={c.muted} /><Text style={s.etaT}>Same-day</Text></>}
-            {left > 0 && <Text style={s.left}>{sameDay ? '· ' : ''}Only {left} left</Text>}
+            {quick && <><Lightning size={12} weight="fill" color={c.accent} /><Text style={[s.etaT, { color: c.accent }]}>Quick</Text></>}
+            {left > 0 && <Text style={s.left}>{quick ? '· ' : ''}Only {left} left</Text>}
           </View>
         )}
       </Tap>

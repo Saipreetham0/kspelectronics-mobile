@@ -20,6 +20,7 @@ import { isHyderabad, loadLoc } from '@/location';
 import type { Loc } from '@/location';
 import { decodeHtml } from '@/format';
 import { useFetch } from '@/useFetch';
+import { QUICK_TAG, useMode } from '@/mode';
 import { useScreen } from '@/useScreen';
 import type { CategoryTree, Product } from '@/types';
 import { c, r } from '@/theme';
@@ -90,6 +91,7 @@ export default function Shop() {
   const chain = findChain(forest, category);
   useEffect(() => { if (category && !pageSlug && chain.length) setPageSlug((chain[1] ?? chain[0]).slug); }, [category, pageSlug, chain]);
 
+  const quickMode = useMode().mode === 'quick';
   const fetchPage = useCallback(async (p: number) => {
     const id = ++req.current;
     const [orderby, order] = sort.split(':');
@@ -99,6 +101,7 @@ export default function Shop() {
     if (brand) qs.set('brand', brand);
     if (orderby) qs.set('orderby', orderby);
     if (order) qs.set('order', order);
+    if (quickMode) qs.set('tag', QUICK_TAG); // Quick: only what a rider can bring
     if (inStock) qs.set('in_stock', 'true');
     if (onSale) qs.set('on_sale', 'true');
     const [lo, hi] = price.split(':');
@@ -121,7 +124,7 @@ export default function Shop() {
       setMore(rows.length === PAGE); setPage(p);
     } catch (e) { if (id === req.current) setError((e as Error).message); }
     if (id === req.current) setLoading(false);
-  }, [search, category, brand, sort, inStock, onSale, price]);
+  }, [search, category, brand, sort, inStock, onSale, price, quickMode]);
   const suggesting = q.trim().length >= 2 && q.trim() !== search; // typing, not yet submitted
   const gridMode = category === '' && !search && !brand && !listAll; // the sectioned category grid: nothing to list yet
   useEffect(() => { if (!gridMode) fetchPage(1); }, [fetchPage, gridMode]);

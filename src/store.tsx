@@ -36,7 +36,7 @@ type Ctx = {
   removeItem: (key: string) => Promise<void>;
   applyCoupon: (code: string) => Promise<void>;
   removeCoupon: (code: string) => Promise<void>;
-  quoteShipping: (state: string, postcode: string, city: string) => Promise<void>;
+  quoteShipping: (state: string, postcode: string, city: string, pin?: { lat?: number; lng?: number }) => Promise<void>;
   setCart: (c: Cart | null) => void;
   clearLocalCart: () => Promise<void>;
 };
@@ -148,7 +148,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (c) => rework(c, key, quantity), withToken('/api/cart/update', 'POST', { key, quantity }, true));
   const removeItem: Ctx['removeItem'] = (key) => optimistic(
     (c) => rework(c, key, 0), withToken('/api/cart/remove', 'POST', { key }, true), true);
-  const quoteShipping: Ctx['quoteShipping'] = (state, postcode, city) => withToken('/api/cart/shipping', 'POST', { state, postcode, city })();
+  const quoteShipping: Ctx['quoteShipping'] = (state, postcode, city, pin) => withToken('/api/cart/shipping', 'POST', { state, postcode, city, lat: pin?.lat, lng: pin?.lng })();
   const applyCoupon: Ctx['applyCoupon'] = (code) => run(withToken('/api/cart/coupon', 'POST', { code }));
   const removeCoupon: Ctx['removeCoupon'] = (code) => run(withToken('/api/cart/coupon', 'DELETE', { code }));
   const clearLocalCart = async () => { setCart(null); setCartToken(null); await storage.del(CART_KEY); };
