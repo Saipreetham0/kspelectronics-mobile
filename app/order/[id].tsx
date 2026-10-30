@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Linking, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text, TextInput } from '@/components/Text';
 import { Button, Card, ErrorBox, Spinner } from '@/components/ui';
 import { api } from '@/api';
 import { decodeHtml } from '@/format';
-import { WHATSAPP } from '@/config';
+import { SITE_URL, WHATSAPP } from '@/config';
 import RiderCard from '@/components/RiderCard';
 import ReviewForm from '@/components/ReviewForm';
 import type { Rider } from '@/types';
@@ -44,6 +44,10 @@ export default function OrderDetail() {
   if (!o) return <Spinner />;
   const money = (v: string | number) => `${o.currency}${Number(v).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
   const help = () => Linking.openURL(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hi, I need help with order #${o.number}.`)}`).catch(() => {});
+  const shareReceipt = () => {
+    const summaryText = `KSP Electronics - Order #${o.number}\nDate: ${new Date(o.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}\nTotal: ${money(o.total)}\nStatus: ${STATUS[o.status] ?? o.status}\n\nTrack order: ${SITE_URL}/my-account/view-order/${o.number}/`;
+    Share.share({ message: summaryText, title: `Order #${o.number} Receipt` }).catch(() => {});
+  };
   const send = async () => {
     if (!ask) return;
     setBusy(true);
@@ -118,9 +122,30 @@ export default function OrderDetail() {
       </Card>
 
       <Card>
-        <Text style={s.h}>Invoice</Text>
-        <Text style={{ color: c.muted, marginTop: 4 }}>Your GST invoice is sent to your email once the order ships. Need it again? Ask us and we will send it.</Text>
-        <Button title="Ask for the invoice" variant="outline" style={{ marginTop: 10, minHeight: 42 }} onPress={() => Linking.openURL(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hi, please send me the GST invoice for order #${o.number}.`)}`).catch(() => {})} />
+        <Text style={s.h}>Tax invoice & receipts</Text>
+        <Text style={{ color: c.muted, marginTop: 4 }}>
+          Your GST invoice is generated and emailed once your shipment is dispatched. You can also share the digital receipt or request an expedited copy.
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+          <Button
+            title="Share receipt"
+            variant="outline"
+            style={{ flex: 1, minHeight: 42 }}
+            onPress={shareReceipt}
+          />
+          <Button
+            title="Ask for invoice"
+            variant="whatsapp"
+            style={{ flex: 1, minHeight: 42 }}
+            onPress={() =>
+              Linking.openURL(
+                `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
+                  `Hi, please send me the official GST invoice PDF for order #${o.number}.`
+                )}`
+              ).catch(() => {})
+            }
+          />
+        </View>
       </Card>
 
       {(o.can.cancel || o.can.return) && (

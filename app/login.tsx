@@ -98,7 +98,7 @@ function OtpCard({ onBack }: { onBack: () => void }) {
         <Button title="Send code" loading={busy} onPress={send} />
       </>) : (<>
         <Text style={{ color: '#444', marginBottom: 12 }}>We sent a 6-digit code to +91 {phone}.</Text>
-        <Field label="Code" value={code} onChangeText={(v) => { const d = v.replace(/\D/g, '').slice(0, 6); setCode(d); if (d.length === 6) verify(d); }} keyboardType="number-pad" textContentType="oneTimeCode" autoComplete="sms-otp" maxLength={6} placeholder="••••••" />
+        <Field label="Code" value={code} autoFocus onChangeText={(v) => { const d = v.replace(/\D/g, '').slice(0, 6); setCode(d); if (d.length === 6) verify(d); }} keyboardType="number-pad" textContentType="oneTimeCode" autoComplete="sms-otp" maxLength={6} placeholder="••••••" />
         {error ? <Text style={{ color: c.danger, fontSize: 13, marginBottom: 10 }} accessibilityRole="alert">{error}</Text> : null}
         <Button title="Verify and log in" loading={busy} disabled={code.length !== 6} onPress={() => verify(code)} />
         <Pressable onPress={send} disabled={wait > 0 || busy} style={{ alignItems: 'center', padding: 12 }} accessibilityRole="button"><Text style={[s.link, wait > 0 && { color: c.muted }]}>{wait > 0 ? `Resend code in ${wait}s` : 'Resend code'}</Text></Pressable>
