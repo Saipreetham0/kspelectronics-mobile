@@ -8,12 +8,12 @@ export class ApiError extends Error {
 }
 
 // retry: a write that is safe to repeat (set a quantity, remove a line) may also try the backup address, like a read.
-type Opts = { method?: string; body?: unknown; cartToken?: string | null; retry?: boolean };
+type Opts = { method?: string; body?: unknown; cartToken?: string | null; retry?: boolean; pin?: string | null }; // pin: "lat,lng,pincode", sent as a header so a selected Quick delivery shows its real price
 
 let active = 0; // index of the API address that worked last, so a dead main address isn't retried on every call
 
 // One request to one address. Replies are never assumed to be JSON; status 0 means the server could not be reached.
-async function call<T>(url: string, { method = 'GET', body, cartToken }: Opts, timeoutMs: number): Promise<T> {
+async function call<T>(url: string, { method = 'GET', body, cartToken, pin }: Opts, timeoutMs: number): Promise<T> {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), timeoutMs);
   try {
@@ -23,6 +23,7 @@ async function call<T>(url: string, { method = 'GET', body, cartToken }: Opts, t
         'Content-Type': 'application/json', 'x-client': 'app',
         ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         ...(cartToken ? { 'x-cart-token': cartToken } : {}),
+        ...(pin ? { 'x-pin': pin } : {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });

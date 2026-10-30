@@ -177,6 +177,10 @@ export default function Checkout() {
     }, 500);
     return () => { live = false; clearTimeout(t); };
   }, [cartToken, pinOk, form.state, form.pincode, form.city, dropLat, dropLng]);
+  // Quick delivery carries Shiprocket's fee, which only online payment and cash on delivery can charge: the other methods are hidden while it is selected.
+  const quickSel = Boolean(quote?.shipping_rates?.[0]?.shipping_rates.some((x) => x.selected && x.quick));
+  const shownMethods = methods.filter((id) => !(id === 'cashfree' && methods.includes('razorpay'))).filter((id) => !quickSel || ['razorpay', 'cashfree', 'cod'].includes(id));
+  useEffect(() => { if (method && shownMethods.length && !shownMethods.includes(method)) setMethod(shownMethods[0]); }, [shownMethods.join(','), method]); // eslint-disable-line react-hooks/exhaustive-deps
   const pickRate = async (packageId: number | string, rateId: string) => {
     setQuoting(true);
     try { setQuote(await api<Cart>('/api/cart/shipping', { method: 'POST', body: { token: cartToken, packageId, rateId, postcode: form.pincode, lat: dropLat, lng: dropLng } })); } catch { /* keep the previous quote */ }
@@ -410,7 +414,7 @@ export default function Checkout() {
         <Card>
           <H>3. Payment</H>
           {methods.length === 0 && <Text style={{ color: c.muted }}>Loading payment options…</Text>}
-          {methods.filter((id) => !(id === 'cashfree' && methods.includes('razorpay'))).map((id) => (
+          {shownMethods.map((id) => (
             <Pressable key={id} onPress={() => setMethod(id)} style={[s.method, method === id && s.methodOn]} accessibilityRole="radio" accessibilityState={{ selected: method === id }}>
               <View style={[s.radio, method === id && { borderColor: c.accent }]}>{method === id && <View style={s.radioDot} />}</View>
               <Text style={{ flex: 1, fontWeight: '600' }}>{payName(id)}</Text>

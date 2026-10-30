@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { api, ApiError, setAuthToken } from './api';
 import { storage } from './storage';
 import { clearAddresses } from './addresses';
-import { clearLoc } from './location';
+import { clearLoc, getLoc } from './location';
 import type { Account, Cart } from './types';
 import { rework } from './cartMath';
 import { track } from './analytics';
@@ -42,6 +42,9 @@ type Ctx = {
 };
 const StoreCtx = createContext<Ctx | null>(null);
 
+// The saved pinned point as the x-pin header (see api.ts), or nothing when no point is pinned.
+const pinHeader = async () => { const l = await getLoc().catch(() => null); return l?.lat != null && l.lng != null ? `${l.lat},${l.lng},${l.pin}` : null; };
+
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<Ctx['user']>(null);
@@ -72,7 +75,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const restoreCart = async () => {
         if (!ct) return;
         setCartToken(ct);
-        try { setCart(await api<Cart>('/api/cart', { cartToken: ct })); } catch { /* shown as empty until the next refresh */ }
+        try { setCart(await api<Cart>('/api/cart', { cartToken: ct, pin: await pinHeader() })); } catch { /* shown as empty until the next refresh */ }
       };
       await Promise.all([restoreUser(), restoreCart()]);
       setReady(true);
@@ -124,7 +127,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   });
   const refresh = useCallback(async () => {
     if (!cartToken || waiting.current > 0) return;
-    try { setCart(await api<Cart>('/api/cart', { cartToken })); } catch { /* keep what is shown */ }
+    try { setCart(await api<Cart>('/api/cart', { cartToken, pin: await pinHeader() })); } catch { /* keep what is shown */ }
   }, [cartToken]);
   const addItem: Ctx['addItem'] = (productId, quantity = 1, variation) => run(() => enqueue(async () => {
     const d = await api<{ cart: Cart; token?: string }>('/api/cart/add', { method: 'POST', body: { productId, quantity, token: cartToken, variation } });
@@ -138,7 +141,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const before = cart;
     if (before) setCart(edit(before));
     try { await call(); } catch (e) {
-      const truth = cartToken ? await api<Cart>('/api/cart', { cartToken }).catch(() => null) : null;
+      const truth = cartToken ? await api<Cart>('/api/cart', { cartToken, pin: await pinHeader() }).catch(() => null) : null;
       setCart(truth ?? before);
       const unsure = e instanceof ApiError && (e.status === 0 || (gone && e.status === 400));
       if (!(unsure && truth)) throw e;
