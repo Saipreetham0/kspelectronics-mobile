@@ -12,10 +12,17 @@ const WishCtx = createContext<Ctx | null>(null);
 // Device-local wishlist of product ids (guests included); products are fetched by id when the list is opened.
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [ids, setIds] = useState<number[]>([]);
-  const { user } = useStore();
+  const { user, ready } = useStore();
   const wasIn = useRef(false);
-  useEffect(() => { if (user) wasIn.current = true; else if (wasIn.current) { wasIn.current = false; setIds([]); } }, [user]); // logging out empties the list (storage is cleared by logout)
-  useEffect(() => { storage.get(KEY).then((v) => v && setIds(JSON.parse(v))).catch(() => {}); }, []);
+  useEffect(() => {
+    if (!ready) return;
+    if (user) wasIn.current = true;
+    else if (wasIn.current) { wasIn.current = false; setIds([]); }
+  }, [user, ready]); // logging out empties the list (storage is cleared by logout)
+  useEffect(() => {
+    if (!ready) return;
+    storage.get(KEY).then((v) => v && setIds(JSON.parse(v))).catch(() => {});
+  }, [ready]);
   const toggle = useCallback((id: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setIds((cur) => {

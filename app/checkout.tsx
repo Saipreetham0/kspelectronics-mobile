@@ -1,14 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, Keyboard, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { ScrollViewInstance, TextInputInstance as RNTextInput } from 'react-native';
-import { Image } from 'expo-image';
 import { Text, TextInput } from '@/components/Text';
 import { router, Stack } from 'expo-router';
 import { Button, Card, Center, Field, H } from '@/components/ui';
 import { api, ApiError } from '@/api';
 import { Addr, CheckoutForm, emptyForm, IN_STATES, validate } from '@/checkoutForm';
 import { decodeHtml, minorToInr, withTax } from '@/format';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { setPayRequest, PayRequest } from '@/payRequest';
 import { loadLoc, lookupPin } from '@/location';
 import { selectedAddress } from '@/addresses';
@@ -21,6 +20,9 @@ import { useStore } from '@/store';
 import type { Account, Cart } from '@/types';
 import { track } from '@/analytics';
 import { c, r } from '@/theme';
+import StatePickerModal from '@/components/checkout/StatePickerModal';
+import PaymentMethods, { payName } from '@/components/checkout/PaymentMethods';
+import OrderSummary from '@/components/checkout/OrderSummary';
 
 const PENDING = 'ksp_pending_order';
 type GstInfo = { gstin: string; legalName: string; tradeName: string; status: string; active: boolean; address: string; city: string; pincode: string; state: string };
@@ -29,9 +31,7 @@ type WcAddr = Record<string, string>;
 // A WooCommerce address, as the checkout form's address; null when the customer never filled it in.
 const fromWc = (a?: WcAddr): Addr | null => (a?.address_1 ? { firstName: a.first_name ?? '', lastName: a.last_name ?? '', address: [a.address_1, a.address_2].filter(Boolean).join(', '), city: a.city ?? '', state: a.state || 'TS', pincode: a.postcode ?? '' } : null);
 const oneLine = (a: Addr) => `${a.address}, ${a.city}${a.state ? `, ${a.state}` : ''} ${a.pincode}`.trim();
-// WooCommerce gives only ids for payment methods; these are the names a shopper should see.
-const PAY_NAMES: Record<string, string> = { cod: 'Cash on delivery', bacs: 'Direct bank transfer', cheque: 'Cheque payment', razorpay: 'Pay online (UPI, cards, netbanking, EMI)', paypal: 'PayPal', velocity_one_bnpl: 'Buy now, pay later (Velocity One)', cashfree: 'Pay online (Cashfree)', stripe: 'Card (Stripe)' };
-const payName = (id: string) => PAY_NAMES[id] ?? id.replace(/_/g, ' ').replace(/^\w/, (ch) => ch.toUpperCase());
+
 // The order the keyboard's "next" key walks the delivery fields in (state is a picker, so it is skipped).
 const ORDER = ['email', 'phone', 'firstName', 'lastName', 'pincode', 'city', 'address'];
 
@@ -56,12 +56,10 @@ export default function Checkout() {
   const [pinOpen, setPinOpen] = useState(false);
   const [dropPin, setDropPin] = useState(''); // the pincode the pinned drop point lies in: typing a different pincode drops the pin
   const scroller = useRef<ScrollViewInstance>(null);
-  const insets = useSafeAreaInsets();
   const inputs = useRef<Record<string, RNTextInput | null>>({});
   const [blurred, setBlurred] = useState<Record<string, boolean>>({}); // fields the shopper has left: their errors show without waiting for "Place order"
   const [needAddr, setNeedAddr] = useState(false); // the delivery area changed, so the street line was cleared
   const [kb, setKb] = useState(false);
-  const [stateQ, setStateQ] = useState('');
   useEffect(() => {
     const on = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKb(true));
     const off = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKb(false));
@@ -260,7 +258,7 @@ export default function Checkout() {
         const d = await api<PayRequest>('/api/pay/razorpay/create', { method: 'POST', body: { token: cartToken, form, previousOrderId: prev } });
         await storage.set(PENDING, String(d.orderId)).catch(() => {}); // the order exists already: a failed note must not look like a failed order
         saveToAccount();
-        setPayRequest(d);
+        await setPayRequest(d);
         router.push('/pay');
       } else {
         const d = await api<{ orderId: number; orderKey?: string; redirect: string | null }>('/api/checkout', { method: 'POST', body: { token: cartToken, form, paymentMethod: method } });
@@ -411,32 +409,20 @@ export default function Checkout() {
             ))}
           </Card>
         )}
-        <Card>
-          <H>3. Payment</H>
-          {methods.length === 0 && <Text style={{ color: c.muted }}>Loading payment options…</Text>}
-          {shownMethods.map((id) => (
-            <Pressable key={id} onPress={() => setMethod(id)} style={[s.method, method === id && s.methodOn]} accessibilityRole="radio" accessibilityState={{ selected: method === id }}>
-              <View style={[s.radio, method === id && { borderColor: c.accent }]}>{method === id && <View style={s.radioDot} />}</View>
-              <Text style={{ flex: 1, fontWeight: '600' }}>{payName(id)}</Text>
-            </Pressable>
-          ))}
-        </Card>
-        <Card>
-          <View style={s.line}><H>Order summary</H><Pressable onPress={() => router.push('/(tabs)/cart')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Edit cart"><Text style={{ color: c.accent, fontWeight: '800' }}>Edit cart</Text></Pressable></View>
-          {items.map((i) => <View key={i.key} style={s.line}><Image source={i.images[0]?.thumbnail || i.images[0]?.src} style={s.thumb} contentFit="contain" /><Text style={{ flex: 1 }} numberOfLines={2}>{decodeHtml(i.name)} <Text style={{ color: c.muted }}>× {i.quantity}</Text></Text><Text style={{ fontWeight: '700' }}>{minorToInr(Number(i.prices.price) * i.quantity, i.prices.currency_minor_unit)}</Text></View>)}
-          <View style={s.hr} />
-          <View style={s.line}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Text style={{ color: '#555' }}>Items total</Text>{saved > 0 && <View style={s.savedChip}><Text style={s.savedChipT}>Saved {minorToInr(saved, m)}</Text></View>}</View>
-            <Text style={{ fontWeight: '600' }}>{mrp > itemsNow && <Text style={{ color: c.muted, textDecorationLine: 'line-through', fontWeight: '400' }}>{minorToInr(mrp, m)} </Text>}{minorToInr(withTax(t.total_items, t.total_items_tax), m)}</Text>
-          </View>
-          {Number(t.total_discount) > 0 && <Sum k="Discount" v={`−${minorToInr(withTax(t.total_discount, t.total_discount_tax), m)}`} color={c.success} />}
-          <Sum k="Shipping" v={!pinOk ? 'Enter pincode' : quoting ? '…' : !quote ? 'Unavailable' : noRates ? 'Not deliverable' : withTax(t.total_shipping, t.total_shipping_tax) > 0 ? minorToInr(withTax(t.total_shipping, t.total_shipping_tax), m) : 'Free'} color={noRates ? c.danger : undefined} />
-          {noRates && <Pressable onPress={() => Linking.openURL(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hi, can you deliver to pincode ${form.pincode}?`)}`).catch(() => {})} style={s.rate} accessibilityRole="link"><Text style={{ color: c.accent, fontWeight: '800' }}>Ask us on WhatsApp about this pincode</Text></Pressable>}
-          <View style={s.hr} />
-          <View style={s.line}><Text style={{ fontSize: 18, fontWeight: '900' }}>Grand total</Text><Text style={{ fontSize: 18, fontWeight: '900' }}>{minorToInr(t.total_price, m)}</Text></View>
-          <Text style={{ color: c.muted, fontSize: 12, marginTop: -2, marginBottom: 6 }}>Includes GST {minorToInr(t.total_tax, m)}</Text>
-          {saved > 0 && <View style={s.savings}><Text style={s.savingsT}>Your total savings</Text><Text style={s.savingsT}>{minorToInr(saved, m)}</Text></View>}
-        </Card>
+        <PaymentMethods methods={shownMethods} selected={method} onSelect={setMethod} native={native} />
+        <OrderSummary
+          items={items}
+          totals={t}
+          quote={quote}
+          quoting={quoting}
+          pinOk={pinOk}
+          saved={saved}
+          mrp={mrp}
+          itemsNow={itemsNow}
+          noRates={noRates}
+          whatsapp={WHATSAPP}
+          pincode={form.pincode}
+        />
         <Text style={{ color: c.muted, fontSize: 12, textAlign: 'center', marginTop: 4 }}>
           By placing your order you agree to our <Text style={s.link} onPress={() => Linking.openURL(`${SITE_URL}/terms-conditions/`)} accessibilityRole="link">Terms</Text> and <Text style={s.link} onPress={() => Linking.openURL(`${SITE_URL}/refund_returns/`)} accessibilityRole="link">Refund Policy</Text>.
         </Text>
@@ -467,31 +453,23 @@ export default function Checkout() {
         selectedAddress().then((a) => { if (!a && cleared) { setNeedAddr(true); setTimeout(() => focusField('address'), 400); } if (a) setForm((f) => ({ ...f, address: a.line, firstName: a.name ? a.name.split(' ')[0] : f.firstName, lastName: a.name ? a.name.split(' ').slice(1).join(' ') : f.lastName, phone: a.phone || f.phone })); });
       }} />
 
-      <Modal visible={Boolean(picker)} animationType="slide" onRequestClose={() => { setPicker(''); setStateQ(''); }}>
-        <View style={{ flex: 1, paddingTop: Math.max(insets.top, 24) + 8, backgroundColor: '#fff' }}>
-          <Text style={{ fontSize: 18, fontWeight: '800', paddingHorizontal: 16, paddingBottom: 10 }}>Select state</Text>
-          <View style={{ paddingHorizontal: 16, marginBottom: 6 }}><TextInput style={s.stateSearch} value={stateQ} onChangeText={setStateQ} placeholder="Search state" placeholderTextColor="#767676" accessibilityLabel="Search state" autoCorrect={false} /></View>
-          <FlatList keyboardShouldPersistTaps="handled" data={IN_STATES.filter(([, n]) => n.toLowerCase().includes(stateQ.trim().toLowerCase())).sort((x, y) => x[1].localeCompare(y[1]))} keyExtractor={([x]) => x} renderItem={({ item: [code, name] }) => {
-            const on = (picker === 'state' ? form.state : form.billing.state) === code;
-            return <Pressable style={[s.stateRow, on && { backgroundColor: c.accentSoft }]} accessibilityRole="button" accessibilityState={{ selected: on }} onPress={() => { picker === 'state' ? set('state')(code) : setB('state')(code); setPicker(''); setStateQ(''); }}><Text style={{ fontSize: 16, fontWeight: on ? '800' : '400' }}>{on ? '✓ ' : ''}{name}</Text></Pressable>;
-          }} />
-          <Button title="Close" variant="outline" onPress={() => { setPicker(''); setStateQ(''); }} style={{ margin: 16, marginBottom: Math.max(insets.bottom, 16) }} />
-        </View>
-      </Modal>
+      <StatePickerModal
+        visible={Boolean(picker)}
+        onClose={() => setPicker('')}
+        value={picker === 'state' ? form.state : form.billing.state}
+        onChange={(code) => {
+          picker === 'state' ? set('state')(code) : setB('state')(code);
+          setPicker('');
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }
-
-const Sum = ({ k, v, color }: { k: string; v: string; color?: string }) => (
-  <View style={s.line}><Text style={{ color: color ?? '#555' }}>{k}</Text><Text style={{ fontWeight: '600', color: color ?? c.text }}>{v}</Text></View>
-);
 
 const s = StyleSheet.create({
   lbl: { fontSize: 13, color: '#555', marginBottom: 6 },
   select: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: c.line, borderRadius: r.md, paddingHorizontal: 14, minHeight: 48, marginBottom: 14 },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  method: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderWidth: 1, borderColor: c.line, borderRadius: r.md, marginBottom: 10 },
-  methodOn: { borderColor: c.accent, backgroundColor: '#f2f6ff' },
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#bbb', alignItems: 'center', justifyContent: 'center' },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: c.accent },
   line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 8 },
@@ -502,10 +480,6 @@ const s = StyleSheet.create({
   chipOn: { borderColor: c.accent, backgroundColor: c.accentSoft },
   chipT: { fontSize: 13, fontWeight: '600', color: c.text },
   box: { width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: '#bbb', alignItems: 'center', justifyContent: 'center' },
-  savedChip: { backgroundColor: c.accentSoft, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  savedChipT: { fontSize: 11, fontWeight: '800', color: c.accent },
-  savings: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: c.accentSoft, borderRadius: r.sm, padding: 10, marginTop: 6 },
-  savingsT: { color: c.accent, fontWeight: '800', fontSize: 13 },
   foot: { backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: c.line },
   footAddr: { flexDirection: 'row', paddingHorizontal: 14, paddingTop: 10 },
   footRow: { flexDirection: 'row', alignItems: 'center', padding: 12 },
@@ -515,7 +489,4 @@ const s = StyleSheet.create({
   gstNote: { color: c.muted, fontSize: 12, marginTop: -8, marginBottom: 12 },
   gstCard: { padding: 12, borderRadius: r.md, borderWidth: 1, borderColor: c.success, backgroundColor: c.greenSoft, marginTop: -4, marginBottom: 14 },
   rider: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: r.md, backgroundColor: c.greenSoft, borderWidth: 1, borderColor: c.green, marginTop: 10, marginBottom: 4 },
-  thumb: { width: 40, height: 40, borderRadius: 8, backgroundColor: c.surface },
-  stateSearch: { borderWidth: 1, borderColor: c.line, borderRadius: r.md, paddingHorizontal: 14, minHeight: 46, fontSize: 15, color: c.text, backgroundColor: '#fff' },
-  stateRow: { paddingHorizontal: 20, paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: c.line },
 });

@@ -11,8 +11,8 @@
     "doctor": "npx expo-doctor",
     "build:preview": "npx eas build --platform android --profile preview",
     "build:prod": "npx eas build --platform android --profile production",
-    "test": "jest",
-    "check": "tsc --noEmit && jest"
+    "test": "jest --no-watchman",
+    "check": "tsc --noEmit && jest --no-watchman"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",

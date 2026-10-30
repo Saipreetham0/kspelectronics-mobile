@@ -46,7 +46,7 @@ export default function ProductCard({ product: p, width, index = 0 }: { product:
         <Text style={s.hint} numberOfLines={1}>{hint}</Text>
         <AddButton product={p} compact />
       </View>
-      <Tap onPress={() => router.push(`/product/${p.slug}`)} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={`${decodeHtml(p.name)} details`}>
+      <Tap onPress={() => router.push(`/product/${p.slug}`)} scaleTo={0.97}>
         <View style={s.priceRow}>
           <Text style={s.price} numberOfLines={1}>{now}</Text>
           {was ? <Text style={s.was}>{was}</Text> : null}

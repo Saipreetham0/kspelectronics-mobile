@@ -1,11 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { router } from 'expo-router';
 import { Button, Center, Spinner } from '@/components/ui';
 import { api } from '@/api';
-import { getPayRequest, setPayRequest } from '@/payRequest';
+import { getPayRequest, restorePayRequest, setPayRequest } from '@/payRequest';
+import type { PayRequest } from '@/payRequest';
 import { storage } from '@/storage';
 import { useStore } from '@/store';
 import { c } from '@/theme';
@@ -15,9 +16,15 @@ type Msg = { type: 'success'; razorpay_payment_id: string; razorpay_order_id: st
 // Razorpay Standard Checkout inside a WebView: works in Expo Go and every build with no native module.
 // ponytail: swap for the native react-native-razorpay SDK later if you want in-app UPI intent handling.
 export default function Pay() {
-  const req = getPayRequest();
+  // Start with the in-memory fast path; if the JS runtime was purged while backgrounded, restore from keychain.
+  const [req, setReq] = useState<PayRequest | null>(getPayRequest());
   const { cartToken, clearLocalCart } = useStore();
   const [verifying, setVerifying] = useState(false);
+
+  useEffect(() => {
+    if (req) return; // already have it in memory
+    restorePayRequest().then((r) => setReq(r)).catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const html = useMemo(() => {
     if (!req) return '';
@@ -34,7 +41,10 @@ export default function Pay() {
 
   if (!req) return <Center><Text>Nothing to pay.</Text><Button title="Back to cart" onPress={() => router.replace('/(tabs)/cart')} /></Center>;
 
-  const fail = (kind: 'cancelled' | 'failed' | 'unconfirmed', reason?: string) => { setPayRequest(null); router.replace({ pathname: '/order-failed', params: { orderId: String(req.orderId), key: req.orderKey, kind, ...(reason ? { reason } : {}) } }); };
+  const fail = (kind: 'cancelled' | 'failed' | 'unconfirmed', reason?: string) => {
+    setPayRequest(null); // fire-and-forget clear; navigation is the priority
+    router.replace({ pathname: '/order-failed', params: { orderId: String(req.orderId), key: req.orderKey, kind, ...(reason ? { reason } : {}) } });
+  };
   const onMessage = async (e: WebViewMessageEvent) => {
     const m = JSON.parse(e.nativeEvent.data) as Msg;
     if (m.type === 'dismiss') return fail('cancelled');
@@ -47,8 +57,7 @@ export default function Pay() {
       return fail('unconfirmed'); // the server could not confirm it (yet): say so, never "failed"
     }
     await api('/api/cart/clear', { method: 'POST', body: { token: cartToken } }).catch(() => {});
-    await Promise.all([clearLocalCart(), storage.del('ksp_pending_order')]);
-    setPayRequest(null);
+    await Promise.all([clearLocalCart(), setPayRequest(null), storage.del('ksp_pending_order')]);
     router.replace({ pathname: '/order-success', params: { orderId: String(req.orderId), key: req.orderKey } });
   };
 

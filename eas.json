@@ -22,7 +22,6 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://store.kspelectronics.in",
-        "GOOGLE_MAPS_ANDROID_KEY": "AIzaSyCje2NFlgu_I0coVOLdfLjjy-5wjtbUlPo",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
       "channel": "preview"
@@ -34,7 +33,6 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://store.kspelectronics.in",
-        "GOOGLE_MAPS_ANDROID_KEY": "AIzaSyCje2NFlgu_I0coVOLdfLjjy-5wjtbUlPo",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
       "channel": "production"

@@ -14,16 +14,32 @@ export function useFetch<T>(path: string | null) {
   const load = useCallback((): Promise<void> => {
     if (!path) return Promise.resolve();
     const id = ++seq.current;
-    if (timer.current) clearTimeout(timer.current);
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
     setLoading(true); setError('');
-    const attempt = (n: number): Promise<void> => api<T>(path).then((d) => { if (id === seq.current) { setData(d); setLoading(false); } }).catch((e: Error) => {
-      if (id !== seq.current) return;
+    // `cancelled` is a closure-local flag: even if the ref is updated after unmount, the in-flight retry
+    // closure still holds this boolean and will not call setData / setError after the component is gone.
+    let cancelled = false;
+    const attempt = (n: number): Promise<void> => api<T>(path).then((d) => {
+      if (cancelled || id !== seq.current) return;
+      setData(d); setLoading(false);
+    }).catch((e: Error) => {
+      if (cancelled || id !== seq.current) return;
       const temporary = e instanceof ApiError && (e.status === 0 || e.status >= 500);
-      if (temporary && n < RETRY_MS.length) { timer.current = setTimeout(() => { if (id === seq.current) attempt(n + 1); }, RETRY_MS[n]); return; } // stays "loading" meanwhile
+      if (temporary && n < RETRY_MS.length) {
+        timer.current = setTimeout(() => { if (!cancelled && id === seq.current) attempt(n + 1); }, RETRY_MS[n]);
+        return; // stays "loading" meanwhile
+      }
       setError(e.message); setLoading(false);
     });
-    return attempt(0);
+    attempt(0);
+    return Promise.resolve();
   }, [path]);
-  useEffect(() => { load(); return () => { seq.current++; if (timer.current) clearTimeout(timer.current); }; }, [load]);
+  useEffect(() => {
+    load();
+    return () => {
+      seq.current++;
+      if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    };
+  }, [load]);
   return { data, error, loading, reload: load };
 }

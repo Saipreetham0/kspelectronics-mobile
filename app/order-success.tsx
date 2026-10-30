@@ -88,8 +88,14 @@ export default function OrderSuccess() {
         })
         .catch((e) => {
           if (!live) return;
-          if (e instanceof ApiError && e.status === 404) router.replace({ pathname: '/order-failed', params: { orderId, kind: 'failed', reason: "We couldn't find this order. If you were charged, message us with the order number." } });
-          else setTries((n) => (n >= 30 ? n : n + 1));
+          if (e instanceof ApiError && e.status === 404) {
+            router.replace({ pathname: '/order-failed', params: { orderId, kind: 'failed', reason: "We couldn't find this order. If you were charged, message us with the order number." } });
+          } else if (tries >= 30) {
+            // Max retries hit on a network error: the order state is unknown. Navigate to failed instead of spinning forever.
+            router.replace({ pathname: '/order-failed', params: { orderId, key: key ?? '', kind: 'unconfirmed' } });
+          } else {
+            setTries((n) => n + 1);
+          }
         });
     }, tries === 0 ? 0 : 4000);
     return () => { live = false; clearTimeout(t); };
