@@ -152,5 +152,5 @@ const s = StyleSheet.create({
   item: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
   img: { width: 52, height: 52, borderRadius: r.sm, backgroundColor: c.surface },
   hr: { height: 1, backgroundColor: c.line, marginVertical: 12 },
-  input: { marginTop: 10, borderWidth: 1, borderColor: c.line, borderRadius: r.md, padding: 12, minHeight: 80, textAlignVertical: 'top', fontSize: 15, color: c.text },
+  input: { marginTop: 10, borderWidth: 1, borderColor: c.line, borderRadius: r.md, padding: 12, minHeight: 80, textAlignVertical: 'top', fontSize: 15, color: c.text, backgroundColor: '#fff' },
 });

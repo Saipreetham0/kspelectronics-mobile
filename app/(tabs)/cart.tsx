@@ -46,6 +46,7 @@ export default function CartScreen() {
     }).catch(() => {});
     refresh();
   }, [refresh])); // also pick up changes made elsewhere
+  const offers = useFetch<{ offers: unknown[] }>(offersOn ? '/api/offers' : null); // the link below appears only when there is something to show
   const popular = useFetch<Product[]>('/api/catalog/products?orderby=popularity&per_page=12'); // hook stays above the early returns
   // Is each line still in stock, and has its price moved since the shopper last saw the cart? (Variations are not checked: the list holds only their parent product.)
   const lines = cart?.items ?? [];
@@ -208,7 +209,7 @@ export default function CartScreen() {
             )}
             <Card>
               <Text style={s.h}>Coupon</Text>
-              {offersOn ? <Pressable onPress={() => router.push('/offers')} hitSlop={{ top: 8, bottom: 8 }} style={{ marginBottom: 10 }} accessibilityRole="button"><Text style={{ color: c.accent, fontWeight: '800' }}>View available offers</Text></Pressable> : null}
+              {offersOn && offers.data?.offers?.length ? <Pressable onPress={() => router.push('/offers')} hitSlop={{ top: 8, bottom: 8 }} style={{ marginBottom: 10 }} accessibilityRole="button"><Text style={{ color: c.accent, fontWeight: '800' }}>View available offers</Text></Pressable> : null}
               {cart!.coupons.map((cp) => (
                 <View key={cp.code} style={s.coupon}><Text style={{ fontWeight: '700', color: c.success }}>{cp.code.toUpperCase()} applied</Text><Pressable onPress={() => act(() => removeCoupon(cp.code))} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityRole="button" accessibilityLabel={`Remove coupon ${cp.code}`}><Text style={{ color: c.danger }}>Remove</Text></Pressable></View>
               ))}
@@ -296,7 +297,7 @@ const s = StyleSheet.create({
   save: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36, paddingHorizontal: 10, borderRadius: r.sm, borderWidth: 1, borderColor: c.line },
   saveT: { color: c.accent, fontWeight: '700', fontSize: 12.5 },
   coupon: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  input: { flex: 1, borderWidth: 1, borderColor: c.line, borderRadius: r.md, paddingHorizontal: 12, minHeight: 48, fontSize: 15, color: c.text },
+  input: { flex: 1, borderWidth: 1, borderColor: c.line, borderRadius: r.md, paddingHorizontal: 12, minHeight: 48, fontSize: 15, color: c.text, backgroundColor: '#fff' }, // a background also removes Android's own underline
   barWrap: { backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: c.line },
   chip: { backgroundColor: c.accentSoft, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
   chipT: { fontSize: 12, fontWeight: '800', color: c.accent },
