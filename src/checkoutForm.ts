@@ -1,6 +1,6 @@
 // Same rules as the website's lib/checkout-form.ts and the server routes. Keep them in sync.
 export type Addr = { firstName: string; lastName: string; address: string; city: string; state: string; pincode: string };
-export type CheckoutForm = Addr & { email: string; phone: string; notes: string; company: string; gstin: string; sameBilling: boolean; billing: Addr; drop?: { lat: number; lng: number } };
+export type CheckoutForm = Addr & { email: string; phone: string; notes: string; company: string; gstin: string; sameBilling: boolean; billing: Addr; drop?: { lat: number; lng: number }; slot?: string; slotLabel?: string };
 
 export const emptyAddr: Addr = { firstName: '', lastName: '', address: '', city: '', state: 'TS', pincode: '' };
 export const emptyForm: CheckoutForm = { ...emptyAddr, email: '', phone: '', notes: '', company: '', gstin: '', sameBilling: true, billing: { ...emptyAddr } };

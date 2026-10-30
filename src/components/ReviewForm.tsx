@@ -5,6 +5,7 @@ import { Text } from '@/components/Text';
 import { Button, Field } from '@/components/ui';
 import { api } from '@/api';
 import { useStore } from '@/store';
+import { maybeAskStoreReview } from '@/storeReview';
 import { c, r } from '@/theme';
 
 // "Write a review": stars, name, email and a few words. New reviews wait for approval in WooCommerce before they show.
@@ -25,7 +26,7 @@ export default function ReviewForm({ productId }: { productId: number }) {
     if (!rating) return Alert.alert('Review', 'Tap the stars to choose a rating.');
     if (!name.trim() || !/^\S+@\S+\.\S+$/.test(email) || text.trim().length < 10) return Alert.alert('Review', 'Please add your name, a valid email, and at least 10 characters of review.');
     setBusy(true);
-    try { await api('/api/reviews', { method: 'POST', body: { productId, rating, name: name.trim(), email: email.trim(), review: text.trim() } }); setDone(true); }
+    try { await api('/api/reviews', { method: 'POST', body: { productId, rating, name: name.trim(), email: email.trim(), review: text.trim() } }); setDone(true); if (rating >= 4) maybeAskStoreReview(); }
     catch (e) { Alert.alert('Could not send review', (e as Error).message); }
     setBusy(false);
   };

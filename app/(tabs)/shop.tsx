@@ -6,6 +6,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SuggestList from '@/components/SuggestList';
+import { alternatives } from '@/searchFallback';
 import ProductCard from '@/components/ProductCard';
 import FilterSheet, { SORTS } from '@/components/FilterSheet';
 import LocationSheet from '@/components/LocationSheet';
@@ -53,7 +54,7 @@ function shortName(child: string, parent: string): string {
 //                     and, when the chosen rail item has children of its own, a row of chips for them. Then the products.
 export default function Shop() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ search?: string; category?: string; brand?: string; brandName?: string }>();
+  const params = useLocalSearchParams<{ search?: string; category?: string; brand?: string; brandName?: string; sort?: string; onsale?: string; list?: string }>(); // sort / onsale / list: Home's "see all" links
   const { width } = useScreen();
   const [q, setQ] = useState(params.search ?? '');
   const [search, setSearch] = useState(params.search ?? '');
@@ -61,9 +62,10 @@ export default function Shop() {
   const [searching, setSearching] = useState(false); // the search bar replaces the category header until the search is cleared
   const [category, setCategory] = useState(params.category ?? ''); // what the products are filtered by
   const [pageSlug, setPageSlug] = useState(''); // the category the page is about (the header); the rail and chips move within it
-  const [sort, setSort] = useState('');
+  const [sort, setSort] = useState(params.sort ?? '');
+  const [listAll, setListAll] = useState(params.list === '1'); // the whole product list instead of the category grid
   const [inStock, setInStock] = useState(false);
-  const [onSale, setOnSale] = useState(false);
+  const [onSale, setOnSale] = useState(params.onsale === '1');
   const [price, setPrice] = useState('');
   const [sheet, setSheet] = useState<'sort' | 'filters' | null>(null);
   const [items, setItems] = useState<Product[]>([]);
@@ -71,6 +73,7 @@ export default function Shop() {
   const [more, setMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [looser, setLooser] = useState(''); // what was searched instead, when the exact search found nothing
   const [pin, setPin] = useState('');
   const [loc, setLoc] = useState<Loc | null>(null);
   const [pinOpen, setPinOpen] = useState(false);
@@ -79,7 +82,7 @@ export default function Shop() {
   const forest = tree.data ?? [];
 
   useFocusEffect(useCallback(() => { loadLoc().then((l) => { setPin(l.pin); setLoc(l.loc); }); }, [])); // re-read on focus: the location is changed from Home
-  useEffect(() => { setSearch(params.search ?? ''); setQ(params.search ?? ''); setCategory(params.category ?? ''); setBrand(params.brand ?? ''); setPageSlug(''); setSearching(false); }, [params.search, params.category, params.brand]);
+  useEffect(() => { setSearch(params.search ?? ''); setQ(params.search ?? ''); setCategory(params.category ?? ''); setBrand(params.brand ?? ''); setPageSlug(''); setSearching(false); setListAll(params.list === '1'); setSort(params.sort ?? ''); setOnSale(params.onsale === '1'); }, [params.search, params.category, params.brand, params.list, params.sort, params.onsale]);
 
   // Opening a category from the grid (or a Home tile or banner): the page is about that category.
   const open = (slug: string) => { setCategory(slug); setPageSlug(slug); };
@@ -101,18 +104,26 @@ export default function Shop() {
     const [lo, hi] = price.split(':');
     if (lo) qs.set('min_price', lo);
     if (hi) qs.set('max_price', hi);
-    if (p === 1) setItems([]); // never show the previous category's products while the new ones load
+    if (p === 1) { setItems([]); setLooser(''); } // never show the previous category's products while the new ones load
     setLoading(true); setError('');
     try {
-      const rows = await api<Product[]>(`/api/catalog/products?${qs}`);
+      let rows = await api<Product[]>(`/api/catalog/products?${qs}`);
       if (id !== req.current) return; // a newer request replaced this one
+      if (p === 1 && !rows.length && search) { // nothing found: try looser versions of the search before giving up
+        for (const alt of alternatives(search)) {
+          qs.set('search', alt);
+          const found = await api<Product[]>(`/api/catalog/products?${qs}`).catch(() => []);
+          if (id !== req.current) return;
+          if (found.length) { rows = found; setLooser(alt); break; }
+        }
+      }
       setItems((cur) => (p === 1 ? rows : [...cur, ...rows]));
       setMore(rows.length === PAGE); setPage(p);
     } catch (e) { if (id === req.current) setError((e as Error).message); }
     if (id === req.current) setLoading(false);
   }, [search, category, brand, sort, inStock, onSale, price]);
   const suggesting = q.trim().length >= 2 && q.trim() !== search; // typing, not yet submitted
-  const gridMode = category === '' && !search && !brand; // the sectioned category grid: nothing to list yet
+  const gridMode = category === '' && !search && !brand && !listAll; // the sectioned category grid: nothing to list yet
   useEffect(() => { if (!gridMode) fetchPage(1); }, [fetchPage, gridMode]);
 
   // Where we are inside the page: pageNode is the header category, sel[0] the chosen rail item, sel[1] the chosen chip.
@@ -178,7 +189,7 @@ export default function Shop() {
           </View>
           <Pressable onPress={() => setPinOpen(true)} hitSlop={6} accessibilityRole="button" accessibilityLabel="Change delivery location">
             <Text style={s.deliver} numberOfLines={1}>
-              {loc ? `${isHyderabad(loc) ? 'Same-day delivery' : 'Delivering'} to ${loc.area}, ${loc.city} · ${loc.pin}` : pin ? `Delivering to ${pin}` : 'Same-day delivery in Hyderabad'} <Text style={{ color: c.accent }}>Change</Text>
+              {loc ? `${isHyderabad(loc) ? 'Same-day delivery' : 'Delivering'} to ${loc.area}, ${loc.city} · ${loc.pin}` : pin ? `Delivering to ${pin}` : 'Set your delivery location'} <Text style={{ color: c.accent }}>Change</Text>
             </Text>
           </Pressable>
         </>
@@ -260,6 +271,7 @@ export default function Shop() {
               </ScrollView>
             )}
 
+            {looser ? <Text style={s.looser} accessibilityLiveRegion="polite">No exact match for “{search}”. Showing results for “{looser}”.</Text> : null}
             {loading && !items.length ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 5 }}>{[0, 1, 2, 3].map((n) => <View key={n} style={{ width: '50%' }}><ProductSkeleton /></View>)}</View>
             ) : error && !items.length ? (
@@ -271,6 +283,12 @@ export default function Shop() {
                 ListEmptyComponent={<View style={{ alignItems: 'center', marginTop: 40, gap: 10 }}>
                   <Text style={{ textAlign: 'center', color: c.muted }}>{activeFilters ? 'No products match these filters.' : 'No products found.'}</Text>
                   {activeFilters ? <Pressable onPress={() => { setInStock(false); setOnSale(false); setPrice(''); }}><Text style={{ color: c.accent, fontWeight: '800' }}>Clear filters</Text></Pressable> : null}
+                  {search && !activeFilters ? (<>
+                    <Text style={{ color: c.muted, marginTop: 6 }}>Try one of these instead</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, paddingHorizontal: 16 }}>
+                      {['Raspberry Pi', 'Arduino', 'ESP32', 'Bambu Lab', 'Sensors'].map((t) => <Pressable key={t} onPress={() => { setQ(t); setSearch(t); addRecent(t); }} style={s.chip} accessibilityRole="button"><Text style={s.chipText}>{t}</Text></Pressable>)}
+                    </View>
+                  </>) : null}
                 </View>}
                 ListFooterComponent={loading ? <View style={{ margin: 16, alignItems: 'center' }}><Dots /></View> : undefined} />
             )}
@@ -293,6 +311,7 @@ export default function Shop() {
 }
 
 const s = StyleSheet.create({
+  looser: { color: c.dealText, backgroundColor: c.dealSoft, fontSize: 13, fontWeight: '600', paddingHorizontal: 14, paddingVertical: 8 },
   // Blinkit's category header: round back / search / share buttons around a pill with the name and the delivery line.
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.line },
   circle: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },

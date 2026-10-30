@@ -45,7 +45,7 @@ export default function TabsLayout() {
   return (
     <View style={{ flex: 1 }}>
       <Tabs screenOptions={{
-        tabBarActiveTintColor: c.accent, tabBarInactiveTintColor: '#8a8f98',
+        tabBarActiveTintColor: c.accent, tabBarInactiveTintColor: '#6b7280',
         tabBarItemStyle: { paddingHorizontal: 2 },
         headerTitleStyle: { fontFamily: 'Inter_800ExtraBold' },
         tabBarStyle: { borderTopColor: c.line, height: barH, paddingTop: 6, paddingBottom: insets.bottom > 0 ? insets.bottom : 6 },

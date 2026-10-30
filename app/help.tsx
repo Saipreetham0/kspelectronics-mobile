@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Constants from 'expo-constants';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -7,6 +7,7 @@ import { api } from '@/api';
 import { WHATSAPP } from '@/config';
 import { POLICIES } from '@/policies';
 import { useStore } from '@/store';
+import { storage } from '@/storage';
 import { c, r } from '@/theme';
 
 const FAQ: { q: string; a: string }[] = [
@@ -25,10 +26,12 @@ export default function Help() {
   const [email, setEmail] = useState(user?.email ?? '');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState<{ at: string; text: string }[]>([]); // the last few messages sent from this phone
+  useEffect(() => { storage.get('ksp_messages').then((v) => v && setSent(JSON.parse(v))).catch(() => {}); }, []);
   const send = async () => {
     if (!name.trim() || !/^\S+@\S+\.\S+$/.test(email) || message.trim().length < 10) return Alert.alert('Message', 'Please add your name, a valid email and a few words about what you need.');
     setBusy(true);
-    try { await api('/api/contact', { method: 'POST', body: { name: name.trim(), email: email.trim(), subject: 'Message from the app', message: message.trim() } }); setMessage(''); Alert.alert('Message sent', 'Thanks. We reply within 24 hours.'); }
+    try { await api('/api/contact', { method: 'POST', body: { name: name.trim(), email: email.trim(), subject: 'Message from the app', message: message.trim() } }); { const next = [{ at: new Date().toISOString(), text: message.trim().slice(0, 120) }, ...sent].slice(0, 5); setSent(next); storage.set('ksp_messages', JSON.stringify(next)).catch(() => {}); } setMessage(''); Alert.alert('Message sent', 'Thanks. We reply within 24 hours.'); }
     catch (e) { Alert.alert('Could not send', (e as Error).message); }
     setBusy(false);
   };
@@ -53,6 +56,12 @@ export default function Help() {
         <Field label="How can we help?" value={message} onChangeText={setMessage} multiline style={{ minHeight: 100, textAlignVertical: 'top', paddingTop: 12 }} />
         <Button title="Send message" loading={busy} onPress={send} />
       </Card>
+      {sent.length > 0 && (
+        <Card>
+          <H>Your recent messages</H>
+          {sent.map((m) => <View key={m.at} style={{ marginBottom: 10 }}><Text style={{ color: c.muted, fontSize: 12 }}>Sent {new Date(m.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}. We reply by email.</Text><Text numberOfLines={2} style={{ color: '#444' }}>{m.text}</Text></View>)}
+        </Card>
+      )}
       <Card>
         <H>Policies</H>
         {POLICIES.map((p) => <Text key={p.url} style={{ color: c.accent, fontWeight: '700', paddingVertical: 10 }} onPress={() => Linking.openURL(p.url).catch(() => {})} accessibilityRole="link">{p.label}</Text>)}

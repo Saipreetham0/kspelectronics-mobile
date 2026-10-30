@@ -14,6 +14,7 @@ export type CartItem = {
   key: string; id: number; quantity: number; name: string; sku: string; images: Img[]; prices: Prices; variation?: { attribute: string; value: string }[];
   totals: { line_total: string; line_total_tax?: string; currency_minor_unit: number };
   quantity_limits?: { minimum: number; maximum: number; multiple_of: number };
+  permalink?: string; low_stock_remaining?: number | null;
 };
 export type Rate = { rate_id: string; name: string; price: string; selected: boolean };
 export type Cart = {
@@ -30,3 +31,6 @@ export type Account = {
   customer: { first_name: string; last_name: string; billing: Record<string, string>; shipping: Record<string, string> } | null;
   orders: Order[] | null;
 };
+
+// A delivery partner's live position, when the store provides it (see docs/SERVER_API.md): shown as a map with a call button.
+export type Rider = { name: string; phone?: string; lat: number; lng: number; updatedAt?: string };

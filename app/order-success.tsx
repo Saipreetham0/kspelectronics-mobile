@@ -7,6 +7,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Button, Center, Spinner } from '@/components/ui';
 import { api, ApiError } from '@/api';
 import { useStore } from '@/store';
+import { track } from '@/analytics';
+import { registerPush } from '@/push';
 import { c } from '@/theme';
 
 type Status = { number: string; status: string; phase: 'paid' | 'waiting' | 'failed'; total: string; currency: string; methodTitle: string; items: { id: number; name: string; quantity: number }[] };
@@ -17,6 +19,9 @@ function SuccessView({ orderId, summary }: { orderId?: string; summary?: Status 
   const tick = useRef(new Animated.Value(0)).current;
   const burst = useRef(new Animated.Value(0)).current;
   const text = useRef(new Animated.Value(0)).current;
+
+  // A paid order: count it, then offer order updates by notification (a moment later, so the prompt doesn't cover the tick).
+  useEffect(() => { track('purchase'); const t = setTimeout(() => registerPush(true), 2500); return () => clearTimeout(t); }, []);
 
   // Ring springs in, the tick pops, dots burst outwards, then the text rises.
   useEffect(() => {

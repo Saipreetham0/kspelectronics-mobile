@@ -21,7 +21,7 @@ export default function Pay() {
 
   const html = useMemo(() => {
     if (!req) return '';
-    const options = JSON.stringify({ key: req.keyId, amount: req.amount, currency: req.currency, order_id: req.rzpOrderId, name: 'KSP Electronics', description: `Order #${req.orderId}`, prefill: req.prefill, theme: { color: c.accent } }).replace(/</g, '\\u003c');
+    const options = JSON.stringify({ key: req.keyId, amount: req.amount, currency: req.currency, order_id: req.rzpOrderId, name: 'KSP Electronics', description: `Order #${req.orderId}`, prefill: req.prefill, theme: { color: c.accent }, remember_customer: true, config: { display: { blocks: { upi: { name: 'Pay with a UPI app', instruments: [{ method: 'upi' }] } }, sequence: ['block.upi', 'block.other'], preferences: { show_default_blocks: true } } } }).replace(/</g, '\\u003c');
     return `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#fff"><script src="https://checkout.razorpay.com/v1/checkout.js"></script><script>
       var post=function(m){window.ReactNativeWebView.postMessage(JSON.stringify(m))};
       var o=${options};

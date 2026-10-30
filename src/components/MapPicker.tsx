@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import * as Location from 'expo-location';
 import MapView from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@/components/Text';
@@ -10,6 +11,7 @@ import { c } from '@/theme';
 // reports ready the box says so, instead of staying silently grey.
 export default function MapPicker({ lat, lng, onMove }: { lat: number; lng: number; onMove: (lat: number, lng: number) => void }) {
   const map = useRef<MapView>(null);
+  const { height } = useWindowDimensions();
   const [show, setShow] = useState(false);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -20,8 +22,16 @@ export default function MapPicker({ lat, lng, onMove }: { lat: number; lng: numb
     const cam = await map.current?.getCamera();
     if (cam) map.current?.animateCamera({ zoom: Math.max(3, Math.min(20, (cam.zoom ?? 17) + d)) }, { duration: 250 });
   };
+  // Re-centres on the phone's position; the map's own move event then looks the spot up.
+  const here = async () => {
+    try {
+      if ((await Location.requestForegroundPermissionsAsync()).status !== 'granted') return;
+      const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      map.current?.animateCamera({ center: { latitude: p.coords.latitude, longitude: p.coords.longitude }, zoom: 17 }, { duration: 300 });
+    } catch { /* the shopper can still drag the map */ }
+  };
   return (
-    <View style={s.box}>
+    <View style={[s.box, { height: Math.round(Math.min(280, Math.max(180, height * 0.3))) }]}>
       {show && (
         <MapView ref={map} style={StyleSheet.absoluteFill} mapType="standard" userInterfaceStyle="light" zoomControlEnabled={false} initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.004, longitudeDelta: 0.004 }}
           onMapReady={() => { setReady(true); setFailed(false); }} onPress={(e) => map.current?.animateCamera({ center: e.nativeEvent.coordinate }, { duration: 300 })} onRegionChangeComplete={(r) => { if (ready) onMove(r.latitude, r.longitude); }}
@@ -29,6 +39,7 @@ export default function MapPicker({ lat, lng, onMove }: { lat: number; lng: numb
       )}
       {!ready && !failed && <View style={s.center}><ActivityIndicator color={c.loader} /></View>}
       {failed && !ready && <View style={s.center}><Text style={s.msg}>The map could not load on this device. You can still tap “Just deliver here”.</Text></View>}
+      {ready && <Pressable onPress={here} style={s.locate} accessibilityRole="button" accessibilityLabel="Centre the map on my location"><Ionicons name="locate" size={22} color={c.accent} /></Pressable>}
       {ready && (
         <View style={s.zoom}>
           <Pressable onPress={() => zoomBy(1)} style={s.zbtn} accessibilityRole="button" accessibilityLabel="Zoom in"><Ionicons name="add" size={24} color={c.text} /></Pressable>
@@ -47,6 +58,7 @@ const s = StyleSheet.create({
   center: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', padding: 24 },
   msg: { color: '#444', textAlign: 'center', lineHeight: 20 },
   zoom: { position: 'absolute', right: 10, bottom: 14, backgroundColor: '#fff', borderRadius: 10, elevation: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
+  locate: { position: 'absolute', left: 10, bottom: 14, width: 44, height: 44, borderRadius: 22, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
   zbtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   zline: { height: StyleSheet.hairlineWidth, backgroundColor: '#ccc', marginHorizontal: 8 },
   hint: { position: 'absolute', top: 10, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6 },

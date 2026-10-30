@@ -7,6 +7,9 @@ import { Button, Card, ErrorBox, Spinner } from '@/components/ui';
 import { api } from '@/api';
 import { decodeHtml } from '@/format';
 import { WHATSAPP } from '@/config';
+import RiderCard from '@/components/RiderCard';
+import ReviewForm from '@/components/ReviewForm';
+import type { Rider } from '@/types';
 import { c, r } from '@/theme';
 
 type Detail = {
@@ -14,7 +17,7 @@ type Detail = {
   address: { name: string; line: string; city: string; state: string; pincode: string; phone: string };
   items: { id: number; productId: number; name: string; quantity: number; price: string; image: string }[];
   can: { cancel: boolean; return: boolean };
-  delivery?: { courier: string; awb: string; live: { status: string; link: string; activities: { date: string; activity: string; location: string }[] } | null } | null;
+  delivery?: { courier: string; awb: string; live: { status: string; link: string; eta?: string | null; rider?: Rider | null; drop?: { lat: number; lng: number } | null; activities: { date: string; activity: string; location: string }[] } | null } | null;
 };
 
 const STATUS: Record<string, string> = { pending: 'Waiting for payment', 'on-hold': 'On hold', processing: 'Being prepared', completed: 'Delivered', cancelled: 'Cancelled', refunded: 'Refunded', failed: 'Payment failed' };
@@ -29,6 +32,13 @@ export default function OrderDetail() {
   const [busy, setBusy] = useState(false);
   const load = useCallback(() => { setError(''); api<Detail>(`/api/orders/${id}`).then(setO).catch((e: Error) => setError(e.message)); }, [id]);
   useEffect(load, [load]);
+  // While a rider is on the way the order is read again every 15 seconds, so the dot on the map moves.
+  const riding = Boolean(o?.delivery?.live?.rider) && o?.status !== 'completed';
+  useEffect(() => {
+    if (!riding) return;
+    const t = setInterval(() => { api<Detail>(`/api/orders/${id}`).then(setO).catch(() => {}); }, 15000);
+    return () => clearInterval(t);
+  }, [riding, id]);
 
   if (error) return <ErrorBox message={error} onRetry={load} />;
   if (!o) return <Spinner />;
@@ -66,6 +76,7 @@ export default function OrderDetail() {
               {o.delivery.live.activities.slice(0, 4).map((a, n) => <Text key={n} numberOfLines={2} style={{ color: '#444', fontSize: 13, marginTop: 4 }}>{a.activity.replace(/\s+/g, ' ').trim()}{a.location ? ` · ${a.location}` : ''}</Text>)}
             </View>
           ) : null}
+          {o.delivery.live?.rider ? <RiderCard rider={o.delivery.live.rider} eta={o.delivery.live.eta} drop={o.delivery.live.drop ?? undefined} /> : null}
           {o.delivery.live?.link ? <Button title="Track shipment" variant="outline" style={{ marginTop: 10, minHeight: 42 }} onPress={() => Linking.openURL(o.delivery!.live!.link).catch(() => {})} /> : null}
         </Card>
       )}
@@ -85,6 +96,19 @@ export default function OrderDetail() {
         <View style={s.row}><Text style={{ fontWeight: '900', fontSize: 16 }}>Total</Text><Text style={{ fontWeight: '900', fontSize: 16 }}>{money(o.total)}</Text></View>
         <Text style={{ color: c.muted, fontSize: 12, marginTop: 2 }}>Includes GST {money(o.tax)}</Text>
       </Card>
+
+      {o.status === 'completed' && (
+        <Card>
+          <Text style={s.h}>How were your items?</Text>
+          <Text style={{ color: c.muted, marginTop: 4 }}>Your review helps other shoppers. It shows once it has been approved.</Text>
+          {o.items.map((i) => (
+            <View key={i.id} style={{ marginTop: 14 }}>
+              <Text numberOfLines={2} style={{ fontWeight: '600', marginBottom: 8 }}>{decodeHtml(i.name)}</Text>
+              <ReviewForm productId={i.productId} />
+            </View>
+          ))}
+        </Card>
+      )}
 
       <Card>
         <Text style={s.h}>Delivery address</Text>

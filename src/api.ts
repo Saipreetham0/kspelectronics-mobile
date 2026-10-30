@@ -7,7 +7,8 @@ export class ApiError extends Error {
   constructor(message: string, public status: number) { super(message); }
 }
 
-type Opts = { method?: string; body?: unknown; cartToken?: string | null };
+// retry: a write that is safe to repeat (set a quantity, remove a line) may also try the backup address, like a read.
+type Opts = { method?: string; body?: unknown; cartToken?: string | null; retry?: boolean };
 
 let active = 0; // index of the API address that worked last, so a dead main address isn't retried on every call
 
@@ -37,15 +38,16 @@ async function call<T>(url: string, { method = 'GET', body, cartToken }: Opts, t
 }
 
 // Every call goes to your Next.js API with the shopper's login token. When the main address can't be reached, reads fall back to the backup address.
-// Only GETs fall back: after a network failure a POST (checkout, add to cart) may already have reached the server, so repeating it elsewhere could duplicate it.
+// Only GETs and writes marked `retry` fall back: after a network failure a POST (checkout, add to cart) may already have reached the server, so repeating it elsewhere could duplicate it.
 export async function api<T>(path: string, opts: Opts = {}): Promise<T> {
   // Product lists ask for the slim version (about 1 KB a product instead of 16): the list screens need little, and the product page loads its own full copy.
   if (/^\/api\/catalog\/products\?/.test(path) && !/[?&]lean=/.test(path)) path += '&lean=1';
   if (!API_URLS.length) throw new ApiError('This copy of the app is not set up to reach the store. Please update the app.', 0);
   const order = API_URLS.map((_, i) => (i + active) % API_URLS.length);
-  const tries = (opts.method ?? 'GET') === 'GET' ? order : order.slice(0, 1);
+  const isRead = (opts.method ?? 'GET') === 'GET';
+  const tries = isRead || opts.retry ? order : order.slice(0, 1);
   // Cart and checkout writes take WordPress 4-12 seconds on a slow moment: cutting them off at 10s made removals look failed (and rolled back) though the store had done them.
-  const timeoutMs = tries.length > 1 ? 10000 : 25000;
+  const timeoutMs = tries.length > 1 ? (isRead ? 8000 : 15000) : 25000;
   let last: ApiError | null = null;
   for (const i of tries) {
     try {
@@ -55,6 +57,7 @@ export async function api<T>(path: string, opts: Opts = {}): Promise<T> {
     } catch (e) {
       if (!(e instanceof ApiError) || e.status !== 0) throw e; // a real answer from the server (even an error) is final
       last = e;
+      if (API_URLS.length > 1) active = (i + 1) % API_URLS.length; // other calls, and the next one, start at the address that is still answering
     }
   }
   throw last as ApiError;

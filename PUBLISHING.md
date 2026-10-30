@@ -49,10 +49,36 @@ The `.easignore` file keeps `.env` (which holds server secrets on this machine) 
 | Purchase history | Yes | Orders, reorder | Not shared |
 | Payment info | Not stored by the app: handled by Razorpay | Payment | Razorpay |
 | App activity (searches) | Only on the phone (recent searches) | Convenience | Not shared |
-| Crash logs and diagnostics | Not collected today | n/a | n/a |
+| Crash logs and diagnostics | Yes, if `EXPO_PUBLIC_SENTRY_DSN` is set (no name, email or address attached) | App stability | Sentry |
+| App activity (screens viewed, add to cart, checkout started, search used) | Yes, if `EXPO_PUBLIC_POSTHOG_KEY` is set. Anonymous per-install id, no personal data | Improving the app | PostHog |
+| Push notification token | Yes, if the shopper allows notifications | Order updates | Expo push service |
+| Device or other IDs | The anonymous analytics id above | Analytics | PostHog |
 - Data is encrypted in transit (https). Users can request deletion in the app (Account > Profile and security > Delete my account).
 
-## 5. After the first release
-- Add crash reporting (Sentry) and analytics before a large launch.
-- Push notifications and phone OTP login need accounts of their own (Firebase or Expo push, an SMS provider).
-- Bump `version` in `app.json` for each release; `versionCode` rises automatically (`autoIncrement`).
+## 5. Production setup (once)
+Everything below is switched on by a value in the EAS build environment (`eas env:create`, or `.env` for a local build). Nothing is sent until its value is set.
+| Value | What it turns on |
+|---|---|
+| `EXPO_PUBLIC_API_URL` | The store's API. Production: `https://store.kspelectronics.in` (a `192.168...` address must never reach a release build) |
+| `EXPO_PUBLIC_SENTRY_DSN` | Crash reports. Create a Sentry project (React Native), copy its DSN. For readable stack traces also set `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` and remove `SENTRY_DISABLE_AUTO_UPLOAD` from `eas.json` |
+| `EXPO_PUBLIC_POSTHOG_KEY` (+ `EXPO_PUBLIC_POSTHOG_HOST` for the EU or a self-hosted server) | Analytics |
+| `EAS_PROJECT_ID` | Run `npx eas init` once and add the id it prints to `app.json` under `extra.eas.projectId` (or set this value). It turns on over-the-air updates and push tokens |
+| `GOOGLE_MAPS_ANDROID_KEY`, `GOOGLE_MAPS_IOS_KEY` | Maps. There is no key in the code any more: restrict each key in Google Cloud to this app's package name or bundle id |
+
+Push also needs, outside the app: an FCM (Firebase) key uploaded to EAS for Android (`eas credentials`), an APNs key for iOS, and a store endpoint `POST /api/push/register` (body `{ token, platform }`) that saves the token against the customer, plus code that sends order-status messages to Expo's push API with `data: { url: '/order/<id>' }` so a tap opens the order.
+
+Releases: `npm run check` (typecheck and tests) must pass; CI runs the same on every push. After `eas init`, ship a fix without a store review with `npx eas update --channel production --message "what changed"` (it reaches builds of the same app `version`).
+
+## 6. After the first release
+- Phone OTP login needs an SMS provider.
+- Bump `version` in `app.json` for each store release; `versionCode` rises automatically (`autoIncrement`).
+
+## 7. App Store / Play Store listing (ASO)
+- **Title (30 characters):** `KSP Electronics: Maker Store` . **Subtitle (iOS, 30):** `3D printers, Pi, Arduino, ESP32`.
+- **Keywords (iOS, 100 characters, no spaces after commas):** `raspberry pi,arduino,esp32,3d printer,filament,bambu lab,sensors,electronics,components,maker,diy kit,hyderabad`
+- **First two lines of the description matter most** (they show before "more"): "Shop 3D printers, Raspberry Pi, Arduino, ESP32 and electronic components. Same-day delivery in Hyderabad, GST invoice, UPI and COD."
+- **Screenshots (5-8, portrait):** 1 Home with categories, 2 a product page with price and "Add", 3 cart with the savings line, 4 checkout with UPI, 5 live order tracking, 6 Order again, 7 search suggestions. Put a short headline on each ("Same-day in Hyderabad", "Prices include GST", "Track your rider live"). Use real products, no placeholder text.
+- **Preview video (15-30 s):** open the app, search "Raspberry Pi", add to cart, check out with UPI, show the order screen. No audio needed.
+- **Ratings:** the app asks for a store rating only after a 4-5 star review of a product, at most every 90 days. Reply to every review in the console.
+- **Localised listings:** add Hindi and Telugu listing text in the consoles even though the app itself is English-only for now.
+- **After launch:** watch search terms in Play Console / App Store Connect and move the ones people use into the title, keywords and first lines.

@@ -6,13 +6,15 @@ import { Button, Card, Field, H } from '@/components/ui';
 import { api } from '@/api';
 import { decodeHtml } from '@/format';
 import { useStore } from '@/store';
+import RiderCard from '@/components/RiderCard';
+import type { Rider } from '@/types';
 import { c } from '@/theme';
 
 type Result = {
   number: string; status: string; date: string; total: string; destination: string;
   items: { id: number; name: string; quantity: number }[];
   shipment: { courier: string; awb: string; link: string } | null;
-  live?: { status: string; courier: string; eta: string | null; link: string; activities: { date: string; activity: string; location: string }[] } | null; // a Shiprocket Quick rider's live status
+  live?: { status: string; courier: string; eta: string | null; link: string; rider?: Rider | null; drop?: { lat: number; lng: number } | null; activities: { date: string; activity: string; location: string }[] } | null; // a Shiprocket Quick rider's live status
   stages: { title: string; note: string; done: boolean; current: boolean }[];
   updates: { id: number; date: string; text: string }[];
 };
@@ -76,6 +78,7 @@ export default function Track() {
                   ))}
                 </View>
               ) : null}
+              {res.live?.rider ? <RiderCard rider={res.live.rider} eta={res.live.eta} drop={res.live.drop ?? undefined} /> : null}
               <Button title="Track shipment" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(res.live?.link || res.shipment!.link || 'https://kspelectronics.shiprocket.co/')} />
             </Card>
           )}

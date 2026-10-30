@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { NATIVE } from '@/native';
+import type { TextInputInstance } from 'react-native';
 import { Animated, Pressable, StyleSheet, TextInputProps, View, ViewProps, ViewStyle } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { c, r } from '@/theme';
@@ -39,12 +40,13 @@ export function Button({ title, onPress, loading, disabled, variant = 'primary',
   );
 }
 
-export function Field({ label, error, ...p }: TextInputProps & { label: string; error?: string }) {
+// `inputRef` hands the input to the screen so it can focus or scroll to it (the form's "next" key and first-error jump).
+export function Field({ label, error, inputRef, ...p }: TextInputProps & { label: string; error?: string; inputRef?: (el: TextInputInstance | null) => void }) {
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={s.label}>{label}</Text>
-      <TextInput placeholderTextColor="#aaa" {...p} style={[s.input, error ? { borderColor: c.danger } : null]} />
-      {error ? <Text style={s.err}>{error}</Text> : null}
+      <TextInput ref={inputRef} placeholderTextColor="#767676" accessibilityLabel={label} {...p} style={[s.input, error ? { borderColor: c.danger } : null]} />
+      {error ? <Text style={s.err} accessibilityRole="alert" accessibilityLiveRegion="polite">{error}</Text> : null}
     </View>
   );
 }
