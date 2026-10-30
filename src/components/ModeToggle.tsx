@@ -8,7 +8,7 @@ import { c, r } from '@/theme';
 
 // Quick / All products. Quick is greyed out (with the reason) where no rider can reach the saved location.
 export default function ModeToggle() {
-  const { mode, quickOk, checking, setMode } = useMode();
+  const { mode, quickOk, checking, noQuickItems, setMode } = useMode();
   const pinned = useLoc()?.lat != null; // Quick is checked against the pinned point, so without one the shopper is asked to set it
   const tab = (m: 'quick' | 'all', label: string, icon: 'flash' | 'cube-outline') => {
     const on = mode === m, off = m === 'quick' && !quickOk;
@@ -23,7 +23,7 @@ export default function ModeToggle() {
   return (
     <View>
       <View style={s.wrap} accessibilityRole="tablist">{tab('quick', 'Quick', 'flash')}{tab('all', 'All products', 'cube-outline')}</View>
-      {!quickOk && !checking && <Text style={s.note}>{pinned ? "Quick delivery isn't available at this location." : 'Set your location on the map to check Quick delivery.'}</Text>}
+      {!quickOk && !checking && <Text style={s.note}>{noQuickItems ? 'Quick delivery reaches you, but no products are marked Quick yet.' : pinned ? "Quick delivery isn't available at this location." : 'Set your location on the map to check Quick delivery.'}</Text>}
     </View>
   );
 }

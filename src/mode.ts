@@ -8,12 +8,16 @@ export type Mode = 'quick' | 'all';
 const KEY = 'ksp_mode';
 export const QUICK_TAG = 'quick';
 
-type S = { chosen: Mode | null; where: string; ok: boolean | null }; // ok: can a rider reach `where`? null = asking
-let s: S = { chosen: null, where: '', ok: null };
+type S = { chosen: Mode | null; where: string; ok: boolean | null; has: boolean | null }; // ok: can a rider reach `where`? has: is any product tagged for Quick? null = asking
+let s: S = { chosen: null, where: '', ok: null, has: null };
 const subs = new Set<() => void>();
 const set = (p: Partial<S>) => { s = { ...s, ...p }; subs.forEach((f) => f()); };
 let loaded = false;
-const load = () => { if (loaded) return; loaded = true; storage.get(KEY).then((v) => { if (v === 'quick' || v === 'all') set({ chosen: v }); }).catch(() => {}); };
+const load = () => {
+  if (loaded) return; loaded = true;
+  // Quick with nothing tagged "quick" would open on an empty Home, so it stays off until at least one product carries the tag.
+  api<unknown[]>(`/api/catalog/products?tag=${QUICK_TAG}&per_page=1&lean=1`).then((r) => set({ has: Array.isArray(r) && r.length > 0 })).catch(() => set({ has: false }));
+  storage.get(KEY).then((v) => { if (v === 'quick' || v === 'all') set({ chosen: v }); }).catch(() => {}); };
 
 export function setMode(m: Mode) { set({ chosen: m }); storage.set(KEY, m).catch(() => {}); }
 
@@ -37,7 +41,8 @@ export function useMode() {
   useEffect(() => { load(); }, []);
   useEffect(() => { if (loc !== undefined) check(loc); }, [loc]);
   const v = useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => s);
-  const quickOk = v.ok === true;
+  const quickOk = v.ok === true && v.has === true;
+  const noQuickItems = v.ok === true && v.has === false; // a rider could come, but nothing is tagged for it yet
   const mode: Mode = quickOk && (v.chosen ?? 'quick') === 'quick' ? 'quick' : 'all';
-  return { mode, quickOk, checking: v.ok === null && Boolean(loc?.lat != null), setMode };
+  return { mode, quickOk, checking: (v.ok === null && Boolean(loc?.lat != null)) || (v.ok === true && v.has === null), noQuickItems, setMode };
 }
