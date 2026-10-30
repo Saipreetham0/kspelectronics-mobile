@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useIsFocused } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { isHyderabad, loadLoc, useLoc } from '@/location';
+import { loadLoc, useLoc } from '@/location';
 import LocationSheet from '@/components/LocationSheet';
 import ModeToggle from '@/components/ModeToggle';
 import { QUICK_TAG, useMode } from '@/mode';
@@ -148,7 +148,7 @@ export default function Home() {
             <View style={{ flex: 1 }}>
               {/* The promise follows the saved place: same-day only around Hyderabad, otherwise the city we ship to. */}
               <Text style={[s.eta, { fontSize: etaSize }]} numberOfLines={2} maxFontSizeMultiplier={1.2}>
-                {!loc && !pin ? 'Where should we deliver?' : mode === 'quick' ? 'Quick delivery by rider' : isHyderabad(loc) ? 'Same-day delivery in Hyderabad' : loc ? `We deliver to ${loc.city}` : 'Delivery to your pincode'}
+                {!loc && !pin ? 'Where should we deliver?' : mode === 'quick' ? 'Quick delivery by rider' : loc ? `We deliver to ${loc.city}` : 'Delivery to your pincode'}
               </Text>
               <Text style={s.where} numberOfLines={1}>
                 {loc ? `${loc.area}, ${loc.city} · ${loc.pin}` : pin ? `Delivering to ${pin}` : 'Set delivery location'} <Ionicons name="chevron-down" size={14} />

@@ -93,7 +93,8 @@ function RootLayout() {
         {/* Phone-width column: on the web preview or a tablet the app stays centred instead of stretching edge to edge. */}
         <View style={{ flex: 1, backgroundColor: '#eef0f4' }}>
           <View style={{ flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center', backgroundColor: c.bg }}>
-            <RootStack />
+            {/* Not before the fonts are in: the app now opens from saved data at once, and text measured in a fallback font is clipped when Inter arrives. The splash covers this moment. */}
+            {isReady ? <RootStack /> : null}
           </View>
         </View>
 
