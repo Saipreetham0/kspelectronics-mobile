@@ -169,28 +169,35 @@ export default function CartScreen() {
               <Pressable onPress={() => slug && router.push({ pathname: '/product/[slug]', params: { slug } })} disabled={!slug} accessibilityRole="link" accessibilityLabel={`Open ${name}`}>
                 <Image source={item.images[0]?.thumbnail || item.images[0]?.src} style={[s.img, gone.has(item.key) && { opacity: 0.4 }]} contentFit="contain" />
               </Pressable>
-              <View style={{ flex: 1 }}>
-                <Pressable onPress={() => slug && router.push({ pathname: '/product/[slug]', params: { slug } })} disabled={!slug} accessibilityRole="link" accessibilityLabel={`Open ${name}`}>
-                  <Text numberOfLines={2} style={s.name}>{name}</Text>
-                </Pressable>
-                {stock.data?.find((p) => p.id === item.id)?.quick ? <View style={s.qk}><Ionicons name="flash" size={11} color={c.accent} /><Text style={s.qkT}>Quick</Text></View> : null}
-                {item.variation?.length ? <Text style={s.var}>{item.variation.map((v) => v.value).join(' / ')}</Text> : null}
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
-                  <Text style={s.price}>{minorToInr(line, cur)}</Text>
-                  {strike > line ? <Text style={s.mrp}>{minorToInr(strike, cur)}</Text> : null}
+              <View style={{ flex: 1, justifyContent: 'space-between' }}>
+                <View>
+                  <Pressable onPress={() => slug && router.push({ pathname: '/product/[slug]', params: { slug } })} disabled={!slug} accessibilityRole="link" accessibilityLabel={`Open ${name}`}>
+                    <Text numberOfLines={2} style={s.name}>{name}</Text>
+                  </Pressable>
+                  {stock.data?.find((p) => p.id === item.id)?.quick ? <View style={s.qk}><Ionicons name="flash" size={11} color={c.accent} /><Text style={s.qkT}>Quick</Text></View> : null}
+                  {item.variation?.length ? <Text style={s.var}>{item.variation.map((v) => v.value).join(' / ')}</Text> : null}
+                  <Pressable onPress={() => removeLine(item, true)} hitSlop={8} style={{ marginTop: 4, alignSelf: 'flex-start' }} accessibilityRole="button" accessibilityLabel={`Move ${name} to wishlist`}>
+                    <Text style={s.wishlistLink}>Move to wishlist</Text>
+                  </Pressable>
+                  {gone.has(item.key) ? <Text style={[s.limit, { color: c.danger }]}>Out of stock</Text> : null}
+                  {moved[item.key] ? <Text style={[s.limit, { color: moved[item.key].now < moved[item.key].was ? c.success : c.dealText }]}>Price {moved[item.key].now < moved[item.key].was ? 'dropped' : 'changed'}: was {minorToInr(moved[item.key].was, cur)}</Text> : null}
                 </View>
-                {gone.has(item.key) ? <Text style={[s.limit, { color: c.danger }]}>Out of stock</Text> : null}
-                {moved[item.key] ? <Text style={[s.limit, { color: moved[item.key].now < moved[item.key].was ? c.success : c.dealText }]}>Price {moved[item.key].now < moved[item.key].was ? 'dropped' : 'changed'}: was {minorToInr(moved[item.key].was, cur)}</Text> : null}
-                {item.quantity > 1 ? <Text style={s.var}>{minorToInr(line / item.quantity, cur)} each</Text> : null}
-                <View style={s.ctl}>
-                  <View style={s.qty}>
-                    <Pressable onPress={() => item.quantity > 1 ? act(() => updateItem(item.key, item.quantity - 1)) : removeLine(item, false)} style={s.qb} accessibilityRole="button" accessibilityLabel={item.quantity > 1 ? `Decrease quantity of ${name}` : `Remove ${name}`}><Text style={s.qt}>−</Text></Pressable>
+
+                {/* Blinkit Stepper & Price Row */}
+                <View style={s.itemFoot}>
+                  <View style={s.stepperPill}>
+                    <Pressable onPress={() => item.quantity > 1 ? act(() => updateItem(item.key, item.quantity - 1)) : removeLine(item, false)} style={s.stepBtn} accessibilityRole="button" accessibilityLabel={item.quantity > 1 ? `Decrease quantity of ${name}` : `Remove ${name}`}>
+                      <Text style={s.stepSymbol}>−</Text>
+                    </Pressable>
                     <Qty item={item} onSet={(n) => act(() => updateItem(item.key, n))} />
-                    <Pressable onPress={() => act(() => updateItem(item.key, item.quantity + 1))} disabled={atMax} style={[s.qb, atMax && { opacity: 0.35 }]} accessibilityRole="button" accessibilityLabel={`Increase quantity of ${name}`}><Text style={s.qt}>+</Text></Pressable>
+                    <Pressable onPress={() => act(() => updateItem(item.key, item.quantity + 1))} disabled={atMax} style={[s.stepBtn, atMax && { opacity: 0.4 }]} accessibilityRole="button" accessibilityLabel={`Increase quantity of ${name}`}>
+                      <Text style={s.stepSymbol}>+</Text>
+                    </Pressable>
                   </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Pressable onPress={() => removeLine(item, true)} hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }} style={s.save} accessibilityRole="button" accessibilityLabel={`Move ${name} to wishlist`}><Ionicons name="heart-outline" size={15} color={c.accent} /><Text style={s.saveT}>Save</Text></Pressable>
-                    <Pressable onPress={() => removeLine(item, false)} hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }} style={s.save} accessibilityRole="button" accessibilityLabel={`Remove ${name} from cart`}><Ionicons name="trash-outline" size={15} color={c.danger} /><Text style={[s.saveT, { color: c.danger }]}>Remove</Text></Pressable>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    {strike > line ? <Text style={s.mrp}>{minorToInr(strike, cur)}</Text> : null}
+                    <Text style={s.price}>{minorToInr(line, cur)}</Text>
+                    {item.quantity > 1 ? <Text style={s.eachPrice}>{minorToInr(line / item.quantity, cur)} each</Text> : null}
                   </View>
                 </View>
                 {atMax && max < 9999 ? <Text style={s.limit}>Maximum {max} per order</Text> : item.low_stock_remaining ? <Text style={s.limit}>Only {item.low_stock_remaining} left</Text> : null}
@@ -221,31 +228,76 @@ export default function CartScreen() {
             </Card>
             <Card>
               <Text style={s.h}>Bill details</Text>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ color: '#555' }}>Items total</Text>
+              <View style={s.billRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name="document-text-outline" size={16} color={c.muted} />
+                  <Text style={{ color: '#555', fontSize: 14 }}>Items total</Text>
                   {saved >= 1 && <View style={s.chip}><Text style={s.chipT}>Saved {minorToInr(saved * 10 ** m, m)}</Text></View>}
                 </View>
-                <Text style={{ fontWeight: '600' }}>{minorToInr(withTax(t.total_items, t.total_items_tax), m)}</Text>
+                <Text style={{ fontWeight: '700', fontSize: 14 }}>{minorToInr(withTax(t.total_items, t.total_items_tax), m)}</Text>
               </View>
-              {Number(t.total_discount) > 0 && <Row k="Coupon discount" v={`−${minorToInr(withTax(t.total_discount, t.total_discount_tax), m)}`} color={c.success} />}
-              <Row k="Delivery" v={shipKnown ? (shipping > 0 ? minorToInr(shipping, m) : 'FREE') : 'Calculated at checkout'} color={shipKnown && shipping <= 0 ? c.success : undefined} />
-              <View style={{ height: 1, backgroundColor: c.line, marginVertical: 6 }} />
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: 16, fontWeight: '900' }}>Estimated total</Text><Text style={{ fontSize: 16, fontWeight: '900' }}>{minorToInr(t.total_price, m)}</Text>
+              {Number(t.total_discount) > 0 && (
+                <View style={s.billRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="pricetag-outline" size={16} color={c.success} />
+                    <Text style={{ color: c.success, fontSize: 14, fontWeight: '600' }}>Coupon discount</Text>
+                  </View>
+                  <Text style={{ fontWeight: '700', color: c.success, fontSize: 14 }}>−{minorToInr(withTax(t.total_discount, t.total_discount_tax), m)}</Text>
+                </View>
+              )}
+              <View style={s.billRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name="bicycle-outline" size={16} color={c.muted} />
+                  <Text style={{ color: '#555', fontSize: 14 }}>Delivery</Text>
+                </View>
+                <Text style={{ fontWeight: '700', color: shipKnown && shipping <= 0 ? c.success : c.text, fontSize: 14 }}>
+                  {shipKnown ? (shipping > 0 ? minorToInr(shipping, m) : 'FREE') : 'Calculated at checkout'}
+                </Text>
               </View>
-              <Text style={{ color: c.muted, fontSize: 12, marginTop: 4 }}>Includes GST {minorToInr(t.total_tax, m)}</Text>
-              {saved >= 1 && <View style={s.savings}><Text style={s.chipT}>Your total savings</Text><Text style={s.chipT}>{minorToInr(saved * 10 ** m, m)}</Text></View>}
+              <View style={{ height: 1, backgroundColor: c.line, marginVertical: 8 }} />
+              <View style={s.billRow}>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: c.text }}>Grand total</Text>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: c.text }}>{minorToInr(t.total_price, m)}</Text>
+              </View>
+              <Text style={{ color: c.muted, fontSize: 11.5, marginTop: 2 }}>Includes GST {minorToInr(t.total_tax, m)}</Text>
+              {saved >= 1 && (
+                <View style={s.receiptSavings}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.receiptSavingsTitle}>Your total savings</Text>
+                    <Text style={s.receiptSavingsSub}>Includes product discounts & savings</Text>
+                  </View>
+                  <Text style={s.receiptSavingsAmt}>{minorToInr(saved * 10 ** m, m)}</Text>
+                </View>
+              )}
             </Card>
           </>
         } />
       {undoBar}
       {!kb && (
         <View style={s.barWrap}>
+          {/* Blinkit Two-Tier Sticky Bar: Delivery Location Strip */}
+          <Pressable onPress={() => setPinOpen(true)} style={s.locStrip} accessibilityRole="button" accessibilityLabel="Change delivery location">
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+              <Ionicons name="home-outline" size={16} color={c.text} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: c.text }} numberOfLines={1}>
+                  Delivering to {loc?.city || 'Your Location'}
+                </Text>
+                <Text numberOfLines={1} style={{ fontSize: 11, color: c.muted }}>
+                  {loc ? `${loc.area}, ${loc.city} · ${loc.pin}` : 'Tap to select delivery location'}
+                </Text>
+              </View>
+            </View>
+            <Text style={{ fontSize: 12.5, fontWeight: '800', color: c.accent }}>Change</Text>
+          </Pressable>
+
+          {/* Tier 2: Total & Checkout CTA */}
           <View style={s.bar}>
-            <View><Text style={{ color: c.muted, fontSize: 12 }}>Estimated total</Text><Text style={{ fontSize: 20, fontWeight: '900' }}>{minorToInr(t.total_price, m)}</Text></View>
-            {/* Waits for quantity changes still on their way, so checkout always opens on the cart the shopper sees. */}
-            <Button title={gone.size ? 'Remove unavailable items' : 'Proceed to checkout'} loading={syncing} disabled={gone.size > 0} style={{ flex: 1, marginLeft: 16 }} onPress={() => router.push('/checkout')} />
+            <View>
+              <Text style={{ color: c.muted, fontSize: 10.5, fontWeight: '800', letterSpacing: 0.5 }}>TOTAL</Text>
+              <Text style={{ fontSize: 19, fontWeight: '900', color: c.text }}>{minorToInr(t.total_price, m)}</Text>
+            </View>
+            <Button title={gone.size ? 'Remove unavailable items' : 'Proceed to checkout  →'} loading={syncing} disabled={gone.size > 0} style={{ flex: 1, marginLeft: 16 }} onPress={() => router.push('/checkout')} />
           </View>
         </View>
       )}
@@ -271,7 +323,7 @@ function Qty({ item, onSet }: { item: CartItem; onSet: (n: number) => void }) {
     if (q !== item.quantity) onSet(q);
   };
   return <TextInput value={txt ?? String(item.quantity)} onChangeText={(v) => setTxt(v.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" selectTextOnFocus returnKeyType="done" onBlur={commit} onSubmitEditing={commit}
-    style={[s.qt, { minWidth: 40, textAlign: 'center', paddingVertical: 8 }]} accessibilityLabel={`Quantity of ${decodeHtml(item.name)}`} />;
+    style={[s.qt, { minWidth: 26, textAlign: 'center', paddingVertical: 4 }]} accessibilityLabel={`Quantity of ${decodeHtml(item.name)}`} />;
 }
 
 const Row = ({ k, v, color }: { k: string; v: string; color?: string }) => (
@@ -282,26 +334,32 @@ const s = StyleSheet.create({
   track: { height: 6, borderRadius: 3, backgroundColor: '#fff', marginTop: 8, overflow: 'hidden' },
   fill: { height: 6, backgroundColor: c.accent },
   img: { width: 84, height: 84, borderRadius: r.sm, backgroundColor: c.surface },
-  name: { fontSize: 14, fontWeight: '600', color: c.text },
+  name: { fontSize: 14, fontWeight: '600', color: c.text, lineHeight: 18 },
   var: { fontSize: 12, color: c.muted, marginTop: 2 },
-  price: { fontSize: 15, fontWeight: '800' },
+  wishlistLink: { color: c.muted, fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' },
+  price: { fontSize: 15, fontWeight: '800', color: c.text },
   mrp: { fontSize: 12, color: c.muted, textDecorationLine: 'line-through' },
-  limit: { fontSize: 12, color: c.dealText, fontWeight: '700', marginTop: 6 },
-  ctl: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, flexWrap: 'wrap', rowGap: 8 },
-  qty: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: c.line, borderRadius: r.sm },
-  qb: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  qt: { fontSize: 16, fontWeight: '700', color: c.text },
+  eachPrice: { fontSize: 11, color: c.muted, marginTop: 1 },
+  limit: { fontSize: 12, color: c.dealText, fontWeight: '700', marginTop: 4 },
+  itemFoot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 10 },
+  stepperPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0c831f', borderRadius: 8, paddingHorizontal: 2 },
+  stepBtn: { width: 30, height: 32, alignItems: 'center', justifyContent: 'center' },
+  stepSymbol: { color: '#ffffff', fontSize: 16, fontWeight: '800' },
+  qt: { fontSize: 13.5, fontWeight: '800', color: '#ffffff' },
   h: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
   qk: { flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start', marginTop: 3 },
   qkT: { color: c.accent, fontWeight: '800', fontSize: 11.5 },
-  save: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36, paddingHorizontal: 10, borderRadius: r.sm, borderWidth: 1, borderColor: c.line },
-  saveT: { color: c.accent, fontWeight: '700', fontSize: 12.5 },
   coupon: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  input: { flex: 1, borderWidth: 1, borderColor: c.line, borderRadius: r.md, paddingHorizontal: 12, minHeight: 48, fontSize: 15, color: c.text, backgroundColor: '#fff' }, // a background also removes Android's own underline
+  input: { flex: 1, borderWidth: 1, borderColor: c.line, borderRadius: r.md, paddingHorizontal: 12, minHeight: 48, fontSize: 15, color: c.text, backgroundColor: '#fff' },
+  billRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  receiptSavings: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#eaf2ff', borderRadius: r.sm, paddingHorizontal: 12, paddingVertical: 10, marginTop: 10, borderWidth: 1, borderColor: '#d1e3ff' },
+  receiptSavingsTitle: { fontSize: 13, fontWeight: '800', color: c.accent },
+  receiptSavingsSub: { fontSize: 11, color: '#4a6da7', marginTop: 1 },
+  receiptSavingsAmt: { fontSize: 15, fontWeight: '900', color: c.accent },
   barWrap: { backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: c.line },
+  locStrip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#f9fafb', borderBottomWidth: 1, borderBottomColor: c.line },
   chip: { backgroundColor: c.accentSoft, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
   chipT: { fontSize: 12, fontWeight: '800', color: c.accent },
-  savings: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: c.accentSoft, borderRadius: r.sm, padding: 10, marginTop: 10 },
   bar: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#fff' },
   undo: { position: 'absolute', left: 12, right: 12, bottom: 92, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#1f1f1f', borderRadius: r.md, paddingHorizontal: 16, paddingVertical: 14, elevation: 6, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
 });
