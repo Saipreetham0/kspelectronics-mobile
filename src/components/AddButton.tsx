@@ -20,6 +20,7 @@ export default function AddButton({ product: p, size = 'sm', block, compact }: {
   const fly = useFly();
   const btn = useRef<HostInstance>(null);
   const line = p.has_options || p.variations.length ? undefined : cart?.items.find((i) => i.id === p.id);
+  const atMax = line ? line.quantity >= (line.quantity_limits?.maximum ?? Infinity) : false;
   const h = compact ? 36 : size === 'lg' ? 44 : 34;
   const w = block ? { alignSelf: 'stretch' as const } : null; // full-width inside lists
   // compact: a small square "+" like Blinkit's product cards (only the idle button; the stepper and stock label keep their natural width)
@@ -45,9 +46,9 @@ export default function AddButton({ product: p, size = 'sm', block, compact }: {
   }
   return (
     <PopIn style={w}><View style={[s.step, { height: h }, w, block && { justifyContent: 'space-between' }]}>
-      <Pressable hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }} onPress={() => guard(() => (line.quantity > 1 ? updateItem(line.key, line.quantity - 1) : removeItem(line.key)))} style={s.sb} accessibilityLabel="Decrease quantity"><Text style={s.st}>−</Text></Pressable>
+      <Pressable hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }} disabled={busy} onPress={() => guard(() => (line.quantity > 1 ? updateItem(line.key, line.quantity - 1) : removeItem(line.key)))} style={[s.sb, busy && { opacity: 0.6 }]} accessibilityLabel="Decrease quantity"><Text style={s.st}>−</Text></Pressable>
       <Bump trigger={line.quantity}><Text style={s.sq}>{line.quantity}</Text></Bump>
-      <Pressable hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }} onPress={() => guard(() => updateItem(line.key, line.quantity + 1))} style={s.sb} accessibilityLabel="Increase quantity"><Text style={s.st}>+</Text></Pressable>
+      <Pressable hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }} disabled={atMax || busy} onPress={() => guard(() => updateItem(line.key, line.quantity + 1))} style={[s.sb, (atMax || busy) && { opacity: 0.4 }]} accessibilityLabel="Increase quantity"><Text style={s.st}>+</Text></Pressable>
     </View></PopIn>
   );
 }

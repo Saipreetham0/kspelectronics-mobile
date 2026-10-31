@@ -76,7 +76,19 @@ export default function CartScreen() {
   }, []);
   if (!ready) return <Spinner />;
   const items = cart?.items ?? [];
-  const act = (fn: () => Promise<void>) => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); return fn().catch((e: Error) => Alert.alert('Cart', e.message)); };
+  const [actBusy, setActBusy] = useState(false);
+  const act = async (fn: () => Promise<void>) => {
+    if (actBusy) return;
+    setActBusy(true);
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    try {
+      await fn();
+    } catch (e: unknown) {
+      Alert.alert('Cart', (e as Error).message);
+    } finally {
+      setActBusy(false);
+    }
+  };
   const inCart = new Set(items.map((i) => i.id));
   const more = (popular.data ?? []).filter((p) => !inCart.has(p.id) && p.is_in_stock).slice(0, 8);
 
@@ -186,11 +198,11 @@ export default function CartScreen() {
                 {/* Blinkit Stepper & Price Row */}
                 <View style={s.itemFoot}>
                   <View style={s.stepperPill}>
-                    <Pressable onPress={() => item.quantity > 1 ? act(() => updateItem(item.key, item.quantity - 1)) : removeLine(item, false)} style={s.stepBtn} accessibilityRole="button" accessibilityLabel={item.quantity > 1 ? `Decrease quantity of ${name}` : `Remove ${name}`}>
+                    <Pressable onPress={() => item.quantity > 1 ? act(() => updateItem(item.key, item.quantity - 1)) : removeLine(item, false)} disabled={actBusy} style={[s.stepBtn, actBusy && { opacity: 0.6 }]} accessibilityRole="button" accessibilityLabel={item.quantity > 1 ? `Decrease quantity of ${name}` : `Remove ${name}`}>
                       <Text style={s.stepSymbol}>−</Text>
                     </Pressable>
                     <Qty item={item} onSet={(n) => act(() => updateItem(item.key, n))} />
-                    <Pressable onPress={() => act(() => updateItem(item.key, item.quantity + 1))} disabled={atMax} style={[s.stepBtn, atMax && { opacity: 0.4 }]} accessibilityRole="button" accessibilityLabel={`Increase quantity of ${name}`}>
+                    <Pressable onPress={() => act(() => updateItem(item.key, item.quantity + 1))} disabled={atMax || actBusy} style={[s.stepBtn, (atMax || actBusy) && { opacity: 0.4 }]} accessibilityRole="button" accessibilityLabel={`Increase quantity of ${name}`}>
                       <Text style={s.stepSymbol}>+</Text>
                     </Pressable>
                   </View>

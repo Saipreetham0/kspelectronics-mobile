@@ -113,6 +113,7 @@ export default function ProductScreen() {
   const line = cart?.items.find((i) => i.id === (matchId ?? p.id));
   const qty = line?.quantity ?? 0;
   const atMax = (left > 0 && qty >= left) || qty >= (line?.quantity_limits?.maximum ?? Infinity);
+  const [stepBusy, setStepBusy] = useState(false);
   const add = async () => {
     if (pending) return Alert.alert('Choose options', `Select ${attrs.filter((a) => !choice[a.name]).map((a) => a.name).join(', ')} first.`);
     try {
@@ -120,7 +121,21 @@ export default function ProductScreen() {
       await addItem(p.id, 1, attrs.length ? attrs.map((a) => ({ attribute: a.name, value: choice[a.name] })) : undefined);
     } catch (e) { Alert.alert('Could not add to cart', (e as Error).message); }
   };
-  const step = (n: number) => (n < 1 ? removeItem(line!.key) : updateItem(line!.key, n)).catch((e: Error) => Alert.alert('Could not update cart', e.message));
+  const step = async (n: number) => {
+    if (!line || stepBusy) return;
+    setStepBusy(true);
+    try {
+      if (n < 1) {
+        await removeItem(line.key);
+      } else {
+        await updateItem(line.key, n);
+      }
+    } catch (e) {
+      Alert.alert('Could not update cart', (e as Error).message);
+    } finally {
+      setStepBusy(false);
+    }
+  };
 
   // Every non-variation attribute, as a specifications table; the first few also appear as quick-fact cards under the photos.
   const specs = p.attributes.filter((a) => !a.has_variations && a.terms.length).map((a) => ({ name: a.name, value: a.terms.map((t) => decodeHtml(t.name)).join(', ') }));
@@ -279,9 +294,9 @@ export default function ProductScreen() {
         {line ? (
           <>
             <PopIn style={s.action}><View style={s.stepper}>
-              <Pressable onPress={() => step(qty - 1)} style={s.stepBtn} accessibilityRole="button" accessibilityLabel="Decrease quantity"><Minus size={18} weight="bold" color="#fff" /></Pressable>
+              <Pressable onPress={() => step(qty - 1)} disabled={stepBusy} style={[s.stepBtn, stepBusy && { opacity: 0.6 }]} accessibilityRole="button" accessibilityLabel="Decrease quantity"><Minus size={18} weight="bold" color="#fff" /></Pressable>
               <Bump trigger={qty}><Text style={s.stepN} accessibilityLabel={`${qty} in cart`}>{qty}</Text></Bump>
-              <Pressable onPress={() => step(qty + 1)} disabled={atMax} style={[s.stepBtn, atMax && { opacity: 0.4 }]} accessibilityRole="button" accessibilityLabel="Increase quantity"><Plus size={18} weight="bold" color="#fff" /></Pressable>
+              <Pressable onPress={() => step(qty + 1)} disabled={atMax || stepBusy} style={[s.stepBtn, (atMax || stepBusy) && { opacity: 0.4 }]} accessibilityRole="button" accessibilityLabel="Increase quantity"><Plus size={18} weight="bold" color="#fff" /></Pressable>
             </View></PopIn>
           </>
         ) : !inStock ? (

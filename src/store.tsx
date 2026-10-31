@@ -55,6 +55,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [guest, setGuest] = useState(false);
   const [cart, setCart] = useState<Cart | null>(null);
   const [cartToken, setCartToken] = useState<string | null>(null);
+  const cartTokenRef = React.useRef<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [syncing, setSyncing] = useState(false);
   // Cart changes run one after another, and only the last answer is shown: a slow older reply can't overwrite a newer one.
@@ -85,7 +86,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       let shown = false;
       if (auth) { setAuthToken(auth); try { if (savedUser) { setUser(JSON.parse(savedUser)); shown = true; } } catch { /* no usable saved name */ } }
       if (auth && !shown) await Promise.race([verifyUser(), new Promise((r) => setTimeout(r, 2000))]); // cap wait so app never hangs offline
-      if (ct) setCartToken(ct);
+      if (ct) { cartTokenRef.current = ct; setCartToken(ct); }
       setReady(true);
       if (auth && shown) verifyUser();
       if (ct) api<Cart>('/api/cart', { cartToken: ct, pin: await pinHeader() }).then(setCart).catch(() => { /* shown as empty until the next refresh */ });
@@ -124,6 +125,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setGuest(false);
     setCart(null);
+    cartTokenRef.current = null;
     setCartToken(null);
     await Promise.all([
       storage.del(AUTH_KEY),
@@ -138,7 +140,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const account = () => api<Account>('/api/auth/me');
 
   const saveCartToken = async (t: string | null | undefined) => {
-    if (t && t !== cartToken) { setCartToken(t); await storage.set(CART_KEY, t); }
+    if (t && t !== cartTokenRef.current) {
+      cartTokenRef.current = t;
+      setCartToken(t);
+      await storage.set(CART_KEY, t);
+    }
   };
   const run = useCallback(async (fn: () => Promise<void>) => { setBusy(true); try { await fn(); } finally { setBusy(false); } }, []);
 
@@ -150,16 +156,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
   // retry: the call is safe to repeat, so a dead main address doesn't strand it (see api.ts).
   const withToken = (path: string, method: string, body: object, retry = false) => () => enqueue(async () => {
-    if (!cartToken) throw new ApiError('Your cart expired. Pull down to refresh it.', 400); // silently doing nothing looked like a button that doesn't work
-    const next = await api<Cart>(path, { method, body: { ...body, token: cartToken }, retry });
+    let token = cartTokenRef.current || cartToken;
+    if (!token) {
+      token = await storage.get(CART_KEY).catch(() => null);
+      if (token) {
+        cartTokenRef.current = token;
+        setCartToken(token);
+      }
+    }
+    if (!token) throw new ApiError('Your cart expired. Pull down to refresh it.', 400); // silently doing nothing looked like a button that doesn't work
+    const next = await api<Cart>(path, { method, body: { ...body, token }, cartToken: token, retry });
     if (waiting.current <= 1) setCart(next); // a newer change is queued: its answer will be the one to show
   });
   const refresh = useCallback(async () => {
-    if (!cartToken || waiting.current > 0) return;
-    try { setCart(await api<Cart>('/api/cart', { cartToken, pin: await pinHeader() })); } catch { /* keep what is shown */ }
+    const token = cartTokenRef.current || cartToken;
+    if (!token || waiting.current > 0) return;
+    try {
+      setCart(await api<Cart>('/api/cart', { cartToken: token, pin: await pinHeader() }));
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 400) {
+        cartTokenRef.current = null;
+        setCartToken(null);
+        setCart(null);
+        await storage.del(CART_KEY).catch(() => {});
+      }
+    }
   }, [cartToken]);
   const addItem: Ctx['addItem'] = (productId, quantity = 1, variation) => run(() => enqueue(async () => {
-    const d = await api<{ cart: Cart; token?: string }>('/api/cart/add', { method: 'POST', body: { productId, quantity, token: cartToken, variation } });
+    const currentToken = cartTokenRef.current || cartToken;
+    const d = await api<{ cart: Cart; token?: string }>('/api/cart/add', { method: 'POST', body: { productId, quantity, token: currentToken, variation }, cartToken: currentToken });
     track('add_to_cart', { quantity });
     await saveCartToken(d.token);
     if (waiting.current <= 1) setCart(d.cart);
@@ -169,8 +194,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const optimistic = async (edit: (c: Cart) => Cart, call: () => Promise<void>, gone = false) => {
     const before = cart;
     if (before) setCart(edit(before));
-    try { await call(); } catch (e) {
-      const truth = cartToken ? await api<Cart>('/api/cart', { cartToken, pin: await pinHeader() }).catch(() => null) : null;
+    try {
+      await call();
+    } catch (e) {
+      const token = cartTokenRef.current || cartToken;
+      const truth = token ? await api<Cart>('/api/cart', { cartToken: token, pin: await pinHeader() }).catch(() => null) : null;
       setCart(truth ?? before);
       const unsure = e instanceof ApiError && (e.status === 0 || (gone && e.status === 400));
       if (!(unsure && truth)) throw e;
@@ -183,7 +211,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const quoteShipping: Ctx['quoteShipping'] = (state, postcode, city, pin) => withToken('/api/cart/shipping', 'POST', { state, postcode, city, lat: pin?.lat, lng: pin?.lng })();
   const applyCoupon: Ctx['applyCoupon'] = (code) => run(withToken('/api/cart/coupon', 'POST', { code }));
   const removeCoupon: Ctx['removeCoupon'] = (code) => run(withToken('/api/cart/coupon', 'DELETE', { code }));
-  const clearLocalCart = async () => { setCart(null); setCartToken(null); await storage.del(CART_KEY); };
+  const clearLocalCart = async () => {
+    cartTokenRef.current = null;
+    setCart(null);
+    setCartToken(null);
+    await storage.del(CART_KEY);
+  };
 
   const itemCount = cart?.items?.reduce((n, i) => n + i.quantity, 0) ?? 0;
   const value = useMemo<Ctx>(() => ({ ready, onboarded, completeOnboarding, user, guest, skipLogin, showLogin, requestOtp, loginOtp, login, register, logout, account, cart, cartToken, itemCount, busy, syncing, addItem, refresh, updateItem, removeItem, applyCoupon, removeCoupon, quoteShipping, setCart, clearLocalCart }),
