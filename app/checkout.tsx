@@ -45,6 +45,7 @@ export default function Checkout() {
   const [quote, setQuote] = useState<Cart | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const placingRef = useRef(false); // set at once: two quick taps arrive before `placing` disables the button, and each would create an order
   const [error, setError] = useState('');
   const [wantGst, setWantGst] = useState(false);
   // What the GST registry says about the typed GSTIN (looked up through our server; 'off' = the store has no lookup set up, so the fields stay manual).
@@ -241,6 +242,7 @@ export default function Checkout() {
     api('/api/auth/profile', { method: 'PUT', body: { shipping: { ...wc(form), phone: form.phone }, ...billing } }).catch(() => {});
   };
   const place = async () => {
+    if (placingRef.current) return;
     track('begin_checkout', { items: items.length, method });
     setTouched(true);
     const bad = ORDER.find((k) => errors[k]) ?? Object.keys(errors)[0];
@@ -251,6 +253,7 @@ export default function Checkout() {
     const problem = gstProblem || (billBad ? 'The billing address from the GST registry looks incomplete. Untick "Issue GST invoice" to continue, or check the GSTIN.' : Object.keys(errors).length ? 'Please fix the highlighted fields.' : !method ? 'Choose a payment method.'
       : noRates ? "Sorry, we can't deliver to this pincode yet. Please contact us on WhatsApp." : !shipReady ? (quoting ? 'Calculating shipping… try again in a moment.' : 'We could not calculate shipping. Check your pincode and state.') : '');
     if (problem) return setError(problem);
+    placingRef.current = true;
     setPlacing(true); setError('');
     try {
       if (native && method === 'razorpay') {
@@ -270,6 +273,7 @@ export default function Checkout() {
         } else { await clearLocalCart(); router.replace({ pathname: '/order-success', params: { orderId: String(d.orderId), key: d.orderKey ?? '' } }); }
       }
     } catch (e) { setError((e as Error).message); }
+    placingRef.current = false;
     setPlacing(false);
   };
 

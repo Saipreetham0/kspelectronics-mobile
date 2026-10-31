@@ -13,7 +13,8 @@ You can delete your account and personal data at any time.
 ## In the app (fastest)
 1. Open the KSP Electronics app and sign in.
 2. Go to **Account > Profile and security**.
-3. Under **Delete account**, tap **Delete my account**, enter your password and confirm.
+3. Under **Delete account**, tap **Delete my account**, enter your password and confirm. If you log in with your mobile number, tap
+   **No password? Confirm with a code to your mobile** and enter the code we send by SMS.
 
 Your account is deleted straight away and you are signed out.
 
@@ -37,7 +38,7 @@ Write to **[support email]**.
 ---
 
 ## Notes for you (not part of the page)
-- Behaviour described here matches the app: `POST /api/auth/delete` asks for the password again, deletes the WooCommerce customer, signs the person out,
+- Behaviour described here matches the app: `POST /api/auth/delete` asks for the password again (or an SMS code for mobile-number accounts, see docs/SERVER_API.md), deletes the WooCommerce customer, signs the person out,
   and emails the shop. Past orders stay for tax records but are no longer linked to a login.
 - Saved addresses, recent searches and the cart token live on the phone only and are removed when the app is uninstalled or the user signs out.
 - Only the account's own customer role can be deleted this way. Admin or shop-manager accounts are refused and must be handled by you.

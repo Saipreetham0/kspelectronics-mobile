@@ -22,7 +22,6 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://store.kspelectronics.in",
-        "EXPO_PUBLIC_SENTRY_DSN": "",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
       "channel": "preview"
@@ -34,7 +33,6 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://store.kspelectronics.in",
-        "EXPO_PUBLIC_SENTRY_DSN": "",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
       "channel": "production"
