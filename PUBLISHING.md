@@ -60,7 +60,7 @@ Everything below is switched on by a value in the EAS build environment (`eas en
 | Value | What it turns on |
 |---|---|
 | `EXPO_PUBLIC_API_URL` | The store's API. Production: `https://store.kspelectronics.in` (a `192.168...` address must never reach a release build) |
-| `EXPO_PUBLIC_SENTRY_DSN` | Crash reports. Create a Sentry project (React Native), copy its DSN. For readable stack traces also set `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` and remove `SENTRY_DISABLE_AUTO_UPLOAD` from `eas.json` |
+| `EXPO_PUBLIC_SENTRY_DSN` | Crash reports. Create a Sentry project (React Native), copy its DSN. Set it as an EAS environment variable, not in `eas.json`: a value there (even an empty one) overrides the dashboard. For readable stack traces also set `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` and remove `SENTRY_DISABLE_AUTO_UPLOAD` from `eas.json` |
 | `EXPO_PUBLIC_POSTHOG_KEY` (+ `EXPO_PUBLIC_POSTHOG_HOST` for the EU or a self-hosted server) | Analytics |
 | `EAS_PROJECT_ID` | Run `npx eas init` once and add the id it prints to `app.json` under `extra.eas.projectId` (or set this value). It turns on over-the-air updates and push tokens |
 | `GOOGLE_MAPS_ANDROID_KEY`, `GOOGLE_MAPS_IOS_KEY` | Maps. There is no key in the code any more: restrict each key in Google Cloud to this app's package name or bundle id |

@@ -34,6 +34,11 @@ export default function Pay() {
   const verifyingRef = useRef(false);
   const [reloadKey, setReloadKey] = useState(0);
   const backgroundedRef = useRef(false);
+  // Set the moment one outcome is chosen (success from the checkout, a paid status on return from a UPI app, a failure or a dismiss):
+  // the others can arrive a moment later and must not clear the cart or navigate a second time. A ref, not state, so it holds before the next render.
+  const doneRef = useRef(false);
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (resumeTimer.current) clearTimeout(resumeTimer.current); }, []);
 
   useEffect(() => {
     verifyingRef.current = verifying;
@@ -45,6 +50,7 @@ export default function Pay() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fail = (kind: 'cancelled' | 'failed' | 'unconfirmed', reason?: string) => {
+    doneRef.current = true;
     setPayRequest(null);
     if (!req) {
       router.replace('/(tabs)/cart');
@@ -60,14 +66,15 @@ export default function Pay() {
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     const onBackPress = () => {
-      if (verifyingRef.current) return true; // Block back button while payment verification is underway
+      if (verifyingRef.current || doneRef.current) return true; // Block back button while payment verification is underway
 
+      // Leaving does not cancel the order on the store: it stays unpaid (and can be paid again from the next screen) until the store expires it.
       Alert.alert(
-        'Cancel Payment?',
-        'Are you sure you want to exit? If payment has already been deducted, your order will still be processed or refunded.',
+        'Leave payment?',
+        'Your order stays unpaid until you complete payment. If money was already deducted, the order is confirmed or the amount refunded automatically.',
         [
-          { text: 'Resume Payment', style: 'cancel' },
-          { text: 'Cancel Order', style: 'destructive', onPress: () => fail('cancelled') },
+          { text: 'Continue paying', style: 'cancel' },
+          { text: 'Leave', style: 'destructive', onPress: () => { if (!doneRef.current) fail('cancelled'); } },
         ]
       );
       return true;
@@ -82,32 +89,40 @@ export default function Pay() {
     const handleAppState = (nextState: AppStateStatus) => {
       if (nextState === 'background' || nextState === 'inactive') {
         backgroundedRef.current = true;
-      } else if (nextState === 'active' && backgroundedRef.current && req && !verifyingRef.current) {
+      } else if (nextState === 'active' && backgroundedRef.current && req && !doneRef.current) {
         backgroundedRef.current = false;
         // Check order status with backend after a brief delay for webhook propagation
-        const t = setTimeout(async () => {
-          if (verifyingRef.current || !req) return;
+        if (resumeTimer.current) clearTimeout(resumeTimer.current);
+        resumeTimer.current = setTimeout(async () => {
+          resumeTimer.current = null;
+          if (doneRef.current || !req) return;
           try {
             const st = await api<OrderStatus>(
               `/api/order-status?id=${encodeURIComponent(req.orderId)}&key=${encodeURIComponent(req.orderKey)}`
             );
-            if (st.phase === 'paid') {
+            if (st.phase === 'paid' && !doneRef.current) {
+              doneRef.current = true;
+              verifyingRef.current = true;
               setVerifying(true);
-              await api('/api/cart/clear', { method: 'POST', body: { token: cartToken } }).catch(() => {});
-              await Promise.all([clearLocalCart(), setPayRequest(null), storage.del('ksp_pending_order')]);
-              router.replace({ pathname: '/order-success', params: { orderId: String(req.orderId), key: req.orderKey } });
+              await succeed(req);
             }
           } catch {
             /* Webhook may still be in transit, allow user to complete in WebView */
           }
         }, 2500);
-        return () => clearTimeout(t);
       }
     };
 
     const appSub = AppState.addEventListener('change', handleAppState);
     return () => appSub.remove();
   }, [req, cartToken]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The one way out after a confirmed payment: the cart is emptied here and on the store, then the success screen.
+  const succeed = async (r: PayRequest) => {
+    await api('/api/cart/clear', { method: 'POST', body: { token: cartToken } }).catch(() => {});
+    await Promise.all([clearLocalCart(), setPayRequest(null), storage.del('ksp_pending_order')]);
+    router.replace({ pathname: '/order-success', params: { orderId: String(r.orderId), key: r.orderKey } });
+  };
 
   const html = useMemo(() => {
     if (!req) return '';
@@ -240,21 +255,21 @@ export default function Pay() {
       return;
     }
 
+    if (doneRef.current) return; // an outcome was already chosen (for example a paid status found on return from a UPI app)
     if (m.type === 'dismiss') return fail('cancelled');
     if (m.type === 'failed') {
       captureError(new Error(`Razorpay failed [${m.code ?? 'declined'}]: ${m.message}`));
       return fail('failed', m.message);
     }
 
+    doneRef.current = true;
+    verifyingRef.current = true;
     setVerifying(true);
     const verified = await verifyWithRetries(m);
     if (!verified) {
       return fail('unconfirmed');
     }
-
-    await api('/api/cart/clear', { method: 'POST', body: { token: cartToken } }).catch(() => {});
-    await Promise.all([clearLocalCart(), setPayRequest(null), storage.del('ksp_pending_order')]);
-    router.replace({ pathname: '/order-success', params: { orderId: String(req.orderId), key: req.orderKey } });
+    await succeed(req);
   };
 
   const handleExternalLink = async (rawUrl: string) => {

@@ -26,6 +26,9 @@ All paths are on the store API (`EXPO_PUBLIC_API_URL`). Errors are `{ "error": "
 - `POST /api/auth/otp/verify` body `{ "phone": "9876543210", "code": "123456" }` → `{ "token": "<same login token /api/auth/login returns>" }`. Find the WooCommerce customer by billing phone, or create one for a new number.
 - SMS format that lets Android offer the code automatically (Google's SMS code autofill): `<#> 123456 is your KSP Electronics code.` followed by the app hash; iOS offers it from any SMS that contains the code.
 
+- Account deletion for these shoppers (they may have no password): `POST /api/auth/delete` also accepts `{ "phone": "9876543210", "code": "123456" }` in place of `{ "password": "..." }`.
+  The app first asks for the code with the same `POST /api/auth/otp/request`. Accept it only when the request carries the login token **and** the phone is the signed-in customer's billing phone; check the code exactly as `/verify` does (expiry, 5-try lock), then delete as for a password.
+
 ## Delivery slots: flag `slots`
 - `GET /api/delivery/slots?pincode=500001` →
 ```json
