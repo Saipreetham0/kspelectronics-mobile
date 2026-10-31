@@ -142,7 +142,7 @@ export default function Home() {
           <View onLayout={(e) => { const h = Math.ceil(e.nativeEvent.layout.height); if (h > 0 && h !== topFull) setTopFull(h); }}>
           <View style={s.logoRow}>
             <Image source={require('../../assets/ksp-logo.png')} style={s.logo} contentFit="contain" accessibilityLabel="KSP Electronics" />
-            <Pressable onPress={() => router.push('/(tabs)/account')} style={s.avatar} accessibilityRole="button" accessibilityLabel="Account"><Ionicons name="person" size={20} color={c.text} /></Pressable>
+            <Pressable onPress={() => router.push('/account')} style={s.avatar} accessibilityRole="button" accessibilityLabel="Account"><Ionicons name="person" size={20} color={c.text} /></Pressable>
           </View>
           <Pressable style={s.loc} onPress={() => setPinOpen(true)} accessibilityRole="button" accessibilityLabel="Change delivery pincode">
             <View style={{ flex: 1 }}>

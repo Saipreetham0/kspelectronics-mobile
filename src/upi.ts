@@ -11,3 +11,4 @@ export function resolveIntentUrl(url: string): string {
     return url;
   }
 }
+

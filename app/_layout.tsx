@@ -74,7 +74,13 @@ function RootStack() {
               <Stack.Screen name="track" options={{ title: 'Track order' }} />
               <Stack.Screen name="wishlist" options={{ title: 'Wishlist' }} />
               <Stack.Screen name="offers" options={{ title: 'Offers' }} />
+              <Stack.Screen name="account" options={{ title: 'Account' }} />
+              <Stack.Screen name="categories" options={{ title: 'Categories' }} />
+              <Stack.Screen name="cart" options={{ title: 'Cart' }} />
+              <Stack.Screen name="shop" options={{ title: 'Categories' }} />
+              <Stack.Screen name="reorder" options={{ title: 'Order Again' }} />
       </Stack.Protected>
+      <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
     </Stack>
   );
 }

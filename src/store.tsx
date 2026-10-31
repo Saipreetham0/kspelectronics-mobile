@@ -84,7 +84,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       };
       let shown = false;
       if (auth) { setAuthToken(auth); try { if (savedUser) { setUser(JSON.parse(savedUser)); shown = true; } } catch { /* no usable saved name */ } }
-      if (auth && !shown) await verifyUser(); // no saved name to show yet (rare): ask once, so the login form does not flash
+      if (auth && !shown) await Promise.race([verifyUser(), new Promise((r) => setTimeout(r, 2000))]); // cap wait so app never hangs offline
       if (ct) setCartToken(ct);
       setReady(true);
       if (auth && shown) verifyUser();
@@ -119,7 +119,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const skipLogin = () => { track('skip_login'); setGuest(true); storage.set(GUEST_KEY, '1').catch(() => {}); };
   const showLogin = () => { setGuest(false); storage.del(GUEST_KEY).catch(() => {}); };
-  const logout = async () => { setAuthToken(null); setUser(null); setGuest(false); await Promise.all([storage.del(AUTH_KEY), storage.del(GUEST_KEY).catch(() => {}), storage.del(USER_KEY).catch(() => {}), clearAddresses(), clearLoc(), ...['ksp_recent_searches', 'ksp_recent_products', 'ksp_wishlist', 'ksp_messages', 'ksp_cart_prices'].map((k) => storage.del(k).catch(() => {}))]); };
+  const logout = async () => {
+    setAuthToken(null);
+    setUser(null);
+    setGuest(false);
+    setCart(null);
+    setCartToken(null);
+    await Promise.all([
+      storage.del(AUTH_KEY),
+      storage.del(CART_KEY).catch(() => {}),
+      storage.del(GUEST_KEY).catch(() => {}),
+      storage.del(USER_KEY).catch(() => {}),
+      clearAddresses(),
+      clearLoc(),
+      ...['ksp_recent_searches', 'ksp_recent_products', 'ksp_wishlist', 'ksp_messages', 'ksp_cart_prices'].map((k) => storage.del(k).catch(() => {}))
+    ]);
+  };
   const account = () => api<Account>('/api/auth/me');
 
   const saveCartToken = async (t: string | null | undefined) => {

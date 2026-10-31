@@ -40,7 +40,6 @@ export default function Profile() {
       await api('/api/auth/delete', { method: 'POST', body: { password: delPw } });
       await logout();
       Alert.alert('Account deleted', 'Your account has been deleted.');
-      router.replace('/(tabs)');
     }) },
   ]);
 

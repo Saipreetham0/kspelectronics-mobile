@@ -47,3 +47,4 @@ const s = StyleSheet.create({
     lineHeight: 20,
   },
 });
+

@@ -13,6 +13,7 @@ type SplashScreenProps = {
 
 export default function AppSplashScreen({ isAppReady, onFinish }: SplashScreenProps) {
   const [minTimePassed, setMinTimePassed] = useState(false);
+  const [forceReady, setForceReady] = useState(false);
 
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoScale = useRef(new Animated.Value(0.95)).current;
@@ -43,12 +44,21 @@ export default function AppSplashScreen({ isAppReady, onFinish }: SplashScreenPr
       setMinTimePassed(true);
     }, 600);
 
-    return () => clearTimeout(timer);
+    // Safety fallback: never allow splash screen to hang indefinitely if fonts or assets stall
+    const maxTimer = setTimeout(() => {
+      setForceReady(true);
+      setMinTimePassed(true);
+    }, 3500);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(maxTimer);
+    };
   }, [logoOpacity, logoScale]);
 
-  // Fade out cleanly once app is ready
+  // Fade out cleanly once app is ready (or safety timeout fired)
   useEffect(() => {
-    if (isAppReady && minTimePassed) {
+    if ((isAppReady || forceReady) && minTimePassed) {
       Animated.timing(containerOpacity, {
         toValue: 0,
         duration: 300,
@@ -58,7 +68,7 @@ export default function AppSplashScreen({ isAppReady, onFinish }: SplashScreenPr
         onFinish?.();
       });
     }
-  }, [isAppReady, minTimePassed, containerOpacity, onFinish]);
+  }, [isAppReady, forceReady, minTimePassed, containerOpacity, onFinish]);
 
   return (
     <Animated.View style={[s.container, { opacity: containerOpacity }]}>
