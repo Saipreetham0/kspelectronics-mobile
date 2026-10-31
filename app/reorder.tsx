@@ -8,3 +8,4 @@ export default function ReorderRedirect() {
   }, [params]);
   return null;
 }
+
