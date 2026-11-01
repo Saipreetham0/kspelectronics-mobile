@@ -24,6 +24,7 @@ import { QUICK_TAG, useMode } from '@/mode';
 import { useScreen } from '@/useScreen';
 import type { CategoryTree, Product } from '@/types';
 import { track } from '@/analytics';
+import { useTabBarSpace } from '@/tabBarSpace';
 import { c, r } from '@/theme';
 
 const PAGE = 20;
@@ -79,6 +80,7 @@ export default function Shop() {
   const [pin, setPin] = useState('');
   const [loc, setLoc] = useState<Loc | null>(null);
   const [pinOpen, setPinOpen] = useState(false);
+  const tabPad = useTabBarSpace() + 90; // room for the floating tab bar and the cart pill above it
   const top = React.useRef(null); useScrollToTop(top as never); // tapping this tab again scrolls back to the top
   const req = useRef(0);
   const tree = useFetch<CategoryTree[]>('/api/catalog/categories?tree=full');
@@ -202,7 +204,7 @@ export default function Shop() {
 
       <View style={{ flex: 1, display: suggesting ? 'none' : 'flex' }}>
       {gridMode ? (
-        <ScrollView ref={top} contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView ref={top} contentContainerStyle={{ paddingBottom: tabPad }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {tree.loading && !tree.data ? (
             <View style={s.grid}>{Array.from({ length: 8 }).map((_, n) => <View key={n} style={[s.tile, { width: tileW }]}><Skeleton style={{ width: tileImg, height: tileImg, borderRadius: 16 }} /><Skeleton style={{ width: tileImg * 0.8, height: 10, marginTop: 8 }} /></View>)}</View>
           ) : tree.error && !tree.data ? (
@@ -230,7 +232,7 @@ export default function Shop() {
       ) : (
         <View style={{ flex: 1, flexDirection: 'row' }}>
           {rail.length > 0 && (
-            <FlatList style={s.rail} data={rail} keyExtractor={(x) => x.key} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}
+            <FlatList style={s.rail} data={rail} keyExtractor={(x) => x.key} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: tabPad - 10 }}
               renderItem={({ item }) => {
                 const on = item.slug === pageNode?.slug ? sel.length === 0 : sel[0]?.slug === item.slug;
                 return (
@@ -282,7 +284,7 @@ export default function Shop() {
             ) : error && !items.length ? (
               <View style={{ padding: 24, alignItems: 'center' }}><Text style={{ color: c.muted, textAlign: 'center', marginBottom: 12 }}>{error}</Text><Button title="Try again" variant="outline" onPress={() => fetchPage(1)} /></View>
             ) : (
-              <FlatList ref={top} data={items.length % 2 ? [...items, { id: -1 } as Product] : items} numColumns={2} keyExtractor={(p) => String(p.id)} contentContainerStyle={{ padding: 4, paddingBottom: 150 }} showsVerticalScrollIndicator={false}
+              <FlatList ref={top} data={items.length % 2 ? [...items, { id: -1 } as Product] : items} numColumns={2} keyExtractor={(p) => String(p.id)} contentContainerStyle={{ padding: 4, paddingBottom: tabPad }} showsVerticalScrollIndicator={false}
                 renderItem={({ item, index }) => (item.id < 0 ? <View style={{ flex: 1 }} /> : <ProductCard product={item} index={index % PAGE} />)}
                 onEndReachedThreshold={0.5} onEndReached={() => more && !loading && fetchPage(page + 1)}
                 ListEmptyComponent={<View style={{ alignItems: 'center', marginTop: 40, gap: 10 }}>

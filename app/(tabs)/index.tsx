@@ -26,6 +26,7 @@ import { useScreen } from '@/useScreen';
 import { getViewed } from '@/recentlyViewed';
 import type { Category, Product } from '@/types';
 import { track } from '@/analytics';
+import { useTabBarSpace } from '@/tabBarSpace';
 import { c, r } from '@/theme';
 
 const HINTS = ['Raspberry Pi', 'Bambu Lab printer', 'Arduino', 'ESP32', 'PLA filament', 'sensors'];
@@ -124,6 +125,7 @@ export default function Home() {
   const loc = useLoc() ?? null; // shared: changing the location anywhere (cart, checkout, shop) shows here at once
   const isFocused = useIsFocused();
   const [pinOpen, setPinOpen] = useState(false);
+  const tabPad = useTabBarSpace() + 90; // room for the floating tab bar and the cart pill above it
   const top = React.useRef(null); useScrollToTop(top as never); // tapping this tab again scrolls back to the top
   const { width } = useScreen();
   const [topFull, setTopFull] = useState(56); // the folding header block's real height, measured, so wrapped text is never clipped
@@ -233,7 +235,7 @@ export default function Home() {
 
       {/* Slides up with the header and is topFull taller, so no gap opens when the header folds. */}
       <Animated.View style={{ flex: 1, marginBottom: -topFull, transform: [{ translateY: lift }] }}>
-      <Animated.ScrollView ref={top} onScrollBeginDrag={() => setLater(true)} scrollEventThrottle={16} onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: NATIVE })} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.loader} />} contentContainerStyle={{ paddingBottom: 150 + topFull }} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView ref={top} onScrollBeginDrag={() => setLater(true)} scrollEventThrottle={16} onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: NATIVE })} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.loader} />} contentContainerStyle={{ paddingBottom: tabPad + topFull }} showsVerticalScrollIndicator={false}>
         {festive && <DiwaliStrip />}
         <CategoryTabs cats={cats.data} />
         <BannerCarousel cats={cats.data} active={isFocused && !searchMode} />
@@ -253,7 +255,7 @@ export default function Home() {
       </Animated.ScrollView>
       {/* Search opened but nothing typed yet: recent searches and popular ones, as on Blinkit. */}
       {searchMode && q.trim().length < 2 && (
-        <FadeIn style={[StyleSheet.absoluteFill, { backgroundColor: '#fff' }]}><ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+        <FadeIn style={[StyleSheet.absoluteFill, { backgroundColor: '#fff' }]}><ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingBottom: tabPad }}>
           {recent.length > 0 && (<>
             <View style={s.recentHead}><Text style={s.recentT}>Recent searches</Text><Pressable onPress={() => { clearRecent(); setRecent([]); }} hitSlop={8} accessibilityLabel="Clear recent searches"><Text style={s.more}>clear</Text></Pressable></View>
             {recent.map((t) => (

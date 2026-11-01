@@ -17,6 +17,7 @@ import { storage } from '@/storage';
 import { useFlag } from '@/appConfig';
 import { useFreeShipMin } from '@/freeShip';
 import type { CartItem, Product } from '@/types';
+import { useTabBarSpace } from '@/tabBarSpace';
 import { c, r } from '@/theme';
 
 type Undo = { label: string; restore: () => Promise<void> };
@@ -31,6 +32,7 @@ export default function CartScreen() {
   const [pinOpen, setPinOpen] = useState(false); // the same "Select delivery location" sheet as Home, right here in the cart
   const [undo, setUndo] = useState<Undo | null>(null); // the last removed line, restorable for a few seconds
   const [kb, setKb] = useState(false);
+  const tabSpace = useTabBarSpace(); // the floating tab bar covers this much of the bottom: the sticky footer and the empty state sit above it
   const top = React.useRef(null); useScrollToTop(top as never); // tapping this tab again scrolls back to the top
   const offersOn = useFlag('offers');
   const { has, toggle } = useWishlist();
@@ -102,7 +104,7 @@ export default function CartScreen() {
     setUndo({ label: `${decodeHtml(item.name)} ${toWishlist ? 'moved to wishlist' : 'removed'}`, restore: async () => { await addItem(item.id, item.quantity, item.variation); if (added) toggle(item.id); } });
   });
   const undoBar = undo && (
-    <View style={s.undo} accessibilityLiveRegion="polite">
+    <View style={[s.undo, { bottom: 92 + tabSpace }]} accessibilityLiveRegion="polite">
       <Text style={{ flex: 1, color: '#fff', fontSize: 13 }} numberOfLines={2}>{undo.label}</Text>
       <Pressable onPress={() => { const u = undo; setUndo(null); act(u.restore); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="Undo"><Text style={{ color: '#9cc0ff', fontWeight: '800', fontSize: 15 }}>UNDO</Text></Pressable>
     </View>
@@ -119,7 +121,7 @@ export default function CartScreen() {
   }
   if (!items.length) {
     return (
-      <View style={{ flex: 1, backgroundColor: c.surface }}>
+      <View style={{ flex: 1, backgroundColor: c.surface, paddingBottom: tabSpace }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Text style={{ fontSize: 20, fontWeight: '800', marginBottom: 6 }}>Your cart is empty</Text>
           <Text style={{ color: c.muted, marginBottom: 18 }}>Add something to get started.</Text>
@@ -294,7 +296,7 @@ export default function CartScreen() {
         } />
       {undoBar}
       {!kb && (
-        <View style={s.barWrap}>
+        <View style={[s.barWrap, { marginBottom: tabSpace }]}>
           {/* Blinkit Two-Tier Sticky Bar: Delivery Location Strip */}
           <Pressable onPress={() => setPinOpen(true)} style={s.locStrip} accessibilityRole="button" accessibilityLabel="Change delivery location">
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>

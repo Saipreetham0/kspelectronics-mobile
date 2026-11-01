@@ -11,6 +11,7 @@ import { useStore } from '@/store';
 import { useFetch } from '@/useFetch';
 import { useScreen } from '@/useScreen';
 import type { Product } from '@/types';
+import { useTabBarSpace } from '@/tabBarSpace';
 import { c, r } from '@/theme';
 
 const GAP = 10;
@@ -24,6 +25,7 @@ export default function Reorder() {
   const { account, user, ready } = useStore();
   const [ids, setIds] = useState<number[] | null>(null);
   const [error, setError] = useState('');
+  const tabPad = useTabBarSpace() + 90; // room for the floating tab bar and the cart pill above it
   const top = React.useRef(null); useScrollToTop(top as never); // tapping this tab again scrolls back to the top
   const load = useCallback(() => {
     if (!user) return;
@@ -68,7 +70,7 @@ export default function Reorder() {
   if (!groups.length) return <Center><Text style={{ color: c.muted, marginBottom: 14 }}>No past orders yet.</Text><Button title="Start shopping" onPress={() => router.replace('/(tabs)/shop')} /></Center>;
 
   return (
-    <ScrollView ref={top} style={{ backgroundColor: '#fff' }} contentContainerStyle={{ padding: 16, paddingBottom: 150 }}>
+    <ScrollView ref={top} style={{ backgroundColor: '#fff' }} contentContainerStyle={{ padding: 16, paddingBottom: tabPad }}>
       <Section title="Frequently bought" groups={groups.slice(0, FREQUENT)} />
       {groups.length > FREQUENT && <Section title="More that you ordered" groups={groups.slice(FREQUENT)} />}
     </ScrollView>

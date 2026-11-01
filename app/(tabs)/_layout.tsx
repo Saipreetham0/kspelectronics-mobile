@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { NATIVE } from '@/native';
-import { Animated, Platform, Pressable, Text as RNText, View } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet, Text as RNText, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Tabs, useSegments } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import { ClockCounterClockwise, House, ShoppingCart, SquaresFour } from 'phosphor-react-native';
 import type { Icon } from 'phosphor-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TAB_BAR_H, useTabBarGap, useTabBarSpace } from '@/tabBarSpace';
 import CartBar from '@/components/CartBar';
 import { useStore } from '@/store';
 import { useScreen } from '@/useScreen';
@@ -54,9 +54,10 @@ function Tab({ Glyph, text, focused, size, fs, badge, onPress, onLongPress, a11y
   );
 }
 
-// Blinkit-style bar: a short brand-blue bar slides along the top edge to the active tab, with a soft shadow instead of a hard line.
+// JioMart-style floating bar: a rounded, slightly see-through pill inset from the screen edges, with content scrolling underneath it.
+// A short brand-blue bar slides along its top edge to the active tab.
 // Tapping the tab you're on scrolls that screen back to the top (the screens listen for the tabPress event), and every tap gives a light tick.
-function TabBar({ state, descriptors, emitter, navigateToTab, height, bottomPad, width, itemCount }: BottomTabBarProps & { height: number; bottomPad: number; width: number; itemCount: number }) {
+function TabBar({ state, descriptors, emitter, navigateToTab, gap, width, itemCount }: BottomTabBarProps & { gap: number; width: number; itemCount: number }) {
   const routes = state.routes.filter((r) => !(descriptors[r.key].options as { hidden?: boolean }).hidden && TABS[r.name]);
   const active = routes.findIndex((r) => r.key === state.routes[state.index]?.key);
   const [w, setW] = useState(0);
@@ -72,8 +73,9 @@ function TabBar({ state, descriptors, emitter, navigateToTab, height, bottomPad,
   const size = Math.round(Math.max(22, Math.min(27, width * 0.06)));
   const fs = width < 340 ? 10 : width < 400 ? 10.5 : width >= 700 ? 13 : 11.5;
   return (
-    <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ height, paddingBottom: bottomPad, flexDirection: 'row', backgroundColor: '#fff',
-      ...Platform.select({ ios: { shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: -2 } }, default: { elevation: 12 } }) }}
+    <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ position: 'absolute', left: 12, right: 12, bottom: gap, height: TAB_BAR_H, flexDirection: 'row',
+      backgroundColor: 'rgba(255,255,255,0.96)', borderRadius: 28, borderWidth: StyleSheet.hairlineWidth, borderColor: c.line,
+      ...Platform.select({ ios: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 14, shadowOffset: { width: 0, height: 4 } }, default: { elevation: 10 } }) }}
       accessibilityRole="tablist">
       <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, width: IND, height: 3, borderBottomLeftRadius: 3, borderBottomRightRadius: 3, backgroundColor: c.accent, opacity: shown, transform: [{ translateX: x }] }} />
       {routes.map((route) => {
@@ -98,18 +100,18 @@ function TabBar({ state, descriptors, emitter, navigateToTab, height, bottomPad,
 
 export default function TabsLayout() {
   const { itemCount } = useStore();
-  const insets = useSafeAreaInsets();
   const segments = useSegments() as string[];
   const { width } = useScreen();
   // The free-delivery nudge rides in the cart pill ("₹450 away from free delivery") instead of a separate strip, so the bottom of the screen stays light.
   const progress = useFreeShip(useFreeShipMin());
   const note = progress ? (progress.left > 0 ? `${minorToInr(progress.left, progress.m)} away from free delivery` : 'Free delivery unlocked') : undefined;
-  // One explicit height (content + home-indicator inset) so the cart pill can sit exactly above the bar on every device.
-  const barH = 58 + insets.bottom;
+  // The bar floats above the bottom edge (clear of the gesture bar); the cart pill sits just above it.
+  const gap = useTabBarGap();
+  const space = useTabBarSpace();
   return (
     <View style={{ flex: 1 }}>
       <Tabs
-        tabBar={(p) => <TabBar {...p} height={barH} bottomPad={insets.bottom > 0 ? insets.bottom : 6} width={width} itemCount={itemCount} />}
+        tabBar={(p) => <TabBar {...p} gap={gap} width={width} itemCount={itemCount} />}
         screenOptions={{ headerTitleStyle: { fontFamily: 'Inter_800ExtraBold' } }}>
         {/* Browsing comes before re-buying in an electronics store, so Categories is second. */}
         <Tabs.Screen name="index" options={{ title: 'Home', headerShown: false }} />
@@ -118,7 +120,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="cart" options={{ title: 'Cart', headerRight: () => <SearchButton /> }} />
       </Tabs>
       {/* sits just above the tab bar */}
-      <CartBar bottom={barH + 10} hidden={segments.includes('cart')} note={note} unlocked={progress ? progress.left <= 0 : false} />
+      <CartBar bottom={space + 10} hidden={segments.includes('cart')} note={note} unlocked={progress ? progress.left <= 0 : false} />
     </View>
   );
 }
