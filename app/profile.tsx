@@ -30,7 +30,7 @@ export default function Profile() {
   useEffect(() => { if (user) account().then((a) => { setFirst(a.customer?.first_name ?? ''); setLast(a.customer?.last_name ?? ''); }).catch(() => {}); }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!ready) return null;
-  if (!user) return <Center><Text style={{ marginBottom: 14 }}>Log in to manage your profile.</Text><Button title="Log in" onPress={() => router.replace('/(tabs)/account')} /></Center>;
+  if (!user) return <Center><Text style={{ marginBottom: 14 }}>Log in to manage your profile.</Text><Button title="Log in" onPress={() => router.replace('/account')} /></Center>;
 
   const run = async (key: string, fn: () => Promise<void>) => { setBusy(key); try { await fn(); } catch (e) { Alert.alert('Could not save', (e as Error).message); } setBusy(''); };
   const saveName = () => run('name', async () => {

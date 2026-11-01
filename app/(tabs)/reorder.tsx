@@ -51,7 +51,7 @@ export default function Reorder() {
         <View style={{ padding: 20, alignItems: 'center' }}>
           <Text style={{ fontSize: 20, fontWeight: '800', color: c.text, textAlign: 'center' }}>Buy your favourites again in one tap</Text>
           <Text style={{ color: c.muted, textAlign: 'center', marginTop: 6, marginBottom: 14, lineHeight: 20 }}>Log in and everything you ordered before shows up here, grouped by category.</Text>
-          <Button title="Log in" onPress={() => router.push('/(tabs)/account')} />
+          <Button title="Log in" onPress={() => router.push('/account')} />
         </View>
         {popular.data && popular.data.length > 0 && (
           <View>

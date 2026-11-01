@@ -93,7 +93,7 @@ export default function Orders() {
     return (
       <Center>
         <Text style={{ marginBottom: 14 }}>Log in to see your orders.</Text>
-        <Button title="Log in" onPress={() => router.replace('/(tabs)/account')} />
+        <Button title="Log in" onPress={() => router.push('/account')} />
       </Center>
     );
   }

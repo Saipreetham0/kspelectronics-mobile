@@ -117,8 +117,6 @@ export default function TabsLayout() {
         <Tabs.Screen name="shop" options={{ title: 'Categories', headerShown: false }} />
         <Tabs.Screen name="reorder" options={{ title: width < 360 ? 'Reorder' : 'Order Again' }} />
         <Tabs.Screen name="cart" options={{ title: 'Cart', headerRight: () => <SearchButton /> }} />
-        {/* Account has no tab: it opens from the avatar on Home (and from login prompts). href: null keeps the screen and its links working. */}
-        <Tabs.Screen name="account" options={{ title: 'Account', headerShown: false, href: null }} />
       </Tabs>
       {/* sits just above the tab bar */}
       {strip && <FreeShipStrip bottom={barH} left={progress.left} pct={progress.pct} m={progress.m} onClose={() => setStripShut(true)} />}
