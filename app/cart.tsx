@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, FlatList, Keyboard, LayoutAnimation, Platform, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { POLICIES } from '@/policies';
+import { Alert, FlatList, Keyboard, LayoutAnimation, Linking, Platform, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { Image } from 'expo-image';
 import { router, useFocusEffect, Stack } from 'expo-router';
@@ -57,6 +58,11 @@ export default function CartScreen() {
   const plain = lines.filter((i) => !i.variation?.length).map((i) => i.id);
   const stock = useFetch<Product[]>(plain.length ? `/api/catalog/products?include=${plain.join(',')}&per_page=40` : null);
   const gone = new Set(lines.filter((i) => stock.data?.some((p) => p.id === i.id && !p.is_in_stock)).map((i) => i.key));
+  // Swiggy's "Did you forget?": popular, in-stock picks from the categories already in the cart, one tab per category (up to 3).
+  const cats = [...new Map((stock.data ?? []).flatMap((p) => p.categories.slice(0, 1)).map((k) => [k.slug, k])).values()].slice(0, 3);
+  const [tab, setTab] = useState<string | null>(null);
+  const cat = cats.find((k) => k.slug === tab)?.slug ?? cats[0]?.slug;
+  const related = useFetch<Product[]>(cat ? `/api/catalog/products?category=${cat}&orderby=popularity&in_stock=true&per_page=16` : null);
   const [moved, setMoved] = useState<Record<string, { was: number; now: number }>>({});
   const sig = lines.map((i) => `${i.id}:${i.prices.price}`).join(',');
   useEffect(() => {
@@ -94,7 +100,9 @@ export default function CartScreen() {
     }
   };
   const inCart = new Set(items.map((i) => i.id));
-  const more = (popular.data ?? []).filter((p) => !inCart.has(p.id) && p.is_in_stock).slice(0, 8);
+  const pick = (l?: Product[] | null) => (l ?? []).filter((p) => !inCart.has(p.id) && p.is_in_stock).slice(0, 8);
+  const forgot = pick(related.data);
+  const more = forgot.length >= 2 ? forgot : pick(popular.data); // too few in that category: the shop's popular list instead
 
   // Removing a line (or moving it to the wishlist) can be taken back for a few seconds.
   const removeLine = (item: CartItem, toWishlist: boolean) => act(async () => {
@@ -157,6 +165,12 @@ export default function CartScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
       <Stack.Screen options={{ headerRight: () => <SearchButton /> }} />
+      {saved >= 1 && (
+        <View style={s.savedBar} accessibilityRole="summary">
+          <Ionicons name="pricetag" size={14} color={c.greenDark} />
+          <Text style={s.savedT}>You're saving {minorToInr(saved * 10 ** m, m)} on this order</Text>
+        </View>
+      )}
       <FlatList data={items} keyExtractor={(i) => i.key} contentContainerStyle={{ padding: 12, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await refresh(); setRefreshing(false); }} tintColor={c.loader} />}
         ListHeaderComponent={
@@ -232,7 +246,16 @@ export default function CartScreen() {
           <>
             {more.length > 0 && (
               <View style={{ marginBottom: 6 }}>
-                <Text style={[s.h, { marginHorizontal: 4, marginTop: 4, marginBottom: 4 }]}>Complete your order</Text>
+                <Text style={[s.h, { marginHorizontal: 4, marginTop: 4, marginBottom: 6 }]}>Did you forget?</Text>
+                {cats.length > 1 && (
+                  <View style={s.tabs}>
+                    {cats.map((k) => (
+                      <Pressable key={k.slug} onPress={() => setTab(k.slug)} style={[s.tab, cat === k.slug && s.tabOn]} accessibilityRole="tab" accessibilityState={{ selected: cat === k.slug }}>
+                        <Text style={[s.tabT, cat === k.slug && { color: '#fff' }]} numberOfLines={1}>{decodeHtml(k.name)}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
                 <FlatList horizontal data={more} keyExtractor={(p) => String(p.id)} showsHorizontalScrollIndicator={false}
                   renderItem={({ item, index }) => <ProductCard product={item} width={140} index={index} />} />
               </View>
@@ -254,9 +277,7 @@ export default function CartScreen() {
               <View style={s.billRow}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Ionicons name="document-text-outline" size={16} color={c.muted} />
-                  <Text style={{ color: c.text2, fontSize: 15 }}>Items total</Text>
-                  {saved >= 1 && <View style={s.chip}><Text style={s.chipT}>Saved {minorToInr(saved * 10 ** m, m)}</Text></View>}
-                </View>
+                  <Text style={{ color: c.text2, fontSize: 15 }}>Items total</Text>                </View>
                 <Text style={{ fontWeight: '700', fontSize: 15 }}>{minorToInr(withTax(t.total_items, t.total_items_tax), m)}</Text>
               </View>
               {Number(t.total_discount) > 0 && (
@@ -277,6 +298,9 @@ export default function CartScreen() {
                   {shipKnown ? (shipping > 0 ? minorToInr(shipping, m) : 'FREE') : 'Calculated at checkout'}
                 </Text>
               </View>
+              {FREE_SHIPPING != null && left != null && (
+                <Text style={s.billNote}>{left > 0 ? `Free delivery on orders over ${minorToInr(FREE_SHIPPING * 10 ** m, m)}` : 'Free delivery unlocked on this order'}</Text>
+              )}
               <View style={{ height: 1, backgroundColor: c.line, marginVertical: 8 }} />
               <View style={s.billRow}>
                 <Text style={{ fontSize: 15, fontWeight: '800', color: c.text }}>Grand total</Text>
@@ -293,6 +317,10 @@ export default function CartScreen() {
                 </View>
               )}
             </Card>
+            <Text style={s.policy}>
+              Cancel any time before dispatch. Return requests within 30 days of delivery.{' '}
+              <Text style={{ color: c.accent, fontWeight: '700' }} onPress={() => Linking.openURL(POLICIES[2].url).catch(() => {})} accessibilityRole="link">Refund policy</Text>
+            </Text>
           </>
         } />
       {undoBar}
@@ -379,14 +407,20 @@ const s = StyleSheet.create({
   coupon: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   input: { flex: 1, borderWidth: 1, borderColor: c.line, borderRadius: r.md, paddingHorizontal: 12, minHeight: 48, fontSize: 15, color: c.text, backgroundColor: '#fff' },
   billRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  billNote: { fontSize: 12, color: c.muted, marginTop: -4, marginBottom: 8, marginLeft: 22 },
+  policy: { fontSize: 12, color: c.muted, lineHeight: 17, marginHorizontal: 6, marginTop: 4 },
+  savedBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8, backgroundColor: c.greenSoft },
+  savedT: { fontSize: 13, fontWeight: '800', color: c.greenDark },
+  tabs: { flexDirection: 'row', gap: 8, marginHorizontal: 4, marginBottom: 8 },
+  tab: { flexShrink: 1, paddingHorizontal: 12, paddingVertical: 6, borderRadius: r.pill, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff' },
+  tabOn: { backgroundColor: c.accent, borderColor: c.accent },
+  tabT: { fontSize: 12, fontWeight: '700', color: c.text },
   receiptSavings: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: c.accentTint, borderRadius: r.sm, paddingHorizontal: 12, paddingVertical: 10, marginTop: 10, borderWidth: 1, borderColor: c.accentSoft },
   receiptSavingsTitle: { fontSize: 13, fontWeight: '800', color: c.accent },
   receiptSavingsSub: { fontSize: 11, color: '#4a6da7', marginTop: 1 },
   receiptSavingsAmt: { fontSize: 15, fontWeight: '800', color: c.accent },
   barWrap: { backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: c.line },
   locStrip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.line },
-  chip: { backgroundColor: c.accentSoft, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  chipT: { fontSize: 12, fontWeight: '800', color: c.accent },
   bar: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#fff' },
   undo: { position: 'absolute', left: 12, right: 12, bottom: 92, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.text, borderRadius: r.md, paddingHorizontal: 16, paddingVertical: 14, elevation: 6, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
 });
