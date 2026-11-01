@@ -1,0 +1,27 @@
+<!-- "Open in the KSP app" banner for kspelectronics.in. Paste into WordPress with a header/footer plugin (e.g. WPCode > "Site Wide Footer").
+     Shows only in an Android browser, never inside the app, and stays hidden for 7 days once dismissed.
+     The button uses an Android intent link: it opens the app on this same page if it is installed, and the Play Store page if it is not. -->
+<div id="ksp-app-bar" hidden style="position:fixed;left:0;right:0;bottom:0;z-index:99999;display:flex;align-items:center;gap:12px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:#fff;border-top:1px solid #e3e6ec;box-shadow:0 -4px 16px rgba(0,0,0,.08);font:14px/1.3 system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <img src="https://kspelectronics.in/wp-content/uploads/ksp-app-icon.png" alt="" width="40" height="40" style="border-radius:9px;flex:none" onerror="this.style.display='none'">
+  <div style="flex:1;min-width:0"><b style="display:block;color:#14181f">KSP Electronics app</b><span style="color:#5b6472">Faster checkout and order tracking</span></div>
+  <a id="ksp-app-open" href="#" style="flex:none;background:#1a56db;color:#fff;text-decoration:none;font-weight:700;padding:9px 16px;border-radius:999px">Open</a>
+  <button id="ksp-app-x" aria-label="Close" style="flex:none;background:none;border:0;font-size:22px;line-height:1;color:#5b6472;padding:4px 6px">&times;</button>
+</div>
+<script>
+(function () {
+  try {
+    var ua = navigator.userAgent || '';
+    if (!/Android/i.test(ua) || /\bwv\b|KSPApp/i.test(ua)) return;           // Android browsers only, not a WebView
+    var KEY = 'ksp_app_bar_until';
+    if (Number(localStorage.getItem(KEY) || 0) > Date.now()) return;
+    var bar = document.getElementById('ksp-app-bar'), open = document.getElementById('ksp-app-open');
+    var play = 'https://play.google.com/store/apps/details?id=in.kspelectronics.app';
+    open.href = 'intent://' + location.host + location.pathname + location.search +
+      '#Intent;scheme=https;package=in.kspelectronics.app;S.browser_fallback_url=' + encodeURIComponent(play) + ';end';
+    document.getElementById('ksp-app-x').onclick = function () {
+      bar.hidden = true; localStorage.setItem(KEY, String(Date.now() + 7 * 864e5));
+    };
+    bar.hidden = false;
+  } catch (e) { /* storage blocked: no banner */ }
+})();
+</script>
