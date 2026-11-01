@@ -40,11 +40,12 @@ export function Bump({ trigger, children, style }: { trigger: unknown; children:
 }
 
 /** Pressable that squeezes slightly while held. */
-export function Tap({ children, style, scaleTo = 0.96, ...p }: PressableProps & { style?: StyleProp<ViewStyle>; scaleTo?: number }) {
+// `fill`: the pressable fills its parent (a sized tile); without it, it hugs its content.
+export function Tap({ children, style, scaleTo = 0.96, fill, ...p }: PressableProps & { style?: StyleProp<ViewStyle>; scaleTo?: number; fill?: boolean }) {
   const v = useRef(new Animated.Value(1)).current;
   const to = (n: number) => Animated.spring(v, { toValue: n, useNativeDriver: NATIVE, speed: 40, bounciness: 6 }).start();
   return (
-    <Pressable {...p} onPressIn={(e) => { to(scaleTo); p.onPressIn?.(e); }} onPressOut={(e) => { to(1); p.onPressOut?.(e); }}>
+    <Pressable {...p} style={fill ? { flex: 1 } : undefined} onPressIn={(e) => { to(scaleTo); p.onPressIn?.(e); }} onPressOut={(e) => { to(1); p.onPressOut?.(e); }}>
       <Animated.View style={[style, { transform: [{ scale: v }] }]}>{children as React.ReactNode}</Animated.View>
     </Pressable>
   );

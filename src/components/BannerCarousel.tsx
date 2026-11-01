@@ -5,19 +5,16 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Cpu, GraduationCap, Printer, Tag, Truck } from 'phosphor-react-native';
+import { Tag } from 'phosphor-react-native';
 import type { Icon } from 'phosphor-react-native';
 import { Text } from '@/components/Text';
 import { Tap } from './motion';
 import type { Category } from '@/types';
 import { useScreen } from '@/useScreen';
-import { useFetch } from '@/useFetch';
-import { inr } from '@/format';
 import { useAppConfig } from '@/appConfig';
 import type { RemoteBanner } from '@/appConfig';
 import { isHttps, openHttps } from '@/links';
 import { track } from '@/analytics';
-import { useStore } from '@/store';
 import { c, r } from '@/theme';
 
 type Banner = {
@@ -30,15 +27,6 @@ type Banner = {
   link?: string; // an in-app path ("/offers") or an https page, for banners set from the store
 };
 
-// Built-in banners, shown when the store sends none. They link by category slug (a category renamed in WordPress keeps its slug).
-const BANNERS: Banner[] = [
-  { id: 'printers', Glyph: Printer, tag: 'AUTHORISED RESELLER', title: '3D printers', sub: 'Bambu Lab printers, filament and parts', cta: 'Shop now', colors: ['#0b1220', '#1e293b'], fg: '#fff', ctaBg: c.green, ctaFg: '#0b1220', slug: '3d-printers-and-parts', search: '3D printer' },
-  { id: 'boards', Glyph: Cpu, tag: 'MAKERS', title: 'Raspberry Pi & boards', sub: 'Arduino · ESP32 · sensors', cta: 'Shop now', colors: [c.accent, c.accentDark], fg: '#fff', ctaBg: '#fff', ctaFg: c.accentDark, slug: 'raspberry-pi', search: 'Raspberry Pi' },
-  { id: 'projects', Glyph: GraduationCap, tag: 'STUDENTS', title: 'Engineering projects', sub: 'Kits for college projects', cta: 'Explore kits', colors: [c.success, c.success], fg: '#fff', ctaBg: '#fff', ctaFg: c.success, slug: 'engineering-projects', search: 'project kit' },
-];
-// The free-delivery banner quotes the store's real minimum. It is left out once the cart has items: the strip above the tab bar says the same thing then.
-const shippingBanner = (min: number): Banner => ({ id: 'shipping', Glyph: Truck, tag: 'FREE SHIPPING', title: `Free delivery over ${inr(min)}`, sub: `On every order of ${inr(min)} or more`, cta: 'Start shopping', colors: [c.dealSoft, '#fde68a'], fg: c.dealText, ctaBg: c.dealText, ctaFg: '#fff' });
-
 // A banner set from the store (APP_BANNERS on the server). Only https images; outside its from/until dates it is skipped.
 export const live = (b: RemoteBanner, now = Date.now()) => (!b.from || Date.parse(b.from) <= now) && (!b.until || now < Date.parse(b.until));
 export const fromStore = (b: RemoteBanner): Banner => ({
@@ -49,16 +37,11 @@ export const fromStore = (b: RemoteBanner): Banner => ({
 const GAP = 12; // the same as the left margin, so a scrolled-past card is fully out of view
 const EVERY_MS = 4500;
 
+// Store campaigns (APP_BANNERS): artwork or text cards that slide by. Shown only while the store runs one.
 // `active`: the slide-show only runs while the page is in view. It also stops on the last banner (and never starts with reduced motion), so nothing moves forever.
 export default function BannerCarousel({ cats, active = true }: { cats: Category[] | null; active?: boolean }) {
-  const ship = useFetch<{ min: number | null }>('/api/cart/free-shipping');
-  const { itemCount } = useStore();
-  const remote = useAppConfig().banners; // banners set from the store replace the built-in ones
-  const banners = useMemo<Banner[]>(() => {
-    const fromCfg = (remote ?? []).filter((b) => live(b)).map(fromStore);
-    if (fromCfg.length) return fromCfg;
-    return ship.data?.min && itemCount === 0 ? [...BANNERS, shippingBanner(ship.data.min)] : BANNERS;
-  }, [remote, ship.data?.min, itemCount]);
+  const remote = useAppConfig().banners; // campaigns set from the store (APP_BANNERS); the everyday home promos are the PromoGrid
+  const banners = useMemo<Banner[]>(() => (remote ?? []).filter((b) => live(b)).map(fromStore), [remote]);
   const [reduce, setReduce] = useState(false);
   useEffect(() => { AccessibilityInfo.isReduceMotionEnabled().then(setReduce).catch(() => {}); }, []);
   const at = useRef(0);
@@ -84,6 +67,7 @@ export default function BannerCarousel({ cats, active = true }: { cats: Category
   }, [step, active, reduce, banners.length]);
   useEffect(() => () => { if (resume.current) clearTimeout(resume.current); }, []);
 
+  if (!banners.length) return null; // after every hook: nothing to show until the store runs a campaign
   const onEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => { at.current = Math.max(0, Math.min(banners.length - 1, Math.round(e.nativeEvent.contentOffset.x / step))); };
 
   const open = (b: Banner) => {

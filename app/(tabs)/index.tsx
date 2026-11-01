@@ -13,6 +13,7 @@ import ModeToggle from '@/components/ModeToggle';
 import { QUICK_TAG, useMode } from '@/mode';
 import ProductCard from '@/components/ProductCard';
 import BannerCarousel from '@/components/BannerCarousel';
+import PromoGrid from '@/components/PromoGrid';
 import SuggestList from '@/components/SuggestList';
 import { DiwaliFx, DiwaliStrip, diwaliOn } from '@/components/Diwali';
 import { FadeIn, Reveal, Tap } from '@/components/motion';
@@ -195,6 +196,7 @@ export default function Home() {
         {festive && <DiwaliStrip />}
         <CategoryTabs cats={cats.data} />
         <BannerCarousel cats={cats.data} active={isFocused && !searchMode} />
+        <PromoGrid cats={cats.data} />
 
         <Text style={[s.h, { marginHorizontal: 16, marginTop: 24 }]}>Shop by category</Text>
         <View style={s.grid}>
