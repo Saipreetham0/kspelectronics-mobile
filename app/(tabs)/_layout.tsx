@@ -7,6 +7,7 @@ import type { BottomTabBarProps } from 'expo-router/tabs';
 import { ClockCounterClockwise, House, ShoppingCart, SquaresFour } from 'phosphor-react-native';
 import type { Icon } from 'phosphor-react-native';
 import { TAB_BAR_H, useTabBarGap, useTabBarSpace } from '@/tabBarSpace';
+import SponsorButton, { SPONSOR_SIZE, useSponsor } from '@/components/SponsorButton';
 import CartBar from '@/components/CartBar';
 import { useStore } from '@/store';
 import { useScreen } from '@/useScreen';
@@ -57,7 +58,7 @@ function Tab({ Glyph, text, focused, size, fs, badge, onPress, onLongPress, a11y
 // JioMart-style floating bar: a rounded, slightly see-through pill inset from the screen edges, with content scrolling underneath it.
 // A short brand-blue bar slides along its top edge to the active tab.
 // Tapping the tab you're on scrolls that screen back to the top (the screens listen for the tabPress event), and every tap gives a light tick.
-function TabBar({ state, descriptors, emitter, navigateToTab, gap, width, itemCount }: BottomTabBarProps & { gap: number; width: number; itemCount: number }) {
+function TabBar({ state, descriptors, emitter, navigateToTab, gap, width, itemCount, room }: BottomTabBarProps & { gap: number; width: number; itemCount: number; room: number }) {
   const routes = state.routes.filter((r) => !(descriptors[r.key].options as { hidden?: boolean }).hidden && TABS[r.name]);
   const active = routes.findIndex((r) => r.key === state.routes[state.index]?.key);
   const [w, setW] = useState(0);
@@ -73,7 +74,7 @@ function TabBar({ state, descriptors, emitter, navigateToTab, gap, width, itemCo
   const size = Math.round(Math.max(22, Math.min(27, width * 0.06)));
   const fs = width < 340 ? 10 : width < 400 ? 10.5 : width >= 700 ? 13 : 11.5;
   return (
-    <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ position: 'absolute', left: 12, right: 12, bottom: gap, height: TAB_BAR_H, flexDirection: 'row',
+    <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ position: 'absolute', left: 12, right: 12 + room, bottom: gap, height: TAB_BAR_H, flexDirection: 'row',
       backgroundColor: 'rgba(255,255,255,0.96)', borderRadius: 28, borderWidth: StyleSheet.hairlineWidth, borderColor: c.line,
       ...Platform.select({ ios: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 14, shadowOffset: { width: 0, height: 4 } }, default: { elevation: 10 } }) }}
       accessibilityRole="tablist">
@@ -107,11 +108,13 @@ export default function TabsLayout() {
   const note = progress ? (progress.left > 0 ? `${minorToInr(progress.left, progress.m)} away from free delivery` : 'Free delivery unlocked') : undefined;
   // The bar floats above the bottom edge (clear of the gesture bar); the cart pill sits just above it.
   const gap = useTabBarGap();
+  const sponsor = useSponsor(); // the round brand button beside the bar (JioMart-style); the bar makes room for it
+  const room = sponsor ? SPONSOR_SIZE + 8 : 0;
   const space = useTabBarSpace();
   return (
     <View style={{ flex: 1 }}>
       <Tabs
-        tabBar={(p) => <TabBar {...p} gap={gap} width={width} itemCount={itemCount} />}
+        tabBar={(p) => <TabBar {...p} gap={gap} width={width - room} itemCount={itemCount} room={room} />}
         screenOptions={{ headerTitleStyle: { fontFamily: 'Inter_800ExtraBold' } }}>
         {/* Browsing comes before re-buying in an electronics store, so Categories is second. */}
         <Tabs.Screen name="index" options={{ title: 'Home', headerShown: false }} />
@@ -120,6 +123,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="cart" options={{ title: 'Cart', headerRight: () => <SearchButton /> }} />
       </Tabs>
       {/* sits just above the tab bar */}
+      {sponsor && <View style={{ position: 'absolute', right: 12, bottom: gap + (TAB_BAR_H - SPONSOR_SIZE) / 2 }}><SponsorButton sponsor={sponsor} /></View>}
       <CartBar bottom={space + 10} hidden={segments.includes('cart')} note={note} unlocked={progress ? progress.left <= 0 : false} />
     </View>
   );

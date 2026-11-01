@@ -12,7 +12,11 @@ import { storage } from './storage';
 // Without the endpoint (or offline) everything stays at its default: features that need the store stay hidden.
 // image: a designed https banner (16:7) shown full-bleed; link: an in-app path ("/offers") or https page; from/until: ISO dates the banner runs between.
 export type RemoteBanner = { id: string; tag?: string; title: string; sub?: string; cta?: string; colors?: [string, string]; fg?: string; category?: string; search?: string; image?: string; link?: string; from?: string; until?: string };
-export type AppConfig = { minVersion?: string; message?: string; flags?: Record<string, boolean>; banners?: RemoteBanner[] };
+// The round sponsor button beside the tab bar (JioMart-style). null hides it; absent shows the app's built-in sponsor.
+//   image: an https logo (square, shown in a circle) · label: the brand name (read out, and drawn when there is no image) · bg / fg: badge colours
+//   link: an in-app path or https page, or brand / category / search to open the shop filtered · from / until: ISO dates it runs between
+export type RemoteSponsor = { id: string; label: string; image?: string; bg?: string; fg?: string; link?: string; brand?: string; category?: string; search?: string; from?: string; until?: string };
+export type AppConfig = { minVersion?: string; message?: string; flags?: Record<string, boolean>; banners?: RemoteBanner[]; sponsor?: RemoteSponsor | null };
 
 const KEY = 'ksp_cfg';
 let cfg: AppConfig = {};
