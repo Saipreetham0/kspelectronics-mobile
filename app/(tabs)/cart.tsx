@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Alert, FlatList, Keyboard, LayoutAnimation, Platform, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { Image } from 'expo-image';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useScrollToTop } from 'expo-router';
 import { isHyderabad, loadLoc } from '@/location';
 import type { Loc } from '@/location';
 import { useWishlist } from '@/wishlist';
@@ -30,6 +30,7 @@ export default function CartScreen() {
   const [pinOpen, setPinOpen] = useState(false); // the same "Select delivery location" sheet as Home, right here in the cart
   const [undo, setUndo] = useState<Undo | null>(null); // the last removed line, restorable for a few seconds
   const [kb, setKb] = useState(false);
+  const top = React.useRef(null); useScrollToTop(top as never); // tapping this tab again scrolls back to the top
   const offersOn = useFlag('offers');
   const { has, toggle } = useWishlist();
   // The focus effect reads these through a ref, so it runs once per visit rather than on every cart change.
@@ -152,7 +153,7 @@ export default function CartScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
-      <FlatList data={items} keyExtractor={(i) => i.key} contentContainerStyle={{ padding: 12, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
+      <FlatList ref={top} data={items} keyExtractor={(i) => i.key} contentContainerStyle={{ padding: 12, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await refresh(); setRefreshing(false); }} tintColor={c.loader} />}
         ListHeaderComponent={
           <>

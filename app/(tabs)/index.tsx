@@ -4,7 +4,7 @@ import { Animated, Easing, FlatList, Keyboard, Pressable, RefreshControl, Scroll
 import { Text, TextInput, AnimatedText } from '@/components/Text';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useFocusEffect, useIsFocused } from 'expo-router';
+import { router, useFocusEffect, useIsFocused, useScrollToTop } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loadLoc, useLoc } from '@/location';
@@ -86,6 +86,7 @@ export default function Home() {
   const loc = useLoc() ?? null; // shared: changing the location anywhere (cart, checkout, shop) shows here at once
   const isFocused = useIsFocused();
   const [pinOpen, setPinOpen] = useState(false);
+  const top = React.useRef(null); useScrollToTop(top as never); // tapping this tab again scrolls back to the top
   const { width } = useScreen();
   const [topFull, setTopFull] = useState(56); // the folding header block's real height, measured, so wrapped text is never clipped
   const cols = width >= 700 ? 6 : 4;
@@ -190,7 +191,7 @@ export default function Home() {
 
       {/* Slides up with the header and is topFull taller, so no gap opens when the header folds. */}
       <Animated.View style={{ flex: 1, marginBottom: -topFull, transform: [{ translateY: lift }] }}>
-      <Animated.ScrollView scrollEventThrottle={16} onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: NATIVE })} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.loader} />} contentContainerStyle={{ paddingBottom: 150 + topFull }} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView ref={top} scrollEventThrottle={16} onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: NATIVE })} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.loader} />} contentContainerStyle={{ paddingBottom: 150 + topFull }} showsVerticalScrollIndicator={false}>
         {festive && <DiwaliStrip />}
         <CategoryTabs cats={cats.data} />
         <BannerCarousel cats={cats.data} active={isFocused && !searchMode} />

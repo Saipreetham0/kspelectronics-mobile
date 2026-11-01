@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { Image } from 'expo-image';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useScrollToTop } from 'expo-router';
 import { Button, Center, ErrorBox, Spinner } from '@/components/ui';
 import ProductCard from '@/components/ProductCard';
 import { Tap } from '@/components/motion';
@@ -24,6 +24,7 @@ export default function Reorder() {
   const { account, user, ready } = useStore();
   const [ids, setIds] = useState<number[] | null>(null);
   const [error, setError] = useState('');
+  const top = React.useRef(null); useScrollToTop(top as never); // tapping this tab again scrolls back to the top
   const load = useCallback(() => {
     if (!user) return;
     setError('');
@@ -67,7 +68,7 @@ export default function Reorder() {
   if (!groups.length) return <Center><Text style={{ color: c.muted, marginBottom: 14 }}>No past orders yet.</Text><Button title="Start shopping" onPress={() => router.replace('/(tabs)/shop')} /></Center>;
 
   return (
-    <ScrollView style={{ backgroundColor: '#fff' }} contentContainerStyle={{ padding: 16, paddingBottom: 150 }}>
+    <ScrollView ref={top} style={{ backgroundColor: '#fff' }} contentContainerStyle={{ padding: 16, paddingBottom: 150 }}>
       <Section title="Frequently bought" groups={groups.slice(0, FREQUENT)} />
       {groups.length > FREQUENT && <Section title="More that you ordered" groups={groups.slice(FREQUENT)} />}
     </ScrollView>
