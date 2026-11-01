@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Image, Platform, StyleSheet } from 'react-native';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { NATIVE } from '@/native';
 
@@ -19,11 +19,35 @@ export default function AppSplashScreen({ isAppReady, onFinish }: SplashScreenPr
   const logoScale = useRef(new Animated.Value(0.95)).current;
   const containerOpacity = useRef(new Animated.Value(1)).current;
 
+  // On native platforms (Android/iOS): the single native OS splash screen covers app launch.
+  // When the app is ready, hide the native splash and trigger onFinish.
   useEffect(() => {
-    // Hide the native OS splash screen once this component is mounted
-    ExpoSplashScreen.hideAsync().catch(() => {});
+    if (Platform.OS !== 'web') {
+      if (isAppReady || forceReady) {
+        ExpoSplashScreen.hideAsync().catch(() => {});
+        onFinish?.();
+      }
+    }
+  }, [isAppReady, forceReady, onFinish]);
 
-    // Subtle, high-end entrance animation for the logo
+  // Safety fallback: never allow splash screen to hang indefinitely if fonts or assets stall
+  useEffect(() => {
+    const maxTimer = setTimeout(() => {
+      setForceReady(true);
+      setMinTimePassed(true);
+      if (Platform.OS !== 'web') {
+        ExpoSplashScreen.hideAsync().catch(() => {});
+        onFinish?.();
+      }
+    }, 3500);
+
+    return () => clearTimeout(maxTimer);
+  }, [onFinish]);
+
+  // Web only: animate logo and fade out when ready
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
     Animated.parallel([
       Animated.timing(logoOpacity, {
         toValue: 1,
@@ -39,25 +63,16 @@ export default function AppSplashScreen({ isAppReady, onFinish }: SplashScreenPr
       }),
     ]).start();
 
-    // Minimum display time for brand impression (kept short: it is time the shopper waits)
     const timer = setTimeout(() => {
       setMinTimePassed(true);
-    }, 600);
+    }, 400);
 
-    // Safety fallback: never allow splash screen to hang indefinitely if fonts or assets stall
-    const maxTimer = setTimeout(() => {
-      setForceReady(true);
-      setMinTimePassed(true);
-    }, 3500);
-
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(maxTimer);
-    };
+    return () => clearTimeout(timer);
   }, [logoOpacity, logoScale]);
 
-  // Fade out cleanly once app is ready (or safety timeout fired)
   useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
     if ((isAppReady || forceReady) && minTimePassed) {
       Animated.timing(containerOpacity, {
         toValue: 0,
@@ -69,6 +84,12 @@ export default function AppSplashScreen({ isAppReady, onFinish }: SplashScreenPr
       });
     }
   }, [isAppReady, forceReady, minTimePassed, containerOpacity, onFinish]);
+
+  // Native uses the single native splash screen from Android/iOS.
+  // Returning null avoids displaying a duplicate second splash screen in JS.
+  if (Platform.OS !== 'web') {
+    return null;
+  }
 
   return (
     <Animated.View style={[s.container, { opacity: containerOpacity }]}>

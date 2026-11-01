@@ -24,6 +24,7 @@ import NotifyMe from '@/components/NotifyMe';
 import CartBar from '@/components/CartBar';
 import SearchButton from '@/components/SearchButton';
 import { addViewed } from '@/recentlyViewed';
+import { track } from '@/analytics';
 import { c, r, shadow } from '@/theme';
 
 type Brand = { name: string; slug: string; image: string; count: number };
@@ -64,7 +65,12 @@ export default function ProductScreen() {
   const p = data?.product;
   const attrs = useMemo(() => p?.attributes.filter((a) => a.has_variations) ?? [], [p]);
 
-  useEffect(() => { if (data?.product.id) addViewed(data.product.id); }, [data?.product.id]);
+  useEffect(() => {
+    if (data?.product.id) {
+      addViewed(data.product.id);
+      track('view_item', { id: data.product.id, slug: data.product.slug, price: priceOf(data.product).now });
+    }
+  }, [data?.product]);
   useEffect(() => {
     if (!p) return;
     let live = true;

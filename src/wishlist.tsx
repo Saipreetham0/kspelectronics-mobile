@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import * as Haptics from 'expo-haptics';
+import { track } from './analytics';
 import { storage } from './storage';
 import { useStore } from './store';
 
@@ -26,7 +27,9 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const toggle = useCallback((id: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setIds((cur) => {
-      const next = cur.includes(id) ? cur.filter((x) => x !== id) : [id, ...cur].slice(0, MAX);
+      const isAdding = !cur.includes(id);
+      track(isAdding ? 'add_to_wishlist' : 'remove_from_wishlist', { id });
+      const next = isAdding ? [id, ...cur].slice(0, MAX) : cur.filter((x) => x !== id);
       storage.set(KEY, JSON.stringify(next)).catch(() => {});
       return next;
     });

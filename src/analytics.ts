@@ -3,7 +3,8 @@ import Constants from 'expo-constants';
 import { storage } from './storage';
 
 // Product analytics (screens and the shopping funnel) sent to PostHog's capture API once EXPO_PUBLIC_POSTHOG_KEY is set; without it every call is a no-op.
-// Events carry an anonymous per-install id and never an email, name, phone, address or order contents. Plain fetch: no SDK to ship.
+// Events carry an anonymous per-install id and never an email, name, phone, address, order number or the products in an order
+// (a purchase carries only its value and item count; product views and taps carry public product ids). Plain fetch: no SDK to ship.
 const KEY = process.env.EXPO_PUBLIC_POSTHOG_KEY;
 const HOST = (process.env.EXPO_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com').replace(/\/$/, '');
 const ID_KEY = 'ksp_aid';
@@ -15,7 +16,25 @@ const anonId = () => (id ??= (async () => {
   return n;
 })());
 
-export type Event = 'screen' | 'search' | 'add_to_cart' | 'begin_checkout' | 'purchase' | 'login' | 'register' | 'skip_login' | 'location_set' | 'onboarding_complete' | 'onboarding_skip' | 'banner_tap';
+export type Event =
+  | 'screen'
+  | 'view_item'
+  | 'search'
+  | 'add_to_cart'
+  | 'remove_from_cart'
+  | 'add_to_wishlist'
+  | 'remove_from_wishlist'
+  | 'begin_checkout'
+  | 'purchase'
+  | 'apply_coupon'
+  | 'login'
+  | 'register'
+  | 'logout'
+  | 'skip_login'
+  | 'location_set'
+  | 'onboarding_complete'
+  | 'onboarding_skip'
+  | 'banner_tap';
 export async function track(event: Event, props: Record<string, string | number | boolean> = {}) {
   if (!KEY || __DEV__) return;
   try {

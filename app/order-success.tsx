@@ -21,7 +21,12 @@ function SuccessView({ orderId, summary }: { orderId?: string; summary?: Status 
   const text = useRef(new Animated.Value(0)).current;
 
   // A paid order: count it, then offer order updates by notification (a moment later, so the prompt doesn't cover the tick).
-  useEffect(() => { track('purchase'); const t = setTimeout(() => registerPush(true), 2500); return () => clearTimeout(t); }, []);
+  // Once per success screen. The value and item count are sent (to measure sales); never the order number, which would tie the anonymous id to a customer.
+  useEffect(() => {
+    track('purchase', { total: summary?.total ?? '', items: summary?.items?.length ?? 0 });
+    const t = setTimeout(() => registerPush(true), 2500);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Ring springs in, the tick pops, dots burst outwards, then the text rises.
   useEffect(() => {

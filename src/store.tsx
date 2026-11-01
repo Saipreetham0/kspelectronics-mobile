@@ -130,6 +130,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const skipLogin = () => { track('skip_login'); setGuest(true); storage.set(GUEST_KEY, '1').catch(() => {}); };
   const showLogin = () => { setGuest(false); storage.del(GUEST_KEY).catch(() => {}); };
   const logout = async () => {
+    track('logout');
     setAuthToken(null);
     setUser(null);
     setGuest(false);
@@ -218,10 +219,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
   const updateItem: Ctx['updateItem'] = (key, quantity) => optimistic(
     (c) => rework(c, key, quantity), withToken('/api/cart/update', 'POST', { key, quantity }, true));
-  const removeItem: Ctx['removeItem'] = (key) => optimistic(
-    (c) => rework(c, key, 0), withToken('/api/cart/remove', 'POST', { key }, true), true);
+  const removeItem: Ctx['removeItem'] = (key) => {
+    track('remove_from_cart', { key });
+    return optimistic(
+      (c) => rework(c, key, 0), withToken('/api/cart/remove', 'POST', { key }, true), true);
+  };
   const quoteShipping: Ctx['quoteShipping'] = (state, postcode, city, pin) => withToken('/api/cart/shipping', 'POST', { state, postcode, city, lat: pin?.lat, lng: pin?.lng })();
-  const applyCoupon: Ctx['applyCoupon'] = (code) => run(withToken('/api/cart/coupon', 'POST', { code }));
+  const applyCoupon: Ctx['applyCoupon'] = (code) => {
+    track('apply_coupon', { code });
+    return run(withToken('/api/cart/coupon', 'POST', { code }));
+  };
   const removeCoupon: Ctx['removeCoupon'] = (code) => run(withToken('/api/cart/coupon', 'DELETE', { code }));
   const clearLocalCart = async () => {
     cartTokenRef.current = null;
