@@ -5,7 +5,7 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Cpu, GraduationCap, Printer, Truck } from 'phosphor-react-native';
+import { Cpu, GraduationCap, Printer, Tag, Truck } from 'phosphor-react-native';
 import type { Icon } from 'phosphor-react-native';
 import { Text } from '@/components/Text';
 import { Tap } from './motion';
@@ -14,26 +14,37 @@ import { useScreen } from '@/useScreen';
 import { useFetch } from '@/useFetch';
 import { inr } from '@/format';
 import { useAppConfig } from '@/appConfig';
+import type { RemoteBanner } from '@/appConfig';
+import { isHttps, openHttps } from '@/links';
+import { track } from '@/analytics';
+import { useStore } from '@/store';
 import { c, r } from '@/theme';
 
 type Banner = {
-  Glyph: Icon; // shown when the category has no photo
-  id: string; tag: string; title: string; sub: string; cta: string;
+  id: string; Glyph: Icon; // the icon, shown when there is no photo
+  tag: string; title: string; sub: string; cta: string;
   colors: [string, string]; fg: string; ctaBg: string; ctaFg: string;
-  match?: string; // lowercase words in a category name: gives the banner its photo and its destination
-  search?: string; // used when no category matches
-  slug?: string; // a category slug given outright (banners set from the store)
+  image?: string; // a designed banner (from the store): shown full-bleed, with no text drawn over it
+  slug?: string; // the category it opens (its photo is used on the card)
+  search?: string; // opened when there is no category
+  link?: string; // an in-app path ("/offers") or an https page, for banners set from the store
 };
 
-// The home banners. Edit the copy here; the photo and the destination come from the live category list.
-// ponytail: static list; move to a CMS-driven endpoint (like Blinkit) when promos need to change without a release.
+// Built-in banners, shown when the store sends none. They link by category slug (a category renamed in WordPress keeps its slug).
 const BANNERS: Banner[] = [
-  { id: 'printers', Glyph: Printer, tag: 'AUTHORISED RESELLER', title: '3D printers', sub: 'Bambu Lab printers, filament and parts', cta: 'Shop now', colors: ['#0b1220', '#1e293b'], fg: '#fff', ctaBg: c.green, ctaFg: '#0b1220', match: 'printer', search: '3D printer' },
-  { id: 'boards', Glyph: Cpu, tag: 'MAKERS', title: 'Raspberry Pi & boards', sub: 'Arduino · ESP32 · sensors', cta: 'Shop now', colors: [c.accent, c.accentDark], fg: '#fff', ctaBg: '#fff', ctaFg: c.accentDark, match: 'raspberry', search: 'Raspberry Pi' },
-  { id: 'projects', Glyph: GraduationCap, tag: 'STUDENTS', title: 'Engineering projects', sub: 'Kits for college projects', cta: 'Explore kits', colors: [c.success, c.success], fg: '#fff', ctaBg: '#fff', ctaFg: c.success, match: 'engineering', search: 'project kit' },
+  { id: 'printers', Glyph: Printer, tag: 'AUTHORISED RESELLER', title: '3D printers', sub: 'Bambu Lab printers, filament and parts', cta: 'Shop now', colors: ['#0b1220', '#1e293b'], fg: '#fff', ctaBg: c.green, ctaFg: '#0b1220', slug: '3d-printers-and-parts', search: '3D printer' },
+  { id: 'boards', Glyph: Cpu, tag: 'MAKERS', title: 'Raspberry Pi & boards', sub: 'Arduino · ESP32 · sensors', cta: 'Shop now', colors: [c.accent, c.accentDark], fg: '#fff', ctaBg: '#fff', ctaFg: c.accentDark, slug: 'raspberry-pi', search: 'Raspberry Pi' },
+  { id: 'projects', Glyph: GraduationCap, tag: 'STUDENTS', title: 'Engineering projects', sub: 'Kits for college projects', cta: 'Explore kits', colors: [c.success, c.success], fg: '#fff', ctaBg: '#fff', ctaFg: c.success, slug: 'engineering-projects', search: 'project kit' },
 ];
-// The free-delivery banner quotes the store's real minimum (the same one the cart uses), and is left out when the store has none.
+// The free-delivery banner quotes the store's real minimum. It is left out once the cart has items: the strip above the tab bar says the same thing then.
 const shippingBanner = (min: number): Banner => ({ id: 'shipping', Glyph: Truck, tag: 'FREE SHIPPING', title: `Free delivery over ${inr(min)}`, sub: `On every order of ${inr(min)} or more`, cta: 'Start shopping', colors: [c.dealSoft, '#fde68a'], fg: c.dealText, ctaBg: c.dealText, ctaFg: '#fff' });
+
+// A banner set from the store (APP_BANNERS on the server). Only https images; outside its from/until dates it is skipped.
+export const live = (b: RemoteBanner, now = Date.now()) => (!b.from || Date.parse(b.from) <= now) && (!b.until || now < Date.parse(b.until));
+export const fromStore = (b: RemoteBanner): Banner => ({
+  id: b.id, Glyph: Tag, tag: b.tag ?? '', title: b.title, sub: b.sub ?? '', cta: b.cta ?? 'Shop now', colors: b.colors ?? [c.accent, c.accentDark], fg: b.fg ?? '#fff',
+  ctaBg: '#fff', ctaFg: c.accentDark, image: isHttps(b.image) ? b.image : undefined, slug: b.category, search: b.search, link: b.link,
+});
 
 const GAP = 10;
 const EVERY_MS = 4500;
@@ -41,10 +52,13 @@ const EVERY_MS = 4500;
 // `active`: the slide-show only runs while the page is in view. It also stops on the last banner (and never starts with reduced motion), so nothing moves forever.
 export default function BannerCarousel({ cats, active = true }: { cats: Category[] | null; active?: boolean }) {
   const ship = useFetch<{ min: number | null }>('/api/cart/free-shipping');
+  const { itemCount } = useStore();
   const remote = useAppConfig().banners; // banners set from the store replace the built-in ones
-  const banners = useMemo<Banner[]>(() => remote?.length
-    ? remote.map((b) => ({ id: b.id, Glyph: Truck, tag: b.tag ?? '', title: b.title, sub: b.sub ?? '', cta: b.cta ?? 'Shop now', colors: b.colors ?? [c.accent, c.accentDark], fg: b.fg ?? '#fff', ctaBg: '#fff', ctaFg: c.accentDark, slug: b.category, search: b.search }))
-    : ship.data?.min ? [...BANNERS, shippingBanner(ship.data.min)] : BANNERS, [remote, ship.data?.min]);
+  const banners = useMemo<Banner[]>(() => {
+    const fromCfg = (remote ?? []).filter((b) => live(b)).map(fromStore);
+    if (fromCfg.length) return fromCfg;
+    return ship.data?.min && itemCount === 0 ? [...BANNERS, shippingBanner(ship.data.min)] : BANNERS;
+  }, [remote, ship.data?.min, itemCount]);
   const [reduce, setReduce] = useState(false);
   useEffect(() => { AccessibilityInfo.isReduceMotionEnabled().then(setReduce).catch(() => {}); }, []);
   const at = useRef(0);
@@ -73,11 +87,12 @@ export default function BannerCarousel({ cats, active = true }: { cats: Category
   const onEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => { const i = Math.max(0, Math.min(banners.length - 1, Math.round(e.nativeEvent.contentOffset.x / step))); at.current = i; setIndex(i); };
 
   const open = (b: Banner) => {
-    if (b.slug) return router.push({ pathname: '/(tabs)/shop', params: { category: b.slug } });
-    const cat = b.match ? cats?.find((x) => x.name.toLowerCase().includes(b.match!)) : undefined;
-    if (cat) router.push({ pathname: '/(tabs)/shop', params: { category: cat.slug } });
-    else if (b.search) router.push({ pathname: '/(tabs)/shop', params: { search: b.search } });
-    else router.push('/(tabs)/shop');
+    track('banner_tap', { id: b.id });
+    if (b.link?.startsWith('/')) return router.push(b.link as never);
+    if (b.link && isHttps(b.link)) return openHttps(b.link);
+    if (b.slug && (!cats || cats.some((x) => x.slug === b.slug))) return router.push({ pathname: '/(tabs)/shop', params: { category: b.slug } });
+    if (b.search) return router.push({ pathname: '/(tabs)/shop', params: { search: b.search } });
+    router.push('/(tabs)/shop');
   };
 
   return (
@@ -88,16 +103,23 @@ export default function BannerCarousel({ cats, active = true }: { cats: Category
         onScrollEndDrag={() => { resume.current = setTimeout(() => { paused.current = false; }, 6000); }}
         onMomentumScrollEnd={onEnd}>
         {banners.map((b) => {
-          const photo = b.match ? cats?.find((x) => x.name.toLowerCase().includes(b.match!))?.image?.src : undefined;
+          const a11y = [b.title, b.sub, b.cta].filter(Boolean).join('. ');
+          // A designed banner: the artwork carries the message, so nothing is drawn over it (send it 16:7, e.g. 1200 × 525).
+          if (b.image) return (
+            <Tap key={b.id} onPress={() => open(b)} scaleTo={0.98} style={{ width: cardW }} accessibilityRole="button" accessibilityLabel={a11y}>
+              <Image source={b.image} style={[s.art, { backgroundColor: b.colors[0] }]} contentFit="cover" transition={200} />
+            </Tap>
+          );
+          const photo = b.slug ? cats?.find((x) => x.slug === b.slug)?.image?.src : undefined;
           return (
-            <Tap key={b.id} onPress={() => open(b)} scaleTo={0.98} style={{ width: cardW }} accessibilityRole="button" accessibilityLabel={`${b.title}. ${b.sub}. ${b.cta}`}>
+            <Tap key={b.id} onPress={() => open(b)} scaleTo={0.98} style={{ width: cardW }} accessibilityRole="button" accessibilityLabel={a11y}>
               <LinearGradient colors={b.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.card}>
                 <View style={[s.blob, { backgroundColor: b.fg, opacity: 0.07, right: -30, top: -40, width: 150, height: 150 }]} />
                 <View style={[s.blob, { backgroundColor: b.fg, opacity: 0.06, right: 40, bottom: -60, width: 120, height: 120 }]} />
                 <View style={s.text}>
                   {b.tag ? <Text style={[s.tag, { color: b.fg, borderColor: b.fg }]}>{b.tag}</Text> : null}
                   <Text style={[s.title, { color: b.fg }]} numberOfLines={2}>{b.title}</Text>
-                  <Text style={[s.sub, { color: b.fg }]} numberOfLines={2}>{b.sub}</Text>
+                  {b.sub ? <Text style={[s.sub, { color: b.fg }]} numberOfLines={2}>{b.sub}</Text> : null}
                   <Text style={[s.cta, { color: b.ctaFg, backgroundColor: b.ctaBg }]}>{b.cta}</Text>
                 </View>
                 <View style={s.photoWrap}>
@@ -110,15 +132,19 @@ export default function BannerCarousel({ cats, active = true }: { cats: Category
           );
         })}
       </ScrollView>
-      <View style={s.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        {banners.map((b, i) => <View key={b.id} style={[s.dot, i === index && s.dotOn]} />)}
-      </View>
+      {banners.length > 1 && (
+        <View style={s.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          {banners.map((b, i) => <View key={b.id} style={[s.dot, i === index && s.dotOn]} />)}
+        </View>
+      )}
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  card: { height: 156, borderRadius: r.lg + 4, padding: 16, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' },
+  // minHeight, not height: with a large system font the text makes the card taller instead of being clipped.
+  card: { minHeight: 156, borderRadius: r.lg + 4, padding: 16, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' },
+  art: { width: '100%', aspectRatio: 16 / 7, borderRadius: r.lg + 4 },
   blob: { position: 'absolute', borderRadius: 999 },
   text: { flex: 1, paddingRight: 8 },
   tag: { alignSelf: 'flex-start', fontSize: 11, fontWeight: '800', letterSpacing: 0.8, borderWidth: 1, borderRadius: r.pill, paddingHorizontal: 8, paddingVertical: 2, opacity: 0.85, overflow: 'hidden' },

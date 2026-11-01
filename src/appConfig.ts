@@ -10,7 +10,8 @@ import { storage } from './storage';
 //   message     a notice shown at the top of the app
 //   banners     replace the Home banners
 // Without the endpoint (or offline) everything stays at its default: features that need the store stay hidden.
-export type RemoteBanner = { id: string; tag?: string; title: string; sub?: string; cta?: string; colors?: [string, string]; fg?: string; category?: string; search?: string };
+// image: a designed https banner (16:7) shown full-bleed; link: an in-app path ("/offers") or https page; from/until: ISO dates the banner runs between.
+export type RemoteBanner = { id: string; tag?: string; title: string; sub?: string; cta?: string; colors?: [string, string]; fg?: string; category?: string; search?: string; image?: string; link?: string; from?: string; until?: string };
 export type AppConfig = { minVersion?: string; message?: string; flags?: Record<string, boolean>; banners?: RemoteBanner[] };
 
 const KEY = 'ksp_cfg';
