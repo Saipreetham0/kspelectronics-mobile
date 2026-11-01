@@ -339,7 +339,7 @@ const s = StyleSheet.create({
   seeAll: { fontSize: 13, fontWeight: '800', color: c.accent },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 6, paddingTop: 6 },
   tile: { alignItems: 'center', paddingVertical: 8, paddingHorizontal: 3 },
-  tileImg: { borderRadius: 18, overflow: 'hidden', backgroundColor: c.accentSoft },
+  tileImg: { borderRadius: 18, overflow: 'hidden', backgroundColor: '#fff', borderWidth: 1, borderColor: c.line, alignItems: 'center', justifyContent: 'center' }, // every tile the same square, picture or not (Instamart)
   tileName: { fontSize: 12, textAlign: 'center', marginTop: 6, color: c.text, fontWeight: '600', lineHeight: 15 },
   // The rail: plain white, the chosen item bold and dark with a bar on its right edge, the others muted.
   rail: { width: 82, flexGrow: 0, backgroundColor: '#fff', borderRightWidth: 1, borderRightColor: c.line },
