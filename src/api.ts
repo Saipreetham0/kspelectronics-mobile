@@ -9,6 +9,10 @@ let onExpired: (() => void) | null = null;
 export const setExpiredHandler = (f: (() => void) | null) => { onExpired = f; };
 const ACCOUNT_CALL = /^https?:\/\/[^/]+\/api\/(auth\/(me|profile)|orders)/;
 
+// Public catalogue reads never carry the login: the CDN skips its cache for any request with an Authorization header, which made every product list
+// take about 2 s for signed-in shoppers instead of about 0.1 s. None of these routes look at the login.
+const PUBLIC = /^https?:\/\/[^/]+\/api\/(catalog|search\/suggest|app-config|pincode|offers|cart\/free-shipping)(\/|\?|$)/;
+
 export class ApiError extends Error {
   constructor(message: string, public status: number) { super(message); }
 }
@@ -27,7 +31,7 @@ async function call<T>(url: string, { method = 'GET', body, cartToken, pin }: Op
       method, signal: ctl.signal,
       headers: {
         'Content-Type': 'application/json', 'x-client': 'app',
-        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        ...(authToken && !(method === 'GET' && PUBLIC.test(url)) ? { Authorization: `Bearer ${authToken}` } : {}),
         ...(cartToken ? { 'x-cart-token': cartToken } : {}),
         ...(pin ? { 'x-pin': pin } : {}),
       },
