@@ -21,6 +21,7 @@ import type { Loc } from '@/location';
 import { decodeHtml } from '@/format';
 import { useFetch } from '@/useFetch';
 import { QUICK_TAG, useMode } from '@/mode';
+import { logoOf, useBrands } from '@/brands';
 import { useScreen } from '@/useScreen';
 import type { CategoryTree, Product } from '@/types';
 import { track } from '@/analytics';
@@ -95,6 +96,7 @@ export default function Shop() {
   const chain = findChain(forest, category);
   useEffect(() => { if (category && !pageSlug && chain.length) setPageSlug((chain[1] ?? chain[0]).slug); }, [category, pageSlug, chain]);
 
+  const brandLogo = logoOf(useBrands(), brand); // the brand's own logo from WordPress, when it has one
   const quickMode = useMode().mode === 'quick';
   const fetchPage = useCallback(async (p: number) => {
     const id = ++req.current;
@@ -169,6 +171,7 @@ export default function Shop() {
       {brand && !searching && !search ? (
         <View style={s.head}>
           <Pressable onPress={() => { setBrand(''); router.setParams({ brand: '', brandName: '' }); if (router.canGoBack()) router.back(); }} style={s.circle} accessibilityRole="button" accessibilityLabel="Back"><Ionicons name="arrow-back" size={22} color={c.text} /></Pressable>
+          {brandLogo ? <View style={s.brandLogo}><Image source={brandLogo} style={{ width: '100%', height: '100%' }} contentFit="contain" accessibilityLabel={`${params.brandName || brand} logo`} /></View> : null}
           <View style={s.headMid}>
             <Text style={s.headT} numberOfLines={1}>{decodeHtml(params.brandName || brand.replace(/-/g, ' '))}</Text>
             <Text style={s.headS} numberOfLines={1}>All products from this brand</Text>
@@ -323,6 +326,7 @@ const s = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.line },
   circle: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   headMid: { flex: 1, minWidth: 0, borderWidth: 1, borderColor: c.line, borderRadius: 22, paddingHorizontal: 14, paddingVertical: 5, backgroundColor: '#fff' },
+  brandLogo: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: c.line, overflow: 'hidden', padding: 5 },
   headT: { fontSize: 15, fontWeight: '800', color: c.text },
   headS: { fontSize: 11, fontWeight: '600', color: c.success, marginTop: 1 },
   headPlace: { color: c.text, fontWeight: '700' },
