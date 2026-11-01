@@ -6,7 +6,8 @@ module.exports = ({ config }) => {
 const projectId = process.env.EAS_PROJECT_ID || config.extra?.eas?.projectId;
 return {
   ...config,
-  plugins: [...(config.plugins ?? []), ['expo-notifications', { color: '#1c61e7' }], '@sentry/react-native'],
+  // Apple Pay (iOS): set EXPO_PUBLIC_APPLE_PAY_MERCHANT_ID to add the entitlement and Razorpay's Apple Pay pod; without it nothing changes.
+  plugins: [...(config.plugins ?? []), ['expo-notifications', { color: '#1c61e7' }], '@sentry/react-native', ['./plugins/withRazorpayApplePay', { merchantId: process.env.EXPO_PUBLIC_APPLE_PAY_MERCHANT_ID }]],
   extra: { ...config.extra, eas: { ...config.extra?.eas, ...(projectId ? { projectId } : {}) } },
   runtimeVersion: { policy: 'appVersion' }, // an update only reaches builds of the same app version
   updates: projectId ? { url: `https://u.expo.dev/${projectId}`, fallbackToCacheTimeout: 0 } : { enabled: false },

@@ -14,6 +14,9 @@ import { useStore } from '@/store';
 import { c } from '@/theme';
 
 import { isUpiAppUrl, resolveIntentUrl } from '@/upi';
+import { useFlag } from '@/appConfig';
+import { canApplePay, payWithApplePay } from '@/applePay';
+import ApplePayButton from '@/components/ApplePayButton';
 
 type Msg =
   | { type: 'success'; razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }
@@ -37,6 +40,16 @@ export default function Pay() {
   // Set the moment one outcome is chosen (success from the checkout, a paid status on return from a UPI app, a failure or a dismiss):
   // the others can arrive a moment later and must not clear the cart or navigate a second time. A ref, not state, so it holds before the next render.
   const doneRef = useRef(false);
+  // Apple Pay (iPhone, when the store has switched it on): Apple's button above the usual checkout, which stays for UPI, cards and netbanking.
+  const applePayOn = useFlag('applepay');
+  const [apple, setApple] = useState(false);
+  const [appleWorking, setAppleWorking] = useState(false);
+  const appleBusy = useRef(false); // set at once: a second sheet while one is open fails
+  useEffect(() => {
+    if (!applePayOn || !req) { setApple(false); return; }
+    let live = true; canApplePay(req.keyId).then((ok) => { if (live) setApple(ok); });
+    return () => { live = false; };
+  }, [applePayOn, req?.keyId]); // eslint-disable-line react-hooks/exhaustive-deps
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (resumeTimer.current) clearTimeout(resumeTimer.current); }, []);
 
@@ -247,6 +260,20 @@ export default function Pay() {
     return false;
   };
 
+  // Apple Pay: the same order, then the same server check of Razorpay's signature as the web checkout. A cancel just returns to the choices.
+  const onApplePay = async () => {
+    if (appleBusy.current || doneRef.current) return;
+    appleBusy.current = true; setAppleWorking(true);
+    const res = await payWithApplePay({ keyId: req.keyId, orderId: req.rzpOrderId, amount: req.amount, currency: req.currency, email: req.prefill.email, contact: req.prefill.contact, ref: String(req.orderId) });
+    appleBusy.current = false; setAppleWorking(false);
+    if (!res.ok) { if (!res.cancelled) Alert.alert('Apple Pay', res.message); return; }
+    if (doneRef.current) return;
+    doneRef.current = true; verifyingRef.current = true; setVerifying(true);
+    const verified = await verifyWithRetries({ type: 'success', razorpay_payment_id: res.razorpay_payment_id, razorpay_order_id: res.razorpay_order_id, razorpay_signature: res.razorpay_signature });
+    if (!verified) return fail('unconfirmed');
+    await succeed(req);
+  };
+
   const onMessage = async (e: WebViewMessageEvent) => {
     let m: Msg;
     try {
@@ -314,6 +341,12 @@ export default function Pay() {
 
   return (
     <View style={s.fill}>
+      {apple && (
+        <View style={s.apple}>
+          <ApplePayButton onPress={onApplePay} disabled={appleWorking} />
+          <Text style={s.or}>or pay with UPI, card or netbanking below</Text>
+        </View>
+      )}
       <WebView
         key={reloadKey}
         originWhitelist={['*']}
@@ -339,4 +372,8 @@ export default function Pay() {
   );
 }
 
-const s = StyleSheet.create({ fill: { flex: 1, backgroundColor: '#fff' } });
+const s = StyleSheet.create({
+  fill: { flex: 1, backgroundColor: '#fff' },
+  apple: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, gap: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: c.line },
+  or: { textAlign: 'center', color: c.muted, fontSize: 12 },
+});
