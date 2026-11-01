@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo, ScrollView, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, ScrollView, StyleSheet, View } from 'react-native';
 import type { ScrollViewInstance } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Image } from 'expo-image';
@@ -46,7 +46,7 @@ export const fromStore = (b: RemoteBanner): Banner => ({
   ctaBg: '#fff', ctaFg: c.accentDark, image: isHttps(b.image) ? b.image : undefined, slug: b.category, search: b.search, link: b.link,
 });
 
-const GAP = 10;
+const GAP = 12; // the same as the left margin, so a scrolled-past card is fully out of view
 const EVERY_MS = 4500;
 
 // `active`: the slide-show only runs while the page is in view. It also stops on the last banner (and never starts with reduced motion), so nothing moves forever.
@@ -66,7 +66,7 @@ export default function BannerCarousel({ cats, active = true }: { cats: Category
   const cardW = Math.round(Math.min(width - 40, 480)); // the next card peeks in, so it reads as a carousel
   const step = cardW + GAP;
   const ref = useRef<ScrollViewInstance>(null);
-  const [index, setIndex] = useState(0);
+  const sx = useRef(new Animated.Value(0)).current; // the row's scroll position, which drives the dots
   const paused = useRef(false);
   const resume = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -77,14 +77,14 @@ export default function BannerCarousel({ cats, active = true }: { cats: Category
       if (paused.current) return;
       const next = at.current + 1;
       if (next >= banners.length) { clearInterval(t); return; }
-      at.current = next; setIndex(next);
+      at.current = next;
       ref.current?.scrollTo({ x: next * step, animated: true });
     }, EVERY_MS);
     return () => clearInterval(t);
   }, [step, active, reduce, banners.length]);
   useEffect(() => () => { if (resume.current) clearTimeout(resume.current); }, []);
 
-  const onEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => { const i = Math.max(0, Math.min(banners.length - 1, Math.round(e.nativeEvent.contentOffset.x / step))); at.current = i; setIndex(i); };
+  const onEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => { at.current = Math.max(0, Math.min(banners.length - 1, Math.round(e.nativeEvent.contentOffset.x / step))); };
 
   const open = (b: Banner) => {
     track('banner_tap', { id: b.id });
@@ -98,7 +98,8 @@ export default function BannerCarousel({ cats, active = true }: { cats: Category
   return (
     <View style={{ paddingTop: 12 }}>
       <ScrollView ref={ref} horizontal showsHorizontalScrollIndicator={false} snapToInterval={step} snapToAlignment="start" decelerationRate="fast"
-        contentContainerStyle={{ paddingHorizontal: 12, gap: GAP }} scrollEventThrottle={32}
+        contentContainerStyle={{ paddingLeft: 12, paddingRight: Math.max(12, width - cardW - 12), gap: GAP }} scrollEventThrottle={16}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: sx } } }], { useNativeDriver: false })}
         onScrollBeginDrag={() => { paused.current = true; if (resume.current) clearTimeout(resume.current); }}
         onScrollEndDrag={() => { resume.current = setTimeout(() => { paused.current = false; }, 6000); }}
         onMomentumScrollEnd={onEnd}>
@@ -134,7 +135,10 @@ export default function BannerCarousel({ cats, active = true }: { cats: Category
       </ScrollView>
       {banners.length > 1 && (
         <View style={s.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          {banners.map((b, i) => <View key={b.id} style={[s.dot, i === index && s.dotOn]} />)}
+          {banners.map((b, i) => {
+            const range = [(i - 1) * step, i * step, (i + 1) * step];
+            return <Animated.View key={b.id} style={[s.dot, { width: sx.interpolate({ inputRange: range, outputRange: [6, 18, 6], extrapolate: 'clamp' }), backgroundColor: sx.interpolate({ inputRange: range, outputRange: [c.line, c.accent, c.line], extrapolate: 'clamp' }) }]} />;
+          })}
         </View>
       )}
     </View>
@@ -154,6 +158,5 @@ const s = StyleSheet.create({
   photoWrap: { width: 112, alignItems: 'center', justifyContent: 'center' },
   photo: { width: 108, height: 108, borderRadius: 24, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', transform: [{ rotate: '-3deg' }] },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 10 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.line },
-  dotOn: { width: 18, backgroundColor: c.accent },
+  dot: { height: 6, borderRadius: 3 },
 });
