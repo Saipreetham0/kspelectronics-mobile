@@ -16,6 +16,7 @@ import DeliverySlots from '@/components/DeliverySlots';
 import SearchButton from '@/components/SearchButton';
 import { storage } from '@/storage';
 import { SITE_URL, WHATSAPP } from '@/config';
+import { isHttps } from '@/links';
 import { useStore } from '@/store';
 import type { Account, Cart } from '@/types';
 import { track } from '@/analytics';
@@ -268,6 +269,7 @@ export default function Checkout() {
         saveToAccount();
         if (d.redirect && !/order-received/.test(d.redirect)) {
           // Pay-later and other redirect gateways: the shopper pays on their page, and this screen waits for the order to turn paid (or failed).
+          if (!isHttps(d.redirect)) throw new Error('Could not open the payment page. Please try again or choose another payment method.');
           await Linking.openURL(d.redirect);
           router.replace({ pathname: '/order-success', params: { orderId: String(d.orderId), key: d.orderKey ?? '' } });
         } else { await clearLocalCart(); router.replace({ pathname: '/order-success', params: { orderId: String(d.orderId), key: d.orderKey ?? '' } }); }
@@ -428,7 +430,7 @@ export default function Checkout() {
           pincode={form.pincode}
         />
         <Text style={{ color: c.muted, fontSize: 12, textAlign: 'center', marginTop: 4 }}>
-          By placing your order you agree to our <Text style={s.link} onPress={() => Linking.openURL(`${SITE_URL}/terms-conditions/`)} accessibilityRole="link">Terms</Text> and <Text style={s.link} onPress={() => Linking.openURL(`${SITE_URL}/refund_returns/`)} accessibilityRole="link">Refund Policy</Text>.
+          By placing your order you agree to our <Text style={s.link} onPress={() => Linking.openURL(`${SITE_URL}/terms-conditions/`).catch(() => {})} accessibilityRole="link">Terms</Text> and <Text style={s.link} onPress={() => Linking.openURL(`${SITE_URL}/refund_returns/`).catch(() => {})} accessibilityRole="link">Refund Policy</Text>.
         </Text>
       </ScrollView>
 
@@ -445,7 +447,7 @@ export default function Checkout() {
             <Text style={{ fontSize: 11, color: c.muted }} numberOfLines={1}>PAY USING</Text>
             <Text style={{ fontSize: 13, fontWeight: '700' }} numberOfLines={2}>{method ? (native && method === 'razorpay' ? 'UPI / Card / Netbanking' : payName(method)) : '…'}</Text>
           </View>
-          <Button title={`${quoting ? 'Updating total…' : minorToInr(t.total_price, m)}  ·  Place order`} loading={placing} onPress={place} style={{ flex: 1, marginLeft: 12 }} />
+          <Button title={quoting ? 'Updating total…' : `${minorToInr(t.total_price, m)}  ·  Place order`} loading={placing} onPress={place} style={{ flex: 1, marginLeft: 12 }} />
         </View>
       </SafeAreaView>}
 

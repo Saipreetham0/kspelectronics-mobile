@@ -21,7 +21,7 @@ import { c, r } from '@/theme';
 type Undo = { label: string; restore: () => Promise<void> };
 
 export default function CartScreen() {
-  const { cart, cartToken, ready, syncing, itemCount, refresh, addItem, updateItem, removeItem, applyCoupon, removeCoupon, quoteShipping } = useStore();
+  const { cart, cartToken, cartFailed, ready, syncing, itemCount, refresh, addItem, updateItem, removeItem, applyCoupon, removeCoupon, quoteShipping } = useStore();
   const [refreshing, setRefreshing] = useState(false);
   const freeShip = useFetch<{ min: number | null }>('/api/cart/free-shipping'); // the store's real free-shipping amount, if it has one
   const [code, setCode] = useState('');
@@ -74,9 +74,9 @@ export default function CartScreen() {
     const off = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKb(false));
     return () => { on.remove(); off.remove(); };
   }, []);
+  const [actBusy, setActBusy] = useState(false);
   if (!ready) return <Spinner />;
   const items = cart?.items ?? [];
-  const [actBusy, setActBusy] = useState(false);
   const act = async (fn: () => Promise<void>) => {
     if (actBusy) return;
     setActBusy(true);
@@ -106,6 +106,15 @@ export default function CartScreen() {
     </View>
   );
 
+  if (!items.length && cartFailed && cartToken) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: c.surface }}>
+        <Text style={{ fontSize: 20, fontWeight: '800', marginBottom: 6 }}>Couldn't load your cart</Text>
+        <Text style={{ color: c.muted, marginBottom: 18, textAlign: 'center' }}>Your items are safe. Check your connection and try again.</Text>
+        <Button title="Try again" onPress={refresh} />
+      </View>
+    );
+  }
   if (!items.length) {
     return (
       <View style={{ flex: 1, backgroundColor: c.surface }}>
@@ -147,13 +156,19 @@ export default function CartScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await refresh(); setRefreshing(false); }} tintColor={c.loader} />}
         ListHeaderComponent={
           <>
-            <Card>
+            {FREE_SHIPPING != null && left != null && (
+              <Card style={{ backgroundColor: c.accentSoft, borderColor: c.accentSoft }}>
+                <Text style={{ fontWeight: '700', color: c.accent }}>{left > 0 ? `Add ${minorToInr(left * 10 ** m, m)} more for free shipping` : '🎉 You get free shipping'}</Text>
+                <View style={s.track}><View style={[s.fill, { width: `${Math.min(100, (subtotal / FREE_SHIPPING) * 100)}%` }]} /></View>
+              </Card>
+            )}
+            <Card style={s.shipTop}>
               <Text style={{ fontSize: 17, fontWeight: '900', color: c.text }}>{!loc ? 'Where should we deliver?' : `Delivery to ${loc.city}${eta ? ` · by ${eta}` : ''}`}</Text>
               <Pressable onPress={() => setPinOpen(true)} hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }} accessibilityRole="button" accessibilityLabel="Change delivery location" style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
                 <Text style={{ flex: 1, color: '#444', fontSize: 13 }} numberOfLines={2}>{loc ? `${loc.area}, ${loc.city} · ${loc.pin}` : 'Set your delivery location'}</Text>
                 <Text style={{ color: c.accent, fontWeight: '800', fontSize: 13 }}>{loc ? 'Change' : 'Set'}</Text>
               </Pressable>
-              <Text style={{ color: c.muted, marginTop: 6 }}>{itemCount} item{itemCount > 1 ? 's' : ''} in your cart</Text>
+              <Text style={{ color: c.muted, marginTop: 6 }}>Shipment of {itemCount} item{itemCount > 1 ? 's' : ''}</Text>
             </Card>
             {gone.size > 0 && (
               <Card style={{ backgroundColor: "#fdecec", borderColor: c.danger }}>
@@ -161,15 +176,9 @@ export default function CartScreen() {
                 <Text style={{ color: '#444', marginTop: 2, fontSize: 13 }}>Remove {gone.size > 1 ? 'them' : 'it'} or move {gone.size > 1 ? 'them' : 'it'} to your wishlist to check out.</Text>
               </Card>
             )}
-            {FREE_SHIPPING != null && left != null && (
-              <Card style={{ backgroundColor: c.accentSoft, borderColor: c.accentSoft }}>
-                <Text style={{ fontWeight: '700', color: c.accent }}>{left > 0 ? `Add ${minorToInr(left * 10 ** m, m)} more for free shipping` : '🎉 You get free shipping'}</Text>
-                <View style={s.track}><View style={[s.fill, { width: `${Math.min(100, (subtotal / FREE_SHIPPING) * 100)}%` }]} /></View>
-              </Card>
-            )}
           </>
         }
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const name = decodeHtml(item.name);
           const slug = item.permalink?.split('/').filter(Boolean).pop();
           const max = item.quantity_limits?.maximum ?? Infinity, atMax = item.quantity >= max;
@@ -177,7 +186,7 @@ export default function CartScreen() {
           const unit = Number(item.prices.price), mrp = Number(item.prices.regular_price);
           const strike = mrp > unit && unit > 0 ? (mrp / unit) * line : 0; // the MRP of the whole line, on the same GST footing as the price shown
           return (
-            <Card style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={[s.lineCard, index === items.length - 1 && s.lineLast]}>
               <Pressable onPress={() => slug && router.push({ pathname: '/product/[slug]', params: { slug } })} disabled={!slug} accessibilityRole="link" accessibilityLabel={`Open ${name}`}>
                 <Image source={item.images[0]?.thumbnail || item.images[0]?.src} style={[s.img, gone.has(item.key) && { opacity: 0.4 }]} contentFit="contain" />
               </Pressable>
@@ -214,7 +223,7 @@ export default function CartScreen() {
                 </View>
                 {atMax && max < 9999 ? <Text style={s.limit}>Maximum {max} per order</Text> : item.low_stock_remaining ? <Text style={s.limit}>Only {item.low_stock_remaining} left</Text> : null}
               </View>
-            </Card>
+            </View>
           );
         }}
         ListFooterComponent={
@@ -343,6 +352,10 @@ const Row = ({ k, v, color }: { k: string; v: string; color?: string }) => (
 );
 
 const s = StyleSheet.create({
+  // The delivery header and every line read as one shipment card, as on Blinkit: the header has no bottom edge, each line a top divider, the last line closes the card.
+  shipTop: { marginBottom: 0, borderBottomWidth: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
+  lineCard: { flexDirection: 'row', gap: 12, padding: 16, backgroundColor: '#fff', borderWidth: 0, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, borderColor: c.line },
+  lineLast: { borderBottomWidth: 1, borderBottomLeftRadius: r.lg, borderBottomRightRadius: r.lg, marginBottom: 14 },
   track: { height: 6, borderRadius: 3, backgroundColor: '#fff', marginTop: 8, overflow: 'hidden' },
   fill: { height: 6, backgroundColor: c.accent },
   img: { width: 84, height: 84, borderRadius: r.sm, backgroundColor: c.surface },

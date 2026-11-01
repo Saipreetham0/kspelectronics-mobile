@@ -101,9 +101,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   logoWrapper: {
-    width: '75%',
-    maxWidth: 300,
-    height: 90,
+    width: '82%',
+    maxWidth: 340,
+    aspectRatio: 2040 / 364, // the wordmark's own proportions, so it is as wide as the box allows
     justifyContent: 'center',
     alignItems: 'center',
   },

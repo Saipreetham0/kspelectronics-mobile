@@ -4,7 +4,7 @@ import Constants from 'expo-constants';
 import { Text } from '@/components/Text';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { CaretRight, ClockCounterClockwise, FileText, Headset, Heart, Package, ShareNetwork, SignOut, Tag, Truck, User, WhatsappLogo } from 'phosphor-react-native';
+import { CaretRight, ClockCounterClockwise, FileText, Headset, Heart, MapPin, Package, ShareNetwork, SignOut, Tag, Truck, User, WhatsappLogo } from 'phosphor-react-native';
 import type { Icon } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, Spinner } from '@/components/ui';
@@ -41,6 +41,7 @@ export default function Account() {
           <Card><Button title="Log in or register" onPress={showLogin} /></Card>
           <Section title="Help and more">
             <Row Glyph={Heart} label="Wishlist" onPress={() => router.push('/wishlist')} />
+            <Row Glyph={MapPin} label="Address book" onPress={() => router.push('/addresses')} />
             <Row Glyph={Truck} label="Track an order" onPress={() => router.push('/track')} />
             <Row Glyph={WhatsappLogo} label="Chat with us on WhatsApp" onPress={chat} />
             <Row Glyph={ShareNetwork} label="Share the app" onPress={shareApp} last />
@@ -61,6 +62,7 @@ export default function Account() {
         </View>
 
         <Section title="Your information">
+          <Row Glyph={MapPin} label="Address book" onPress={() => router.push('/addresses')} />
           <Row Glyph={ClockCounterClockwise} label="Order again" onPress={() => router.push('/(tabs)/reorder')} />
           {offersOn && <Row Glyph={Tag} label="Offers and coupons" onPress={() => router.push('/offers')} />}
           <Row Glyph={Truck} label="Track an order" onPress={() => router.push('/track')} last />

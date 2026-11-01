@@ -3,6 +3,12 @@ import { API_URLS } from './config';
 let authToken: string | null = null;
 export const setAuthToken = (t: string | null) => { authToken = t; };
 
+// Called when the store says the saved login is no longer valid (401 on an account call while signed in), so the app signs out instead of failing on every screen.
+// Only calls that exist to read or change the logged-in account count: a wrong password on login, password change or delete is a 401 too, and must not log anyone out.
+let onExpired: (() => void) | null = null;
+export const setExpiredHandler = (f: (() => void) | null) => { onExpired = f; };
+const ACCOUNT_CALL = /^https?:\/\/[^/]+\/api\/(auth\/(me|profile)|orders)/;
+
 export class ApiError extends Error {
   constructor(message: string, public status: number) { super(message); }
 }
@@ -28,6 +34,7 @@ async function call<T>(url: string, { method = 'GET', body, cartToken, pin }: Op
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const data = await r.json().catch(() => null);
+    if (r.status === 401 && authToken && ACCOUNT_CALL.test(url)) onExpired?.();
     if (!r.ok) throw new ApiError((data as { error?: string } | null)?.error ?? 'Something went wrong. Please try again.', r.status);
     return data as T;
   } catch (e) {

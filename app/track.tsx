@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { openHttps } from '@/links';
 import { Text } from '@/components/Text';
 import { useLocalSearchParams } from 'expo-router';
 import { Button, Card, Field, H } from '@/components/ui';
@@ -79,7 +80,7 @@ export default function Track() {
                 </View>
               ) : null}
               {res.live?.rider ? <RiderCard rider={res.live.rider} eta={res.live.eta} drop={res.live.drop ?? undefined} /> : null}
-              <Button title="Track shipment" variant="outline" style={{ marginTop: 12 }} onPress={() => Linking.openURL(res.live?.link || res.shipment!.link || 'https://kspelectronics.shiprocket.co/')} />
+              <Button title="Track shipment" variant="outline" style={{ marginTop: 12 }} onPress={() => openHttps(res.live?.link || res.shipment!.link || 'https://kspelectronics.shiprocket.co/')} />
             </Card>
           )}
           {res.updates.length > 0 && (

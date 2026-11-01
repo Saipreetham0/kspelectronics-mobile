@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api, ApiError, setAuthToken } from './api';
+import { api, ApiError, setAuthToken, setExpiredHandler } from './api';
+import { setPayRequest } from './payRequest';
 import { storage } from './storage';
 import { clearAddresses } from './addresses';
 import { clearLoc, getLoc } from './location';
@@ -30,6 +31,7 @@ type Ctx = {
   account: () => Promise<Account>;
   cart: Cart | null;
   cartToken: string | null;
+  cartFailed: boolean; // a cart is saved but the store couldn't be asked for it: shown as an error with a retry, not as an empty cart
   itemCount: number;
   busy: boolean;
   syncing: boolean; // cart changes are still on their way to the store
@@ -55,6 +57,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [guest, setGuest] = useState(false);
   const [cart, setCart] = useState<Cart | null>(null);
   const [cartToken, setCartToken] = useState<string | null>(null);
+  const [cartFailed, setCartFailed] = useState(false);
   const cartTokenRef = React.useRef<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -89,8 +92,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (ct) { cartTokenRef.current = ct; setCartToken(ct); }
       setReady(true);
       if (auth && shown) verifyUser();
-      if (ct) api<Cart>('/api/cart', { cartToken: ct, pin: await pinHeader() }).then(setCart).catch(() => { /* shown as empty until the next refresh */ });
+      if (ct) api<Cart>('/api/cart', { cartToken: ct, pin: await pinHeader() }).then((c) => { setCart(c); setCartFailed(false); }).catch(() => setCartFailed(true));
     })();
+  }, []);
+
+  // The store rejected the saved login mid-session: sign out here too (the cart and addresses stay: the shopper can carry on as a guest).
+  useEffect(() => {
+    setExpiredHandler(() => { setAuthToken(null); setUser(null); storage.del(AUTH_KEY).catch(() => {}); storage.del(USER_KEY).catch(() => {}); });
+    return () => setExpiredHandler(null);
   }, []);
 
   const signIn = async (token: string) => {
@@ -134,7 +143,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       storage.del(USER_KEY).catch(() => {}),
       clearAddresses(),
       clearLoc(),
-      ...['ksp_recent_searches', 'ksp_recent_products', 'ksp_wishlist', 'ksp_messages', 'ksp_cart_prices'].map((k) => storage.del(k).catch(() => {}))
+      setPayRequest(null), // an unfinished payment's order key must not outlive the login
+      ...['ksp_recent_searches', 'ksp_recent_products', 'ksp_wishlist', 'ksp_messages', 'ksp_cart_prices', 'ksp_pending_order'].map((k) => storage.del(k).catch(() => {}))
     ]);
   };
   const account = () => api<Account>('/api/auth/me');
@@ -173,7 +183,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!token || waiting.current > 0) return;
     try {
       setCart(await api<Cart>('/api/cart', { cartToken: token, pin: await pinHeader() }));
+      setCartFailed(false);
     } catch (e) {
+      setCartFailed(!(e instanceof ApiError && e.status === 400));
       if (e instanceof ApiError && e.status === 400) {
         cartTokenRef.current = null;
         setCartToken(null);
@@ -219,9 +231,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const itemCount = cart?.items?.reduce((n, i) => n + i.quantity, 0) ?? 0;
-  const value = useMemo<Ctx>(() => ({ ready, onboarded, completeOnboarding, user, guest, skipLogin, showLogin, requestOtp, loginOtp, login, register, logout, account, cart, cartToken, itemCount, busy, syncing, addItem, refresh, updateItem, removeItem, applyCoupon, removeCoupon, quoteShipping, setCart, clearLocalCart }),
+  const value = useMemo<Ctx>(() => ({ ready, onboarded, completeOnboarding, user, guest, skipLogin, showLogin, requestOtp, loginOtp, login, register, logout, account, cart, cartToken, cartFailed, itemCount, busy, syncing, addItem, refresh, updateItem, removeItem, applyCoupon, removeCoupon, quoteShipping, setCart, clearLocalCart }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ready, onboarded, completeOnboarding, user, guest, cart, cartToken, busy, syncing, refresh]);
+    [ready, onboarded, completeOnboarding, user, guest, cart, cartToken, cartFailed, busy, syncing, refresh]);
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }
 

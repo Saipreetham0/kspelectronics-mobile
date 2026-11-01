@@ -21,11 +21,12 @@ export default function AddButton({ product: p, size = 'sm', block, compact }: {
   const btn = useRef<HostInstance>(null);
   const line = p.has_options || p.variations.length ? undefined : cart?.items.find((i) => i.id === p.id);
   const atMax = line ? line.quantity >= (line.quantity_limits?.maximum ?? Infinity) : false;
-  const h = compact ? 36 : size === 'lg' ? 44 : 34;
+  const nOpt = p.variations.length ? `${p.variations.length} options` : 'options';
+  const opts = Boolean(p.has_options || p.variations.length);
+  const h = compact ? (opts ? 38 : 32) : size === 'lg' ? 44 : 34;
   const w = block ? { alignSelf: 'stretch' as const } : null; // full-width inside lists
-  // compact: a small square "+" like Blinkit's product cards (only the idle button; the stepper and stock label keep their natural width)
-  const box = compact ? { width: 36, minWidth: 36, paddingHorizontal: 0 } : null;
-  const plus = compact ? '+' : null;
+  // compact: Blinkit's card button, a white "ADD" (with "N options" under it when a choice is needed) that sits over the image corner
+  const box = compact ? { minWidth: 54, paddingHorizontal: 8, backgroundColor: '#fff' } : null;
   const guard = async (fn: () => Promise<void>) => {
     if (busy) return;
     tap(); setBusy(true);
@@ -35,12 +36,12 @@ export default function AddButton({ product: p, size = 'sm', block, compact }: {
 
   if (!p.is_in_stock) return <View style={[s.out, { height: h }, w]}><Text style={s.outText}>Out of stock</Text></View>;
   if (p.has_options || p.variations.length) {
-    return <Pressable hitSlop={8} onPress={() => router.push(`/product/${p.slug}`)} style={[s.add, { height: h }, w, box]} accessibilityRole="button" accessibilityLabel="Choose options"><Text style={plus ? s.plus : s.addText}>{plus ?? 'OPTIONS'}</Text></Pressable>;
+    return <Pressable hitSlop={8} onPress={() => router.push(`/product/${p.slug}`)} style={[s.add, { height: h }, w, box]} accessibilityRole="button" accessibilityLabel="Choose options"><Text style={s.addText}>{compact ? 'ADD' : 'OPTIONS'}</Text>{compact ? <Text style={s.optT}>{nOpt}</Text> : null}</Pressable>;
   }
   if (!line) {
     return (
       <Pressable ref={btn} hitSlop={8} onPress={() => { btn.current?.measureInWindow((x, y, width, height) => fly(p.images[0]?.thumbnail || p.images[0]?.src, { x, y, width, height })); guard(() => addItem(p.id, 1)); }} style={({ pressed }) => [s.add, { height: h }, w, box, pressed &&{ transform: [{ scale: 0.96 }] }]} accessibilityRole="button" accessibilityLabel="Add to cart">
-        {busy ? <Dots size={5} /> : <Text style={plus ? s.plus : s.addText}>{plus ?? 'ADD'}</Text>}
+        {busy ? <Dots size={5} /> : <Text style={s.addText}>ADD</Text>}
       </Pressable>
     );
   }
@@ -56,7 +57,7 @@ export default function AddButton({ product: p, size = 'sm', block, compact }: {
 const s = StyleSheet.create({
   add: { minWidth: 66, paddingHorizontal: 14, borderRadius: r.sm, borderWidth: 1.2, borderColor: c.accent, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' },
   addText: { color: c.accent, fontWeight: '800', fontSize: 13 },
-  plus: { color: c.accent, fontWeight: '600', fontSize: 24, lineHeight: 26 },
+  optT: { color: c.accent, fontSize: 9, fontWeight: '600', marginTop: -1 },
   step: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.accent, borderRadius: r.sm, overflow: 'hidden' },
   sb: { width: 30, height: '100%', alignItems: 'center', justifyContent: 'center' },
   st: { color: '#fff', fontSize: 18, fontWeight: '800' },

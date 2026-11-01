@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { openHttps } from '@/links';
 import { Alert, Linking, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -81,7 +82,7 @@ export default function OrderDetail() {
             </View>
           ) : null}
           {o.delivery.live?.rider ? <RiderCard rider={o.delivery.live.rider} eta={o.delivery.live.eta} drop={o.delivery.live.drop ?? undefined} /> : null}
-          {o.delivery.live?.link ? <Button title="Track shipment" variant="outline" style={{ marginTop: 10, minHeight: 42 }} onPress={() => Linking.openURL(o.delivery!.live!.link).catch(() => {})} /> : null}
+          {o.delivery.live?.link ? <Button title="Track shipment" variant="outline" style={{ marginTop: 10, minHeight: 42 }} onPress={() => openHttps(o.delivery!.live!.link)} /> : null}
         </Card>
       )}
 

@@ -187,7 +187,7 @@ export default function Shop() {
         <>
           <View style={s.bar}>
             <Ionicons name="search" size={19} color="#777" />
-            <TextInput style={s.input} placeholder='Search "Arduino", "filament" and more' value={q} onChangeText={setQ} autoFocus={searching} onSubmitEditing={() => { setSearch(q.trim()); addRecent(q); }} returnKeyType="search" />
+            <TextInput style={s.input} placeholder='Search "Arduino", "filament" and more' placeholderTextColor="#767676" value={q} onChangeText={setQ} autoFocus={searching} onSubmitEditing={() => { setSearch(q.trim()); addRecent(q); }} returnKeyType="search" />
             {(q || search || searching) ? <Pressable onPress={() => { setQ(''); setSearch(''); setSearching(false); }} accessibilityLabel="Clear search" hitSlop={8}><Ionicons name="close-circle" size={19} color="#aaa" /></Pressable> : null}
           </View>
           <Pressable onPress={() => setPinOpen(true)} hitSlop={6} accessibilityRole="button" accessibilityLabel="Change delivery location">

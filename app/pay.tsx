@@ -13,7 +13,7 @@ import { storage } from '@/storage';
 import { useStore } from '@/store';
 import { c } from '@/theme';
 
-import { resolveIntentUrl } from '@/upi';
+import { isUpiAppUrl, resolveIntentUrl } from '@/upi';
 
 type Msg =
   | { type: 'success'; razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }
@@ -274,6 +274,7 @@ export default function Pay() {
 
   const handleExternalLink = async (rawUrl: string) => {
     const targetUrl = resolveIntentUrl(rawUrl);
+    if (!isUpiAppUrl(targetUrl)) return; // not a UPI app: the payment page may not open anything else
     try {
       await Linking.openURL(targetUrl);
     } catch {

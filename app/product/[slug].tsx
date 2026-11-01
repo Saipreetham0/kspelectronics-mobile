@@ -91,6 +91,7 @@ export default function ProductScreen() {
   // Picking a colour brings that variation's photo to the front of the gallery.
   useEffect(() => { if (current) { gallery.current?.scrollToOffset({ offset: 0, animated: true }); setShot(0); } }, [current]);
 
+  const [stepBusy, setStepBusy] = useState(false);
   if (loading && !data) return <ProductSkeleton />;
   if (error || !p) return <ErrorBox message={error || 'Product not found.'} onRetry={reload} />;
 
@@ -113,7 +114,6 @@ export default function ProductScreen() {
   const line = cart?.items.find((i) => i.id === (matchId ?? p.id));
   const qty = line?.quantity ?? 0;
   const atMax = (left > 0 && qty >= left) || qty >= (line?.quantity_limits?.maximum ?? Infinity);
-  const [stepBusy, setStepBusy] = useState(false);
   const add = async () => {
     if (pending) return Alert.alert('Choose options', `Select ${attrs.filter((a) => !choice[a.name]).map((a) => a.name).join(', ')} first.`);
     try {

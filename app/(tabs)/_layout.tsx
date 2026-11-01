@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NATIVE } from '@/native';
 import { Animated, Text as RNText, View } from 'react-native';
 import type { ColorValue } from 'react-native';
@@ -11,6 +11,8 @@ import { useStore } from '@/store';
 import { useScreen } from '@/useScreen';
 import { Bump } from '@/components/motion';
 import SearchButton from '@/components/SearchButton';
+import FreeShipStrip, { STRIP_H, useFreeShip } from '@/components/FreeShipStrip';
+import { useFetch } from '@/useFetch';
 import { c } from '@/theme';
 
 // The active tab's icon springs up a little when selected.
@@ -38,6 +40,10 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const segments = useSegments() as string[];
   const { width } = useScreen();
+  const freeShip = useFetch<{ min: number | null }>('/api/cart/free-shipping'); // the store's free-delivery amount, if it has one
+  const progress = useFreeShip(freeShip.data?.min);
+  const [stripShut, setStripShut] = useState(false); // closed for this session
+  const strip = progress && !stripShut && !segments.includes('cart');
   // One explicit height (content + home-indicator inset) so the cart pill can sit exactly above the bar on every device.
   const barH = 58 + insets.bottom;
   // Five tabs share the width: shrink the labels on narrow phones, and ignore the system font scale so they never wrap or clip.
@@ -58,7 +64,8 @@ export default function TabsLayout() {
         <Tabs.Screen name="account" options={{ title: 'Account', headerShown: false, href: null }} />
       </Tabs>
       {/* sits just above the tab bar */}
-      <CartBar bottom={barH + 10} hidden={segments.includes('cart')} />
+      {strip && <FreeShipStrip bottom={barH} left={progress.left} pct={progress.pct} m={progress.m} onClose={() => setStripShut(true)} />}
+      <CartBar bottom={barH + 10 + (strip ? STRIP_H : 0)} hidden={segments.includes('cart')} />
     </View>
   );
 }

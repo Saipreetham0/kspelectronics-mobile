@@ -12,3 +12,6 @@ export function resolveIntentUrl(url: string): string {
   }
 }
 
+// The payment page may hand off to a UPI app, and only to one: a tel:, sms:, file: or any other scheme it asks for is ignored.
+const UPI_APPS = new Set(['upi', 'tez', 'gpay', 'phonepe', 'paytmmp', 'paytm', 'credpay', 'cred', 'bhim', 'amazonpay', 'mobikwik', 'freecharge', 'samsungpay', 'whatsapp']);
+export const isUpiAppUrl = (url: string) => UPI_APPS.has((url.match(/^([a-z][a-z0-9+.-]*):/i)?.[1] ?? '').toLowerCase());

@@ -60,21 +60,37 @@ function MoreLike({ id, refreshKey }: { id: number; refreshKey: number }) {
   return <Row title="More like what you viewed" path={`/api/catalog/products?category=${cat.slug}&orderby=popularity&per_page=10`} refreshKey={refreshKey} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { category: cat.slug } })} />;
 }
 
+// Blinkit's row of round icon tabs under the search bar: the top categories, one tap away.
+function CategoryTabs({ cats }: { cats: Category[] | null }) {
+  const top = (cats ?? []).slice(0, 10);
+  if (!top.length) return null;
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 10, paddingTop: 12 }}>
+      {top.map((cat) => (
+        <Tap key={cat.id} onPress={() => router.push({ pathname: '/(tabs)/shop', params: { category: cat.slug } })} scaleTo={0.92} style={s.tab} accessibilityRole="button" accessibilityLabel={decodeHtml(cat.name)}>
+          <View style={s.tabImg}>{cat.image?.src ? <Image source={cat.image.src} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : <Ionicons name="apps" size={20} color={c.accent} />}</View>
+          <Text numberOfLines={2} style={s.tabName}>{decodeHtml(cat.name)}</Text>
+        </Tap>
+      ))}
+    </ScrollView>
+  );
+}
+
 export default function Home() {
   const festive = diwaliOn();
   const [q, setQ] = useState('');
   const [hint, setHint] = useState(0);
   const [pin, setPin] = useState('');
-  const { mode } = useMode();
+  const { mode, quickOk } = useMode();
   const quick = mode === 'quick' ? `&tag=${QUICK_TAG}` : ''; // Quick shows only what a rider can bring
   const loc = useLoc() ?? null; // shared: changing the location anywhere (cart, checkout, shop) shows here at once
   const isFocused = useIsFocused();
   const [pinOpen, setPinOpen] = useState(false);
   const { width } = useScreen();
-  const [topFull, setTopFull] = useState(98); // the folding header block's real height, measured, so wrapped text is never clipped
+  const [topFull, setTopFull] = useState(56); // the folding header block's real height, measured, so wrapped text is never clipped
   const cols = width >= 700 ? 6 : 4;
   const tileImg = Math.round(Math.max(56, Math.min(92, width / cols - 22)));
-  const etaSize = Math.round(Math.max(16, Math.min(22, width * 0.053)));
+  const etaSize = Math.round(Math.max(15, Math.min(18, width * 0.046)));
   const [key, setKey] = useState(0);
   const [recent, setRecent] = useState<string[]>([]);
   const [focused, setFocused] = useState(false);
@@ -140,10 +156,7 @@ export default function Home() {
         <SafeAreaView edges={['top']}>
           <Animated.View style={{ opacity: topO }} pointerEvents={searchMode ? 'none' : 'auto'}>
           <View onLayout={(e) => { const h = Math.ceil(e.nativeEvent.layout.height); if (h > 0 && h !== topFull) setTopFull(h); }}>
-          <View style={s.logoRow}>
-            <Image source={require('../../assets/ksp-logo.png')} style={s.logo} contentFit="contain" accessibilityLabel="KSP Electronics" />
-            <Pressable onPress={() => router.push('/account')} style={s.avatar} accessibilityRole="button" accessibilityLabel="Account"><Ionicons name="person" size={20} color={c.text} /></Pressable>
-          </View>
+          <View style={s.topRow}>
           <Pressable style={s.loc} onPress={() => setPinOpen(true)} accessibilityRole="button" accessibilityLabel="Change delivery pincode">
             <View style={{ flex: 1 }}>
               {/* The promise follows the saved place: same-day only around Hyderabad, otherwise the city we ship to. */}
@@ -155,7 +168,9 @@ export default function Home() {
               </Text>
             </View>
           </Pressable>
-          <ModeToggle />
+          <Pressable onPress={() => router.push('/account')} style={s.avatar} accessibilityRole="button" accessibilityLabel="Account"><Ionicons name="person" size={20} color={c.text} /></Pressable>
+          </View>
+          {quickOk && <ModeToggle />}
           </View>
           </Animated.View>
           <Animated.View style={[s.search, { minHeight: barH, borderColor: barBorder }]}>
@@ -177,6 +192,7 @@ export default function Home() {
       <Animated.View style={{ flex: 1, marginBottom: -topFull, transform: [{ translateY: lift }] }}>
       <Animated.ScrollView scrollEventThrottle={16} onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: NATIVE })} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.loader} />} contentContainerStyle={{ paddingBottom: 150 + topFull }} showsVerticalScrollIndicator={false}>
         {festive && <DiwaliStrip />}
+        <CategoryTabs cats={cats.data} />
         <BannerCarousel cats={cats.data} active={isFocused && !searchMode} />
 
         <Text style={[s.h, { marginHorizontal: 16, marginTop: 24 }]}>Shop by category</Text>
@@ -238,14 +254,16 @@ export default function Home() {
 }
 
 const s = StyleSheet.create({
-  head: { paddingHorizontal: 16, paddingBottom: 14 },
-  logoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 },
-  logo: { width: 150, height: 34 },
-  loc: { flexDirection: 'row', alignItems: 'center', paddingTop: 10 },
+  head: { paddingHorizontal: 16, paddingBottom: 10 },
+  topRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 6 },
+  loc: { flex: 1, flexDirection: 'row', alignItems: 'center' },
+  tab: { width: 88, alignItems: 'center', paddingHorizontal: 2 },
+  tabImg: { width: 52, height: 52, borderRadius: 26, overflow: 'hidden', backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' },
+  tabName: { fontSize: 11, textAlign: 'center', marginTop: 5, color: c.text, fontWeight: '600', lineHeight: 13 },
   eta: { fontSize: 20, fontWeight: '900', color: c.text, letterSpacing: -0.3 },
   where: { fontSize: 13, color: '#3b3b3b', marginTop: 2, fontWeight: '600' },
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  search: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: r.lg, paddingHorizontal: 14, minHeight: 50, marginTop: 14, borderWidth: 1, borderColor: c.line },
+  search: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: r.lg, paddingHorizontal: 14, minHeight: 50, marginTop: 10, borderWidth: 1, borderColor: c.line },
   input: { flex: 1, fontSize: 15, color: c.text, height: 50 },
   hint: { position: 'absolute', left: 48, right: 44, color: '#6b7280', fontSize: 15 },
   h: { fontSize: 18, fontWeight: '900', color: c.text },
