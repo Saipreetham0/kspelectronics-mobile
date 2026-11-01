@@ -162,13 +162,10 @@ export default function CartScreen() {
                 <View style={s.track}><View style={[s.fill, { width: `${Math.min(100, (subtotal / FREE_SHIPPING) * 100)}%` }]} /></View>
               </Card>
             )}
+            {/* The shipment header says what is coming and when; where it goes is the sticky bar at the bottom (one place, as on Blinkit). */}
             <Card style={s.shipTop}>
-              <Text style={{ fontSize: 17, fontWeight: '900', color: c.text }}>{!loc ? 'Where should we deliver?' : `Delivery to ${loc.city}${eta ? ` · by ${eta}` : ''}`}</Text>
-              <Pressable onPress={() => setPinOpen(true)} hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }} accessibilityRole="button" accessibilityLabel="Change delivery location" style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
-                <Text style={{ flex: 1, color: '#444', fontSize: 13 }} numberOfLines={2}>{loc ? `${loc.area}, ${loc.city} · ${loc.pin}` : 'Set your delivery location'}</Text>
-                <Text style={{ color: c.accent, fontWeight: '800', fontSize: 13 }}>{loc ? 'Change' : 'Set'}</Text>
-              </Pressable>
-              <Text style={{ color: c.muted, marginTop: 6 }}>Shipment of {itemCount} item{itemCount > 1 ? 's' : ''}</Text>
+              <Text style={{ fontSize: 17, fontWeight: '900', color: c.text }}>{eta ? `Arrives by ${eta}` : `Shipment of ${itemCount} item${itemCount > 1 ? 's' : ''}`}</Text>
+              {eta ? <Text style={{ color: c.muted, marginTop: 4 }}>Shipment of {itemCount} item{itemCount > 1 ? 's' : ''}</Text> : null}
             </Card>
             {gone.size > 0 && (
               <Card style={{ backgroundColor: "#fdecec", borderColor: c.danger }}>
