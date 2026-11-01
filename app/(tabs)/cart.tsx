@@ -367,7 +367,7 @@ const s = StyleSheet.create({
   eachPrice: { fontSize: 11, color: c.muted, marginTop: 1 },
   limit: { fontSize: 12, color: c.dealText, fontWeight: '700', marginTop: 4 },
   itemFoot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 10 },
-  stepperPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0c831f', borderRadius: 8, paddingHorizontal: 2 },
+  stepperPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.accent, borderRadius: r.sm, paddingHorizontal: 2 }, // the same brand blue as the product cards' stepper
   stepBtn: { width: 30, height: 32, alignItems: 'center', justifyContent: 'center' },
   stepSymbol: { color: '#ffffff', fontSize: 16, fontWeight: '800' },
   qt: { fontSize: 13.5, fontWeight: '800', color: '#ffffff' },
