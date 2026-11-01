@@ -10,6 +10,7 @@ import { diwaliOn } from './Diwali';
 import { useFetch } from '@/useFetch';
 import { useScreen } from '@/useScreen';
 import { useStore } from '@/store';
+import { useFreeShipMin } from '@/freeShip';
 import { decodeHtml, inr } from '@/format';
 import { track } from '@/analytics';
 import type { Category, Product } from '@/types';
@@ -61,7 +62,7 @@ function Tile({ cat, width, height, tall }: { cat: Category; width: number; heig
 export default function PromoGrid({ cats }: { cats: Category[] | null }) {
   const { width } = useScreen();
   const { itemCount } = useStore();
-  const ship = useFetch<{ min: number | null }>('/api/cart/free-shipping');
+  const freeMin = useFreeShipMin();
   if (!cats?.length) return null;
   const withPhoto = cats.filter((x) => x.image?.src);
   const chosen = PICKS.map((slug) => withPhoto.find((x) => x.slug === slug)).filter((x): x is Category => Boolean(x));
@@ -80,8 +81,8 @@ export default function PromoGrid({ cats }: { cats: Category[] | null }) {
           <Text style={s.h}>{festive ? 'Diwali deals' : 'Deals on bestsellers'}</Text>
           <Text style={s.all} onPress={() => router.push({ pathname: '/(tabs)/shop', params: { list: '1', onsale: '1' } })} accessibilityRole="link">See all</Text>
         </View>
-        {ship.data?.min && itemCount === 0 ? (
-          <View style={s.ship}><Truck size={16} weight="fill" color={c.success} /><Text style={s.shipT}>Free delivery on orders over {inr(ship.data.min)}</Text></View>
+        {freeMin && itemCount === 0 ? (
+          <View style={s.ship}><Truck size={16} weight="fill" color={c.success} /><Text style={s.shipT}>Free delivery on orders over {inr(freeMin)}</Text></View>
         ) : null}
         <View style={{ flexDirection: 'row', gap: GAP }}>
           <Tile cat={hero} width={col} height={small * 2 + GAP} tall />

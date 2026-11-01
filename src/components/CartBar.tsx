@@ -10,7 +10,8 @@ import { Bump } from './motion';
 import { c, r, shadow } from '@/theme';
 
 // Floating green bar above the tab bar (Blinkit's "View cart"): slides up when the cart has items.
-export default function CartBar({ bottom, hidden }: { bottom: number; hidden?: boolean }) {
+// note: the free-delivery nudge shown under the item count ("₹450 away from free delivery" / "Free delivery unlocked").
+export default function CartBar({ bottom, hidden, note, unlocked }: { bottom: number; hidden?: boolean; note?: string; unlocked?: boolean }) {
   const { cart, itemCount } = useStore();
   // Hidden = pushed fully below the screen edge (its own height plus the gap it floats above the tab bar), and faded out with it.
   const away = bottom + 110;
@@ -27,13 +28,13 @@ export default function CartBar({ bottom, hidden }: { bottom: number; hidden?: b
   if (!cart) return null;
   return (
     <Animated.View pointerEvents={show ? 'auto' : 'none'} style={[s.wrap, { bottom, opacity: y.interpolate({ inputRange: [0, away * 0.4, away], outputRange: [1, 0, 0], extrapolate: 'clamp' }), transform: [{ translateY: y }, { scale: bounce }] }]}>
-      <Pressable onPress={() => router.push('/(tabs)/cart')} style={({ pressed }) => [s.bar, pressed && { opacity: 0.92 }]} accessibilityRole="button" accessibilityLabel={`View cart, ${itemCount} items`}>
+      <Pressable onPress={() => router.push('/(tabs)/cart')} style={({ pressed }) => [s.bar, pressed && { opacity: 0.92 }]} accessibilityRole="button" accessibilityLabel={`View cart, ${itemCount} item${itemCount > 1 ? 's' : ''}${note ? `. ${note}` : ''}`}>
         <View style={s.thumbs}>
           {cart.items.slice(0, 2).map((i, n) => <Image key={i.key} source={i.images[0]?.thumbnail} style={[s.thumb, { marginLeft: n ? -14 : 0, zIndex: 2 - n }]} contentFit="contain" />)}
         </View>
         <View style={{ marginLeft: 10, marginRight: 14 }}>
           <Text style={s.title}>View cart</Text>
-          <Bump trigger={itemCount} style={{ alignSelf: 'flex-start' }}><Text style={s.sub}>{itemCount} item{itemCount > 1 ? 's' : ''}</Text></Bump>
+          <Bump trigger={itemCount} style={{ alignSelf: 'flex-start' }}><Text style={s.sub} numberOfLines={1}>{itemCount} item{itemCount > 1 ? 's' : ''}{note ? <Text style={unlocked ? s.unlocked : null}>{`  ·  ${note}`}</Text> : null}</Text></Bump>
         </View>
         <View style={s.go}><Ionicons name="chevron-forward" size={20} color="#fff" /></View>
       </Pressable>
@@ -49,5 +50,6 @@ const s = StyleSheet.create({
   thumb: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', borderWidth: 2, borderColor: c.accent },
   title: { color: '#fff', fontWeight: '800', fontSize: 15 },
   sub: { color: '#fff', fontSize: 13, marginTop: 1 },
+  unlocked: { color: '#c8f7d9', fontWeight: '700' },
   go: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(0,0,0,0.2)', alignItems: 'center', justifyContent: 'center' },
 });

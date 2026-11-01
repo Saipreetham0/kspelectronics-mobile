@@ -16,8 +16,8 @@ import BannerCarousel from '@/components/BannerCarousel';
 import PromoGrid from '@/components/PromoGrid';
 import SuggestList from '@/components/SuggestList';
 import { DiwaliFx, DiwaliStrip, diwaliOn } from '@/components/Diwali';
-import { FadeIn, Reveal, Tap } from '@/components/motion';
-import { ProductSkeleton, Skeleton } from '@/components/Skeleton';
+import { FadeIn, Tap } from '@/components/motion';
+import { ProductSkeleton } from '@/components/Skeleton';
 import { Button } from '@/components/ui';
 import { decodeHtml } from '@/format';
 import { addRecent, clearRecent, getRecent } from '@/recentSearches';
@@ -30,23 +30,31 @@ import { c, r } from '@/theme';
 
 const HINTS = ['Raspberry Pi', 'Bambu Lab printer', 'Arduino', 'ESP32', 'PLA filament', 'sensors'];
 
-function Row({ title, path, refreshKey, all = true, onAll }: { title: string; path: string; refreshKey: number; all?: boolean; onAll?: () => void }) {
+// A product row. Rows lower on the page leave out what an earlier row already shows (`exclude`), and tell Home what they show (`onIds`),
+// so a small catalogue doesn't fill six rows with the same few products. `rank` re-orders the list (Top deals: biggest discount first).
+function Row({ title, path, refreshKey, all = true, onAll, exclude, onIds, rank, max = 10 }: {
+  title: string; path: string; refreshKey: number; all?: boolean; onAll?: () => void; exclude?: number[]; onIds?: (ids: number[]) => void; rank?: (p: Product[]) => Product[]; max?: number;
+}) {
   const { data, loading, error, reload } = useFetch<Product[]>(`${path}${path.includes('?') ? '&' : '?'}k=${refreshKey}`);
   const { width } = useScreen();
   const cardW = Math.round(Math.max(128, Math.min(180, (width - 22) / 2.4))); // about two and a half cards across, so the next one peeks in
-  if (!loading && !data?.length && !error) return null;
+  const skip = new Set(exclude ?? []);
+  const shown = data ? (rank ? rank(data) : data).filter((p) => !skip.has(p.id)).slice(0, max) : null;
+  const key = shown?.map((p) => p.id).join(',') ?? '';
+  useEffect(() => { if (shown) onIds?.(shown.map((p) => p.id)); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!loading && (shown?.length ?? 0) < 2 && !error) return null; // one lone card reads as a mistake
   return (
     <View style={{ marginTop: 22 }}>
       <View style={s.rowHead}>
         <Text style={s.h}>{title}</Text>
-        {all && <Pressable onPress={onAll ?? (() => router.push('/(tabs)/shop'))} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityRole="button" accessibilityLabel={`See all ${title}`}><Text style={s.more}>see all</Text></Pressable>}
+        {all && <Pressable onPress={onAll ?? (() => router.push('/(tabs)/shop'))} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityRole="button" accessibilityLabel={`See all ${title}`}><Text style={s.more}>See all</Text></Pressable>}
       </View>
       {error && !data ? (
         <View style={{ paddingHorizontal: 16 }}><Text style={{ color: c.muted, marginBottom: 8 }}>Couldn't load this right now.</Text><Button title="Try again" variant="outline" onPress={reload} /></View>
       ) : loading && !data ? (
         <View style={{ flexDirection: 'row', paddingHorizontal: 11 }}>{[0, 1, 2].map((n) => <ProductSkeleton key={n} width={cardW} />)}</View>
       ) : (
-        <FlatList horizontal data={data ?? []} keyExtractor={(p) => String(p.id)} showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 11 }}
+        <FlatList horizontal data={shown ?? []} keyExtractor={(p) => String(p.id)} showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 11 }}
           renderItem={({ item, index }) => <ProductCard product={item} width={cardW} index={index} />} />
       )}
     </View>
@@ -54,16 +62,16 @@ function Row({ title, path, refreshKey, all = true, onAll }: { title: string; pa
 }
 
 // A row of popular products from the category of the last product the shopper opened.
-function MoreLike({ id, refreshKey }: { id: number; refreshKey: number }) {
-  const one = useFetch<Product[]>(`/api/catalog/products?include=${id}&per_page=1&lean=0`); // lean=0: the full product, which names its categories
+function MoreLike({ id, refreshKey, exclude, onIds }: { id: number; refreshKey: number; exclude?: number[]; onIds?: (ids: number[]) => void }) {
+  const one = useFetch<Product[]>(`/api/catalog/products?include=${id}&per_page=1`); // the light product (~1 KB) names its category
   const cat = one.data?.[0]?.categories?.[0];
   if (!cat) return null;
-  return <Row title="More like what you viewed" path={`/api/catalog/products?category=${cat.slug}&orderby=popularity&per_page=10`} refreshKey={refreshKey} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { category: cat.slug } })} />;
+  return <Row title="More like what you viewed" path={`/api/catalog/products?category=${cat.slug}&orderby=popularity&in_stock=true&per_page=16`} refreshKey={refreshKey} exclude={exclude} onIds={onIds} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { category: cat.slug } })} />;
 }
 
 // Blinkit's row of round icon tabs under the search bar: the top categories, one tap away.
 function CategoryTabs({ cats }: { cats: Category[] | null }) {
-  const top = (cats ?? []).slice(0, 10);
+  const top = (cats ?? []).filter((x) => x.slug !== 'services').slice(0, 10);
   if (!top.length) return null;
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 10, paddingTop: 12 }}>
@@ -73,9 +81,38 @@ function CategoryTabs({ cats }: { cats: Category[] | null }) {
           <Text numberOfLines={2} style={s.tabName}>{decodeHtml(cat.name)}</Text>
         </Tap>
       ))}
+      <Tap onPress={() => router.push('/(tabs)/shop')} scaleTo={0.92} style={s.tab} accessibilityRole="button" accessibilityLabel="All categories">
+        <View style={[s.tabImg, { backgroundColor: c.accentSoft }]}><Ionicons name="grid" size={22} color={c.accent} /></View>
+        <Text numberOfLines={2} style={[s.tabName, { color: c.accent }]}>All categories</Text>
+      </Tap>
     </ScrollView>
   );
 }
+
+// Biggest discount first (Top deals), so the row leads with its best offer.
+const offOf = (p: Product) => { const was = Number(p.prices.regular_price), now = Number(p.prices.price); return was > now && now > 0 ? (was - now) / was : 0; };
+const byDiscount = (rows: Product[]) => [...rows].sort((a, b) => offOf(b) - offOf(a));
+
+// Price shortcuts, Blinkit's "Starting at ₹19" idea: the cheap end of the catalogue in one tap, which is where add-on and impulse buys come from.
+const BANDS: [string, string][] = [['Under ₹99', ':99'], ['Under ₹499', ':499'], ['Under ₹999', ':999'], ['Under ₹1,999', ':1999']];
+function PriceBands() {
+  return (
+    <View style={{ marginTop: 22 }}>
+      <View style={s.rowHead}><Text style={s.h}>Shop by budget</Text></View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, gap: 10 }}>
+        {BANDS.map(([label, price]) => (
+          <Tap key={price} onPress={() => { track('banner_tap', { id: `price${price}` }); router.push({ pathname: '/(tabs)/shop', params: { list: '1', price, sort: 'price:asc' } }); }} scaleTo={0.95} style={s.band} accessibilityRole="button" accessibilityLabel={`Products ${label.toLowerCase()}`}>
+            <Text style={s.bandLead}>Under</Text>
+            <Text style={s.bandHot}>{label.replace('Under ', '')}</Text>
+          </Tap>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+// The rows on Home, top to bottom: each leaves out products an earlier row already shows.
+const ROWS = ['viewed', 'deals', 'like', 'bambu', 'best', 'new'] as const;
 
 export default function Home() {
   const festive = diwaliOn();
@@ -90,8 +127,6 @@ export default function Home() {
   const top = React.useRef(null); useScrollToTop(top as never); // tapping this tab again scrolls back to the top
   const { width } = useScreen();
   const [topFull, setTopFull] = useState(56); // the folding header block's real height, measured, so wrapped text is never clipped
-  const cols = width >= 700 ? 6 : 4;
-  const tileImg = Math.round(Math.max(56, Math.min(92, width / cols - 22)));
   const etaSize = Math.round(Math.max(15, Math.min(18, width * 0.046)));
   const [key, setKey] = useState(0);
   const [recent, setRecent] = useState<string[]>([]);
@@ -100,6 +135,12 @@ export default function Home() {
   const searchMode = focused || q.length > 0; // Blinkit-style: while searching, the search bar takes over the top of the screen
   const [refreshing, setRefreshing] = useState(false);
   const cats = useFetch<Category[]>('/api/catalog/categories');
+  const [rowIds, setRowIds] = useState<Record<string, number[]>>({});
+  const before = (row: (typeof ROWS)[number]) => ROWS.slice(0, ROWS.indexOf(row)).flatMap((k) => rowIds[k] ?? []);
+  const report = (row: string) => (ids: number[]) => setRowIds((m) => (m[row]?.join(',') === ids.join(',') ? m : { ...m, [row]: ids }));
+  // Rows below the first screen wait until the page has settled (or the shopper scrolls), so opening Home asks the store for less at once.
+  const [later, setLater] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setLater(true), 1500); return () => clearTimeout(t); }, []);
   const fade = React.useRef(new Animated.Value(1)).current;
   const slide = React.useRef(new Animated.Value(0)).current;
   const scrollY = React.useRef(new Animated.Value(0)).current;
@@ -192,33 +233,23 @@ export default function Home() {
 
       {/* Slides up with the header and is topFull taller, so no gap opens when the header folds. */}
       <Animated.View style={{ flex: 1, marginBottom: -topFull, transform: [{ translateY: lift }] }}>
-      <Animated.ScrollView ref={top} scrollEventThrottle={16} onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: NATIVE })} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.loader} />} contentContainerStyle={{ paddingBottom: 150 + topFull }} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView ref={top} onScrollBeginDrag={() => setLater(true)} scrollEventThrottle={16} onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: NATIVE })} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.loader} />} contentContainerStyle={{ paddingBottom: 150 + topFull }} showsVerticalScrollIndicator={false}>
         {festive && <DiwaliStrip />}
         <CategoryTabs cats={cats.data} />
         <BannerCarousel cats={cats.data} active={isFocused && !searchMode} />
         <PromoGrid cats={cats.data} />
 
-        <Text style={[s.h, { marginHorizontal: 16, marginTop: 24 }]}>Shop by category</Text>
-        <View style={s.grid}>
-          {cats.loading && !cats.data
-            ? Array.from({ length: 8 }).map((_, n) => <View key={n} style={[s.tile, { width: `${100 / cols}%` }]}><Skeleton style={{ width: tileImg, height: tileImg, borderRadius: 16 }} /><Skeleton style={{ width: tileImg * 0.8, height: 10, marginTop: 8 }} /></View>)
-            : (cats.data ?? []).map((cat, n) => (
-              <Reveal key={cat.id} index={n} style={[s.tile, { width: `${100 / cols}%` }]}>
-                <Tap onPress={() => router.push({ pathname: '/(tabs)/shop', params: { category: cat.slug } })} scaleTo={0.92} style={{ alignItems: 'center' }} accessibilityRole="button" accessibilityLabel={decodeHtml(cat.name)}>
-                  <View style={[s.tileImg, { width: tileImg, height: tileImg }]}>{cat.image?.src ? <Image source={cat.image.src} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} /> : <Ionicons name="apps" size={26} color={c.accent} />}</View>
-                  <Text numberOfLines={3} style={s.tileName}>{decodeHtml(cat.name)}</Text>
-                </Tap>
-              </Reveal>
-            ))}
-        </View>
         {Boolean(cats.error) && !cats.data && <View style={{ padding: 16 }}><Text style={{ color: c.muted, marginBottom: 10 }}>{cats.error}</Text><Button title="Try again" variant="outline" onPress={cats.reload} /></View>}
 
-        {viewed.length > 0 && <Row title="Recently viewed" all={false} path={`/api/catalog/products?include=${viewed.join(',')}&per_page=12`} refreshKey={key} />}
-        {viewed.length > 0 && <MoreLike id={viewed[0]} refreshKey={key} />}
-        <Row title="Bambu Lab" path="/api/catalog/products?brand=bambu-lab&in_stock=true&orderby=popularity&per_page=10" refreshKey={key} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { brand: 'bambu-lab', brandName: 'Bambu Lab' } })} />
-        <Row title="Best sellers" path={`/api/catalog/products?orderby=popularity&per_page=8${quick}`} refreshKey={key} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { list: '1', sort: 'popularity' } })} />
-        <Row title="On sale" path={`/api/catalog/products?on_sale=true&per_page=8${quick}`} refreshKey={key} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { list: '1', onsale: '1' } })} />
-        <Row title="New arrivals" path={`/api/catalog/products?orderby=date&per_page=8${quick}`} refreshKey={key} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { list: '1' } })} />
+        {viewed.length > 0 && <Row title="Recently viewed" all={false} path={`/api/catalog/products?include=${viewed.join(',')}&per_page=12`} refreshKey={key} onIds={report('viewed')} />}
+        <Row title={festive ? 'Diwali top deals' : 'Top deals'} path={`/api/catalog/products?on_sale=true&in_stock=true&per_page=30${quick}`} rank={byDiscount} refreshKey={key} exclude={before('deals')} onIds={report('deals')} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { list: '1', onsale: '1' } })} />
+        <PriceBands />
+        {later && (<>
+          {viewed.length > 0 && <MoreLike id={viewed[0]} refreshKey={key} exclude={before('like')} onIds={report('like')} />}
+          <Row title="Bambu Lab" path="/api/catalog/products?brand=bambu-lab&in_stock=true&orderby=popularity&per_page=16" refreshKey={key} exclude={before('bambu')} onIds={report('bambu')} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { brand: 'bambu-lab', brandName: 'Bambu Lab' } })} />
+          <Row title="Best sellers" path={`/api/catalog/products?orderby=popularity&in_stock=true&per_page=16${quick}`} refreshKey={key} exclude={before('best')} onIds={report('best')} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { list: '1', sort: 'popularity' } })} />
+          <Row title="New arrivals" path={`/api/catalog/products?orderby=date&in_stock=true&per_page=16${quick}`} refreshKey={key} exclude={before('new')} onIds={report('new')} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { list: '1', sort: 'date' } })} />
+        </>)}
       </Animated.ScrollView>
       {/* Search opened but nothing typed yet: recent searches and popular ones, as on Blinkit. */}
       {searchMode && q.trim().length < 2 && (
@@ -277,8 +308,7 @@ const s = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.surface, borderRadius: r.pill, paddingHorizontal: 12, paddingVertical: 8 },
   chipT: { fontSize: 13, color: c.text, fontWeight: '600' },
   more: { color: c.accent, fontWeight: '800', fontSize: 13 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, paddingTop: 12 },
-  tile: { width: '25%', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 4 },
-  tileImg: { width: 70, height: 70, borderRadius: 18, overflow: 'hidden', backgroundColor: c.surface },
-  tileName: { fontSize: 12, textAlign: 'center', marginTop: 6, color: c.text, fontWeight: '600', lineHeight: 14 },
+  band: { flexDirection: 'row', alignItems: 'center', borderRadius: r.pill, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff', overflow: 'hidden' },
+  bandLead: { fontSize: 13, fontWeight: '600', color: c.text2, paddingLeft: 14, paddingRight: 6, paddingVertical: 9 },
+  bandHot: { fontSize: 13, fontWeight: '800', color: '#fff', backgroundColor: c.accent, paddingHorizontal: 12, paddingVertical: 9 },
 });

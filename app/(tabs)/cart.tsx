@@ -15,6 +15,7 @@ import { useStore } from '@/store';
 import { useFetch } from '@/useFetch';
 import { storage } from '@/storage';
 import { useFlag } from '@/appConfig';
+import { useFreeShipMin } from '@/freeShip';
 import type { CartItem, Product } from '@/types';
 import { c, r } from '@/theme';
 
@@ -23,7 +24,7 @@ type Undo = { label: string; restore: () => Promise<void> };
 export default function CartScreen() {
   const { cart, cartToken, cartFailed, ready, syncing, itemCount, refresh, addItem, updateItem, removeItem, applyCoupon, removeCoupon, quoteShipping } = useStore();
   const [refreshing, setRefreshing] = useState(false);
-  const freeShip = useFetch<{ min: number | null }>('/api/cart/free-shipping'); // the store's real free-shipping amount, if it has one
+  const freeMin = useFreeShipMin(); // the store's real free-shipping amount, if it has one (asked once per session)
   const [code, setCode] = useState('');
   const [couponBusy, setCouponBusy] = useState(false);
   const [loc, setLoc] = useState<Loc | null>(null);
@@ -137,7 +138,7 @@ export default function CartScreen() {
   }
   const t = cart!.totals; const m = t.currency_minor_unit;
   const subtotal = withTax(t.total_items, t.total_items_tax) / 10 ** m; // with GST: the amount the free-shipping rule counts and the shopper recognises
-  const FREE_SHIPPING = freeShip.data?.min ?? null;
+  const FREE_SHIPPING = freeMin ?? null;
   const left = FREE_SHIPPING == null ? null : FREE_SHIPPING - subtotal;
   // Blinkit's "you're saving" banner: sale markdowns plus any coupon discount.
   const saved = (items.reduce((n, i) => n + Math.max(0, Number(i.prices.regular_price) - Number(i.prices.price)) * i.quantity, 0) + withTax(t.total_discount, t.total_discount_tax)) / 10 ** m;

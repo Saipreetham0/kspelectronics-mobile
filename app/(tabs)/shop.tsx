@@ -23,6 +23,7 @@ import { useFetch } from '@/useFetch';
 import { QUICK_TAG, useMode } from '@/mode';
 import { useScreen } from '@/useScreen';
 import type { CategoryTree, Product } from '@/types';
+import { track } from '@/analytics';
 import { c, r } from '@/theme';
 
 const PAGE = 20;
@@ -55,7 +56,7 @@ function shortName(child: string, parent: string): string {
 //                     and, when the chosen rail item has children of its own, a row of chips for them. Then the products.
 export default function Shop() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ search?: string; category?: string; brand?: string; brandName?: string; sort?: string; onsale?: string; list?: string }>(); // sort / onsale / list: Home's "see all" links
+  const params = useLocalSearchParams<{ search?: string; category?: string; brand?: string; brandName?: string; sort?: string; onsale?: string; list?: string; price?: string }>(); // sort / onsale / list / price: Home's "See all" links and budget shortcuts
   const { width } = useScreen();
   const [q, setQ] = useState(params.search ?? '');
   const [search, setSearch] = useState(params.search ?? '');
@@ -67,7 +68,7 @@ export default function Shop() {
   const [listAll, setListAll] = useState(params.list === '1'); // the whole product list instead of the category grid
   const [inStock, setInStock] = useState(false);
   const [onSale, setOnSale] = useState(params.onsale === '1');
-  const [price, setPrice] = useState('');
+  const [price, setPrice] = useState(params.price ?? ''); // "lo:hi" in whole rupees, e.g. ":499" for under ₹499
   const [sheet, setSheet] = useState<'sort' | 'filters' | null>(null);
   const [items, setItems] = useState<Product[]>([]);
   const [page, setPage] = useState(1);
@@ -84,7 +85,7 @@ export default function Shop() {
   const forest = tree.data ?? [];
 
   useFocusEffect(useCallback(() => { loadLoc().then((l) => { setPin(l.pin); setLoc(l.loc); }); }, [])); // re-read on focus: the location is changed from Home
-  useEffect(() => { setSearch(params.search ?? ''); setQ(params.search ?? ''); setCategory(params.category ?? ''); setBrand(params.brand ?? ''); setPageSlug(''); setSearching(false); setListAll(params.list === '1'); setSort(params.sort ?? ''); setOnSale(params.onsale === '1'); }, [params.search, params.category, params.brand, params.list, params.sort, params.onsale]);
+  useEffect(() => { setSearch(params.search ?? ''); setQ(params.search ?? ''); setCategory(params.category ?? ''); setBrand(params.brand ?? ''); setPageSlug(''); setSearching(false); setListAll(params.list === '1'); setSort(params.sort ?? ''); setOnSale(params.onsale === '1'); setPrice(params.price ?? ''); }, [params.search, params.category, params.brand, params.list, params.sort, params.onsale, params.price]);
 
   // Opening a category from the grid (or a Home tile or banner): the page is about that category.
   const open = (slug: string) => { setCategory(slug); setPageSlug(slug); };
@@ -188,7 +189,7 @@ export default function Shop() {
         <>
           <View style={s.bar}>
             <Ionicons name="search" size={19} color={c.muted} />
-            <TextInput style={s.input} placeholder='Search "Arduino", "filament" and more' placeholderTextColor={c.placeholder} value={q} onChangeText={setQ} autoFocus={searching} onSubmitEditing={() => { setSearch(q.trim()); addRecent(q); }} returnKeyType="search" />
+            <TextInput style={s.input} placeholder='Search "Arduino", "filament" and more' placeholderTextColor={c.placeholder} value={q} onChangeText={setQ} autoFocus={searching} onSubmitEditing={() => { const t = q.trim(); if (t) track('search', { query: t }); setSearch(t); addRecent(q); }} returnKeyType="search" />
             {(q || search || searching) ? <Pressable onPress={() => { setQ(''); setSearch(''); setSearching(false); }} accessibilityLabel="Clear search" hitSlop={8}><Ionicons name="close-circle" size={19} color={c.muted} /></Pressable> : null}
           </View>
           <Pressable onPress={() => setPinOpen(true)} hitSlop={6} accessibilityRole="button" accessibilityLabel="Change delivery location">
@@ -290,7 +291,7 @@ export default function Shop() {
                   {search && !activeFilters ? (<>
                     <Text style={{ color: c.muted, marginTop: 6 }}>Try one of these instead</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, paddingHorizontal: 16 }}>
-                      {['Raspberry Pi', 'Arduino', 'ESP32', 'Bambu Lab', 'Sensors'].map((t) => <Pressable key={t} onPress={() => { setQ(t); setSearch(t); addRecent(t); }} style={s.chip} accessibilityRole="button"><Text style={s.chipText}>{t}</Text></Pressable>)}
+                      {['Raspberry Pi', 'Arduino', 'ESP32', 'Bambu Lab', 'Sensors'].map((t) => <Pressable key={t} onPress={() => { setQ(t); setSearch(t); track('search', { query: t }); addRecent(t); }} style={s.chip} accessibilityRole="button"><Text style={s.chipText}>{t}</Text></Pressable>)}
                     </View>
                   </>) : null}
                 </View>}
@@ -304,7 +305,7 @@ export default function Shop() {
         <SuggestList text={q}
           onProduct={(slug) => { setQ(search); router.push(`/product/${slug}`); }}
           onCategory={(slug) => { setQ(''); setSearch(''); setSearching(false); open(slug); }}
-          onSearch={(t) => { setQ(t); setSearch(t); addRecent(t); }} />
+          onSearch={(t) => { setQ(t); setSearch(t); track('search', { query: t }); addRecent(t); }} />
       )}
 
       <LocationSheet visible={pinOpen} onClose={() => setPinOpen(false)} onChange={(l) => { setLoc(l); setPin(l.pin); }} />

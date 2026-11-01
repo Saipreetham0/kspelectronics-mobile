@@ -12,8 +12,8 @@ import { useStore } from '@/store';
 import { useScreen } from '@/useScreen';
 import { Bump } from '@/components/motion';
 import SearchButton from '@/components/SearchButton';
-import FreeShipStrip, { STRIP_H, useFreeShip } from '@/components/FreeShipStrip';
-import { useFetch } from '@/useFetch';
+import { useFreeShip, useFreeShipMin } from '@/freeShip';
+import { minorToInr } from '@/format';
 import { c } from '@/theme';
 
 const INACTIVE = c.muted;
@@ -101,10 +101,9 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const segments = useSegments() as string[];
   const { width } = useScreen();
-  const freeShip = useFetch<{ min: number | null }>('/api/cart/free-shipping'); // the store's free-delivery amount, if it has one
-  const progress = useFreeShip(freeShip.data?.min);
-  const [stripShut, setStripShut] = useState(false); // closed for this session
-  const strip = progress && !stripShut && !segments.includes('cart');
+  // The free-delivery nudge rides in the cart pill ("₹450 away from free delivery") instead of a separate strip, so the bottom of the screen stays light.
+  const progress = useFreeShip(useFreeShipMin());
+  const note = progress ? (progress.left > 0 ? `${minorToInr(progress.left, progress.m)} away from free delivery` : 'Free delivery unlocked') : undefined;
   // One explicit height (content + home-indicator inset) so the cart pill can sit exactly above the bar on every device.
   const barH = 58 + insets.bottom;
   return (
@@ -119,8 +118,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="cart" options={{ title: 'Cart', headerRight: () => <SearchButton /> }} />
       </Tabs>
       {/* sits just above the tab bar */}
-      {strip && <FreeShipStrip bottom={barH} left={progress.left} pct={progress.pct} m={progress.m} onClose={() => setStripShut(true)} />}
-      <CartBar bottom={barH + 10 + (strip ? STRIP_H : 0)} hidden={segments.includes('cart')} />
+      <CartBar bottom={barH + 10} hidden={segments.includes('cart')} note={note} unlocked={progress ? progress.left <= 0 : false} />
     </View>
   );
 }
