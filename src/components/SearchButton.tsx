@@ -29,7 +29,7 @@ export default function SearchButton({ compact }: { compact?: boolean }) {
             <Pressable onPress={close} hitSlop={10} accessibilityRole="button" accessibilityLabel="Close search"><Ionicons name="arrow-back" size={22} color={c.text} /></Pressable>
             <TextInput style={s.input} value={q} onChangeText={setQ} autoFocus placeholder="Search to add more products" returnKeyType="search"
               onSubmitEditing={() => { if (q.trim()) { addRecent(q); go({ pathname: '/(tabs)/shop', params: { search: q.trim() } }); } }} accessibilityLabel="Search products" />
-            {q ? <Pressable onPress={() => setQ('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear"><Ionicons name="close-circle" size={20} color="#aaa" /></Pressable> : null}
+            {q ? <Pressable onPress={() => setQ('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear"><Ionicons name="close-circle" size={20} color={c.muted} /></Pressable> : null}
           </View>
           {q.trim().length >= 2
             ? <SuggestList text={q} inCart={inCart}

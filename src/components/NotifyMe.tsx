@@ -26,7 +26,7 @@ export default function NotifyMe({ productId, style }: { productId: number; styl
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
           <Pressable style={s.scrim} onPress={() => setOpen(false)} accessibilityLabel="Close" />
           <View style={s.sheet}>
-            <Text style={{ fontSize: 18, fontWeight: '900' }}>Notify me when back</Text>
+            <Text style={{ fontSize: 17, fontWeight: '800' }}>Notify me when back</Text>
             <Text style={{ color: c.muted, marginVertical: 8 }}>We will email you as soon as it is in stock again.</Text>
             <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
             <Button title="Notify me" loading={busy} onPress={send} />

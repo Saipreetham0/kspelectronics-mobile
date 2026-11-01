@@ -54,13 +54,13 @@ export default function MapPicker({ lat, lng, onMove }: { lat: number; lng: numb
 }
 const s = StyleSheet.create({
   // No overflow:hidden or rounded corners here: Android draws a MapView black when a clipping parent sits above it.
-  box: { height: 280, backgroundColor: '#e5e7eb' },
+  box: { height: 280, backgroundColor: c.line },
   center: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  msg: { color: '#444', textAlign: 'center', lineHeight: 20 },
+  msg: { color: c.text2, textAlign: 'center', lineHeight: 20 },
   zoom: { position: 'absolute', right: 10, bottom: 14, backgroundColor: '#fff', borderRadius: 10, elevation: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
   locate: { position: 'absolute', left: 10, bottom: 14, width: 44, height: 44, borderRadius: 22, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
   zbtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  zline: { height: StyleSheet.hairlineWidth, backgroundColor: '#ccc', marginHorizontal: 8 },
+  zline: { height: StyleSheet.hairlineWidth, backgroundColor: c.line, marginHorizontal: 8 },
   hint: { position: 'absolute', top: 10, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6 },
   hintT: { color: '#fff', fontSize: 12, fontWeight: '600' },
   pin: { position: 'absolute', top: '50%', left: '50%', marginLeft: -22, marginTop: -44 },

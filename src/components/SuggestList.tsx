@@ -33,7 +33,7 @@ export default function SuggestList({ text, onProduct, onCategory, onSearch, onA
       {result.products.map((p) => (
         <Pressable key={p.id} onPress={() => onProduct(p.slug)} style={s.row} accessibilityRole="button" accessibilityLabel={`${p.name}, ${p.price}`}>
           <View style={s.photo}>
-            {p.image ? <Image source={p.image} style={{ width: '100%', height: '100%' }} contentFit="contain" /> : <Ionicons name="cube-outline" size={22} color="#b8bdc6" />}
+            {p.image ? <Image source={p.image} style={{ width: '100%', height: '100%' }} contentFit="contain" /> : <Ionicons name="cube-outline" size={22} color={c.borderStrong} />}
           </View>
           <View style={{ flex: 1 }}>
             <Text style={s.name} numberOfLines={2}>{p.name}</Text>
@@ -59,13 +59,13 @@ const s = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.line },
   iconBox: { width: 54, height: 54, borderRadius: r.md, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' },
   photo: { width: 54, height: 54, borderRadius: r.md, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  name: { flex: 1, fontSize: 14, fontWeight: '600', color: c.text, lineHeight: 19 },
+  name: { flex: 1, fontSize: 15, fontWeight: '600', color: c.text, lineHeight: 19 },
   price: { fontSize: 13, fontWeight: '800', color: c.text, marginTop: 2 },
   out: { fontSize: 12, fontWeight: '700', color: c.danger },
-  muted: { fontSize: 12, fontWeight: '500', color: c.muted },
+  muted: { fontSize: 12, fontWeight: '400', color: c.muted },
   add: { minWidth: 64, paddingHorizontal: 12, height: 34, borderRadius: r.sm, borderWidth: 1.2, borderColor: c.accent, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' },
   addOn: { backgroundColor: c.accent },
-  addT: { color: c.accent, fontWeight: '800', fontSize: 12.5 },
+  addT: { color: c.accent, fontWeight: '800', fontSize: 13 },
   opts: { color: c.muted, fontSize: 12, fontWeight: '700' },
   none: { textAlign: 'center', color: c.muted, padding: 24, lineHeight: 20 },
 });

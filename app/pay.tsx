@@ -301,7 +301,7 @@ export default function Pay() {
   if (errorMsg) {
     return (
       <Center>
-        <Text style={{ fontSize: 18, fontWeight: '800', marginBottom: 8, color: c.text }}>Payment Gateway Error</Text>
+        <Text style={{ fontSize: 17, fontWeight: '800', marginBottom: 8, color: c.text }}>Payment Gateway Error</Text>
         <Text style={{ color: c.muted, textAlign: 'center', marginBottom: 20, paddingHorizontal: 24 }}>
           {errorMsg}
         </Text>

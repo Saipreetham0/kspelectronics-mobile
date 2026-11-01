@@ -33,10 +33,10 @@ export default function Login() {
 
   return (
     <ScrollView style={{ backgroundColor: c.surface }} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-      <LinearGradient colors={['#d6e5ff', '#eef3fc', c.surface]} style={{ paddingTop: insets.top + 40, paddingBottom: 28, paddingHorizontal: 20 }}>
+      <LinearGradient colors={[c.heroTop, c.accentTint, c.surface]} style={{ paddingTop: insets.top + 40, paddingBottom: 28, paddingHorizontal: 20 }}>
         <Image source={require('../assets/ksp-logo.png')} style={{ width: 200, height: 36, marginBottom: 22 }} contentFit="contain" contentPosition="left center" accessibilityLabel="KSP Electronics" />
-        <Text style={{ fontSize: 26, fontWeight: '900', color: c.text }}>{mode === 'in' ? 'Welcome back' : 'Create your account'}</Text>
-        <Text style={{ color: c.muted, marginTop: 6, fontSize: 14 }}>{mode === 'in' ? 'Log in to see your orders and check out faster.' : 'It takes a minute and makes checkout faster.'}</Text>
+        <Text style={{ fontSize: 28, fontWeight: '800', color: c.text }}>{mode === 'in' ? 'Welcome back' : 'Create your account'}</Text>
+        <Text style={{ color: c.muted, marginTop: 6, fontSize: 15 }}>{mode === 'in' ? 'Log in to see your orders and check out faster.' : 'It takes a minute and makes checkout faster.'}</Text>
       </LinearGradient>
       <View style={{ paddingHorizontal: 12 }}>
         {mode === 'otp' ? <OtpCard onBack={() => setMode('in')} /> : <Card>
@@ -97,7 +97,7 @@ function OtpCard({ onBack }: { onBack: () => void }) {
         {error ? <Text style={{ color: c.danger, fontSize: 13, marginBottom: 10 }} accessibilityRole="alert">{error}</Text> : null}
         <Button title="Send code" loading={busy} onPress={send} />
       </>) : (<>
-        <Text style={{ color: '#444', marginBottom: 12 }}>We sent a 6-digit code to +91 {phone}.</Text>
+        <Text style={{ color: c.text2, marginBottom: 12 }}>We sent a 6-digit code to +91 {phone}.</Text>
         <Field label="Code" value={code} autoFocus onChangeText={(v) => { const d = v.replace(/\D/g, '').slice(0, 6); setCode(d); if (d.length === 6) verify(d); }} keyboardType="number-pad" textContentType="oneTimeCode" autoComplete="sms-otp" maxLength={6} placeholder="••••••" />
         {error ? <Text style={{ color: c.danger, fontSize: 13, marginBottom: 10 }} accessibilityRole="alert">{error}</Text> : null}
         <Button title="Verify and log in" loading={busy} disabled={code.length !== 6} onPress={() => verify(code)} />

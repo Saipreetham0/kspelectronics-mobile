@@ -69,7 +69,7 @@ const s = StyleSheet.create({
   scrim: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
   sheet: { width: '100%', maxWidth: 560, alignSelf: 'center', backgroundColor: '#fff', borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 18, paddingTop: 16 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  title: { fontSize: 18, fontWeight: '900', color: c.text },
+  title: { fontSize: 17, fontWeight: '800', color: c.text },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 50, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.line },
   rowT: { fontSize: 15, fontWeight: '600', color: c.text },
   group: { fontSize: 13, fontWeight: '800', color: c.muted, marginTop: 14, textTransform: 'uppercase', letterSpacing: 0.6 },

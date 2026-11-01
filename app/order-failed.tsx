@@ -21,12 +21,12 @@ export default function OrderFailed() {
   const chat = () => Linking.openURL(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hi, I need help with my payment${orderId ? ` for order #${orderId}` : ''}.`)}`).catch(() => {});
   return (
     <Center>
-      <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: k === 'unconfirmed' ? c.dealSoft : '#fdecec', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-        <Text style={{ fontSize: 42, color: k === 'unconfirmed' ? c.dealText : c.danger, fontWeight: '900' }}>{k === 'unconfirmed' ? '…' : '✕'}</Text>
+      <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: k === 'unconfirmed' ? c.dealSoft : c.dangerSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+        <Text style={{ fontSize: 42, color: k === 'unconfirmed' ? c.dealText : c.danger, fontWeight: '800' }}>{k === 'unconfirmed' ? '…' : '✕'}</Text>
       </View>
-      <Text style={{ fontSize: 24, fontWeight: '900', color: c.text, textAlign: 'center' }} accessibilityRole="header">{copy.title}</Text>
+      <Text style={{ fontSize: 24, fontWeight: '800', color: c.text, textAlign: 'center' }} accessibilityRole="header">{copy.title}</Text>
       {orderId ? <Text style={{ color: c.muted, marginTop: 6 }}>Order #{orderId}</Text> : null}
-      <Text style={{ color: '#444', textAlign: 'center', marginTop: 12, marginBottom: 26, lineHeight: 22, maxWidth: 360 }}>{copy.body}</Text>
+      <Text style={{ color: c.text2, textAlign: 'center', marginTop: 12, marginBottom: 26, lineHeight: 22, maxWidth: 360 }}>{copy.body}</Text>
       <View style={{ gap: 10, alignSelf: 'stretch' }}>
         {k === 'unconfirmed' && orderId && key
           ? <Button title="Check payment status" onPress={() => router.replace({ pathname: '/order-success', params: { orderId, key } })} />

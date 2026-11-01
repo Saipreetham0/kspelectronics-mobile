@@ -28,12 +28,12 @@ type Banner = {
 // The home banners. Edit the copy here; the photo and the destination come from the live category list.
 // ponytail: static list; move to a CMS-driven endpoint (like Blinkit) when promos need to change without a release.
 const BANNERS: Banner[] = [
-  { id: 'printers', Glyph: Printer, tag: 'AUTHORISED RESELLER', title: '3D printers', sub: 'Bambu Lab printers, filament and parts', cta: 'Shop now', colors: ['#0b1220', '#1e293b'], fg: '#fff', ctaBg: '#21c15e', ctaFg: '#0b1220', match: 'printer', search: '3D printer' },
-  { id: 'boards', Glyph: Cpu, tag: 'MAKERS', title: 'Raspberry Pi & boards', sub: 'Arduino · ESP32 · sensors', cta: 'Shop now', colors: ['#1c61e7', '#144fc0'], fg: '#fff', ctaBg: '#fff', ctaFg: '#144fc0', match: 'raspberry', search: 'Raspberry Pi' },
-  { id: 'projects', Glyph: GraduationCap, tag: 'STUDENTS', title: 'Engineering projects', sub: 'Kits for college projects', cta: 'Explore kits', colors: ['#15803d', '#166534'], fg: '#fff', ctaBg: '#fff', ctaFg: '#166534', match: 'engineering', search: 'project kit' },
+  { id: 'printers', Glyph: Printer, tag: 'AUTHORISED RESELLER', title: '3D printers', sub: 'Bambu Lab printers, filament and parts', cta: 'Shop now', colors: ['#0b1220', '#1e293b'], fg: '#fff', ctaBg: c.green, ctaFg: '#0b1220', match: 'printer', search: '3D printer' },
+  { id: 'boards', Glyph: Cpu, tag: 'MAKERS', title: 'Raspberry Pi & boards', sub: 'Arduino · ESP32 · sensors', cta: 'Shop now', colors: [c.accent, c.accentDark], fg: '#fff', ctaBg: '#fff', ctaFg: c.accentDark, match: 'raspberry', search: 'Raspberry Pi' },
+  { id: 'projects', Glyph: GraduationCap, tag: 'STUDENTS', title: 'Engineering projects', sub: 'Kits for college projects', cta: 'Explore kits', colors: [c.success, c.success], fg: '#fff', ctaBg: '#fff', ctaFg: c.success, match: 'engineering', search: 'project kit' },
 ];
 // The free-delivery banner quotes the store's real minimum (the same one the cart uses), and is left out when the store has none.
-const shippingBanner = (min: number): Banner => ({ id: 'shipping', Glyph: Truck, tag: 'FREE SHIPPING', title: `Free delivery over ${inr(min)}`, sub: `On every order of ${inr(min)} or more`, cta: 'Start shopping', colors: ['#fef3c7', '#fde68a'], fg: c.dealText, ctaBg: c.dealText, ctaFg: '#fff' });
+const shippingBanner = (min: number): Banner => ({ id: 'shipping', Glyph: Truck, tag: 'FREE SHIPPING', title: `Free delivery over ${inr(min)}`, sub: `On every order of ${inr(min)} or more`, cta: 'Start shopping', colors: [c.dealSoft, '#fde68a'], fg: c.dealText, ctaBg: c.dealText, ctaFg: '#fff' });
 
 const GAP = 10;
 const EVERY_MS = 4500;
@@ -43,7 +43,7 @@ export default function BannerCarousel({ cats, active = true }: { cats: Category
   const ship = useFetch<{ min: number | null }>('/api/cart/free-shipping');
   const remote = useAppConfig().banners; // banners set from the store replace the built-in ones
   const banners = useMemo<Banner[]>(() => remote?.length
-    ? remote.map((b) => ({ id: b.id, Glyph: Truck, tag: b.tag ?? '', title: b.title, sub: b.sub ?? '', cta: b.cta ?? 'Shop now', colors: b.colors ?? ['#1c61e7', '#144fc0'], fg: b.fg ?? '#fff', ctaBg: '#fff', ctaFg: '#144fc0', slug: b.category, search: b.search }))
+    ? remote.map((b) => ({ id: b.id, Glyph: Truck, tag: b.tag ?? '', title: b.title, sub: b.sub ?? '', cta: b.cta ?? 'Shop now', colors: b.colors ?? [c.accent, c.accentDark], fg: b.fg ?? '#fff', ctaBg: '#fff', ctaFg: c.accentDark, slug: b.category, search: b.search }))
     : ship.data?.min ? [...BANNERS, shippingBanner(ship.data.min)] : BANNERS, [remote, ship.data?.min]);
   const [reduce, setReduce] = useState(false);
   useEffect(() => { AccessibilityInfo.isReduceMotionEnabled().then(setReduce).catch(() => {}); }, []);
@@ -121,13 +121,13 @@ const s = StyleSheet.create({
   card: { height: 156, borderRadius: r.lg + 4, padding: 16, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' },
   blob: { position: 'absolute', borderRadius: 999 },
   text: { flex: 1, paddingRight: 8 },
-  tag: { alignSelf: 'flex-start', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.8, borderWidth: 1, borderRadius: r.pill, paddingHorizontal: 8, paddingVertical: 2, opacity: 0.85, overflow: 'hidden' },
-  title: { fontSize: 20, fontWeight: '900', lineHeight: 24, marginTop: 8 },
+  tag: { alignSelf: 'flex-start', fontSize: 11, fontWeight: '800', letterSpacing: 0.8, borderWidth: 1, borderRadius: r.pill, paddingHorizontal: 8, paddingVertical: 2, opacity: 0.85, overflow: 'hidden' },
+  title: { fontSize: 20, fontWeight: '800', lineHeight: 24, marginTop: 8 },
   sub: { fontSize: 12, opacity: 0.88, marginTop: 3 },
   cta: { alignSelf: 'flex-start', fontSize: 12, fontWeight: '800', paddingHorizontal: 14, paddingVertical: 7, borderRadius: r.pill, overflow: 'hidden', marginTop: 12 },
   photoWrap: { width: 112, alignItems: 'center', justifyContent: 'center' },
   photo: { width: 108, height: 108, borderRadius: 24, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', transform: [{ rotate: '-3deg' }] },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 10 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#d3d8e0' },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.line },
   dotOn: { width: 18, backgroundColor: c.accent },
 });

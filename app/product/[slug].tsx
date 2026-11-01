@@ -211,13 +211,13 @@ export default function ProductScreen() {
           {brand ? (
             <Pressable onPress={() => router.push({ pathname: '/(tabs)/shop', params: { brand: brand.slug, brandName: brand.name } })} style={s.brand} accessibilityRole="button" accessibilityLabel={`Explore all ${brand.name} products`}>
               <View style={s.brandLogo}>
-                {brand.image ? <Image source={brand.image} style={{ width: '100%', height: '100%' }} contentFit="contain" accessibilityLabel={`${brand.name} logo`} /> : <Text style={{ fontWeight: '900', fontSize: 18, color: c.accent }}>{brand.name.trim()[0]?.toUpperCase()}</Text>}
+                {brand.image ? <Image source={brand.image} style={{ width: '100%', height: '100%' }} contentFit="contain" accessibilityLabel={`${brand.name} logo`} /> : <Text style={{ fontWeight: '800', fontSize: 17, color: c.accent }}>{brand.name.trim()[0]?.toUpperCase()}</Text>}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontWeight: '800' }} numberOfLines={1}>{decodeHtml(brand.name)}</Text>
                 <Text style={{ color: c.muted, fontSize: 12 }}>Explore all products{brand.count > 1 ? ` (${brand.count})` : ''}</Text>
               </View>
-              <Text style={{ color: c.muted, fontSize: 22 }}>›</Text>
+              <Text style={{ color: c.muted, fontSize: 24 }}>›</Text>
             </Pressable>
           ) : null}
           </Reveal>
@@ -235,7 +235,7 @@ export default function ProductScreen() {
                   if (sw) {
                     return (
                       <Pressable key={t.slug} onPress={pick} accessibilityRole="radio" accessibilityLabel={label} accessibilityState={{ selected: on }} style={[s.swRing, on && { borderColor: c.accent }]}>
-                        <View style={[s.sw, { backgroundColor: sw.color ?? '#eee' }, !ok && { opacity: 0.4 }]}>
+                        <View style={[s.sw, { backgroundColor: sw.color ?? c.line }, !ok && { opacity: 0.4 }]}>
                           {sw.image ? <Image source={sw.image} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : null}
                           {!ok && <View style={s.swX} />}
                         </View>
@@ -313,7 +313,7 @@ export default function ProductScreen() {
       <Modal visible={details} animationType="slide" onRequestClose={() => setDetails(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
           <View style={s.sheetHead}>
-            <Text style={{ flex: 1, fontSize: 18, fontWeight: '900' }} numberOfLines={1}>Product details</Text>
+            <Text style={{ flex: 1, fontSize: 17, fontWeight: '800' }} numberOfLines={1}>Product details</Text>
             <Pressable onPress={() => setDetails(false)} hitSlop={12} accessibilityRole="button" accessibilityLabel="Close"><X size={24} color={c.text} /></Pressable>
           </View>
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
@@ -373,25 +373,25 @@ function ProductSkeleton() {
 
 const s = StyleSheet.create({
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 8 },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#d1d5db' },
-  name: { fontSize: 19, fontWeight: '800', color: c.text, lineHeight: 25 },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: c.line },
+  name: { fontSize: 20, fontWeight: '800', color: c.text, lineHeight: 25 },
   priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10, marginTop: 8 },
-  price: { fontSize: 24, fontWeight: '900', color: c.text },
+  price: { fontSize: 24, fontWeight: '800', color: c.text },
   was: { fontSize: 15, color: c.muted, textDecorationLine: 'line-through' },
   gst: { fontSize: 12, color: c.muted },
-  label: { fontSize: 14, fontWeight: '700', color: c.text, marginBottom: 8 },
+  label: { fontSize: 15, fontWeight: '700', color: c.text, marginBottom: 8 },
   opts: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   swRing: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
   sw: { width: 32, height: 32, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(0,0,0,0.18)' },
   swX: { position: 'absolute', left: -4, right: -4, top: 14, height: 2, backgroundColor: '#cf000f', transform: [{ rotate: '-45deg' }] },
   opt: { minWidth: 92, paddingHorizontal: 18, paddingVertical: 14, borderRadius: r.md, borderWidth: 1.5, borderColor: c.line, alignItems: 'center' }, // "Select unit" cards
   optOn: { borderColor: c.accent, backgroundColor: c.accentSoft },
-  optText: { fontSize: 14, color: c.text },
+  optText: { fontSize: 15, color: c.text },
   sku: { color: c.muted, fontSize: 13, marginTop: 16 },
-  section: { fontSize: 16, fontWeight: '800', color: c.text, marginBottom: 6 },
-  docH: { fontSize: 14, fontWeight: '800', color: c.text, marginTop: 10 },
-  desc: { color: '#444', fontSize: 14, lineHeight: 22, marginTop: 6 },
-  more: { color: c.accent, fontWeight: '800', fontSize: 14, marginTop: 10 },
+  section: { fontSize: 15, fontWeight: '800', color: c.text, marginBottom: 6 },
+  docH: { fontSize: 15, fontWeight: '800', color: c.text, marginTop: 10 },
+  desc: { color: c.text2, fontSize: 15, lineHeight: 22, marginTop: 6 },
+  more: { color: c.accent, fontWeight: '800', fontSize: 15, marginTop: 10 },
   specRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 12, paddingVertical: 10, borderRadius: r.sm },
   specK: { flex: 2, fontSize: 13, color: c.muted, fontWeight: '600' },
   specV: { flex: 3, fontSize: 13, color: c.text, fontWeight: '600' },
@@ -407,11 +407,11 @@ const s = StyleSheet.create({
   sheetHead: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.line },
   fact: { backgroundColor: c.surface, borderRadius: r.md, paddingHorizontal: 14, paddingVertical: 10, minWidth: 110, maxWidth: 200 },
   factK: { fontSize: 11, color: c.muted, fontWeight: '600' },
-  factV: { fontSize: 14, color: c.text, fontWeight: '800', marginTop: 2 },
+  factV: { fontSize: 15, color: c.text, fontWeight: '800', marginTop: 2 },
   rating: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
-  ratingT: { fontSize: 14, fontWeight: '800', color: c.text },
+  ratingT: { fontSize: 15, fontWeight: '800', color: c.text },
   ratingN: { fontSize: 13, color: c.muted },
-  barPrice: { fontSize: 18, fontWeight: '900', color: c.text },
+  barPrice: { fontSize: 17, fontWeight: '800', color: c.text },
   barNote: { fontSize: 11, color: c.muted, marginTop: 1 },
   bar: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderTopWidth: 1, borderTopColor: c.line, backgroundColor: '#fff' },
   action: { width: 150, flexShrink: 0 }, // a compact button on the right, as on Blinkit: the price takes the rest

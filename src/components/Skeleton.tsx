@@ -11,7 +11,7 @@ export function Skeleton({ style }: { style?: ViewStyle }) {
     a.start();
     return () => a.stop();
   }, [o]);
-  return <Animated.View style={[{ backgroundColor: '#e9ebef', borderRadius: r.sm, opacity: o }, style]} />;
+  return <Animated.View style={[{ backgroundColor: c.line, borderRadius: r.sm, opacity: o }, style]} />;
 }
 
 export const ProductSkeleton = ({ width }: { width?: number }) => (

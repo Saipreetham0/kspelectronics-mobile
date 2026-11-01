@@ -187,9 +187,9 @@ export default function Shop() {
       ) : (
         <>
           <View style={s.bar}>
-            <Ionicons name="search" size={19} color="#777" />
-            <TextInput style={s.input} placeholder='Search "Arduino", "filament" and more' placeholderTextColor="#767676" value={q} onChangeText={setQ} autoFocus={searching} onSubmitEditing={() => { setSearch(q.trim()); addRecent(q); }} returnKeyType="search" />
-            {(q || search || searching) ? <Pressable onPress={() => { setQ(''); setSearch(''); setSearching(false); }} accessibilityLabel="Clear search" hitSlop={8}><Ionicons name="close-circle" size={19} color="#aaa" /></Pressable> : null}
+            <Ionicons name="search" size={19} color={c.muted} />
+            <TextInput style={s.input} placeholder='Search "Arduino", "filament" and more' placeholderTextColor={c.placeholder} value={q} onChangeText={setQ} autoFocus={searching} onSubmitEditing={() => { setSearch(q.trim()); addRecent(q); }} returnKeyType="search" />
+            {(q || search || searching) ? <Pressable onPress={() => { setQ(''); setSearch(''); setSearching(false); }} accessibilityLabel="Clear search" hitSlop={8}><Ionicons name="close-circle" size={19} color={c.muted} /></Pressable> : null}
           </View>
           <Pressable onPress={() => setPinOpen(true)} hitSlop={6} accessibilityRole="button" accessibilityLabel="Change delivery location">
             <Text style={s.deliver} numberOfLines={1}>
@@ -320,7 +320,7 @@ const s = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.line },
   circle: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   headMid: { flex: 1, minWidth: 0, borderWidth: 1, borderColor: c.line, borderRadius: 22, paddingHorizontal: 14, paddingVertical: 5, backgroundColor: '#fff' },
-  headT: { fontSize: 14, fontWeight: '800', color: c.text },
+  headT: { fontSize: 15, fontWeight: '800', color: c.text },
   headS: { fontSize: 11, fontWeight: '600', color: c.success, marginTop: 1 },
   headPlace: { color: c.text, fontWeight: '700' },
   bar: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.surface, borderRadius: r.lg, marginHorizontal: 12, marginVertical: 8, paddingHorizontal: 14, minHeight: 46 },
@@ -328,7 +328,7 @@ const s = StyleSheet.create({
   deliver: { fontSize: 12, fontWeight: '700', color: c.success, paddingHorizontal: 14, paddingBottom: 6 },
   // The category grid: a bold section heading (with "See all") over four-across tiles.
   sectionRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginHorizontal: 16, marginTop: 18, marginBottom: 4 },
-  section: { flex: 1, fontSize: 20, fontWeight: '900', color: c.text },
+  section: { flex: 1, fontSize: 20, fontWeight: '800', color: c.text },
   seeAll: { fontSize: 13, fontWeight: '800', color: c.accent },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 6, paddingTop: 6 },
   tile: { alignItems: 'center', paddingVertical: 8, paddingHorizontal: 3 },
@@ -340,14 +340,14 @@ const s = StyleSheet.create({
   railBar: { position: 'absolute', right: 0, top: 6, bottom: 6, width: 4, borderTopLeftRadius: 4, borderBottomLeftRadius: 4, backgroundColor: c.accent },
   railImg: { width: 54, height: 54, borderRadius: 27, overflow: 'hidden', backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center', opacity: 0.85 },
   railImgOn: { backgroundColor: c.accentSoft, opacity: 1 },
-  railText: { fontSize: 10.5, textAlign: 'center', marginTop: 5, color: c.muted, fontWeight: '500', lineHeight: 13 },
+  railText: { fontSize: 11, textAlign: 'center', marginTop: 5, color: c.muted, fontWeight: '400', lineHeight: 13 },
   railTextOn: { color: c.text, fontWeight: '800' },
   sortRow: { paddingHorizontal: 12, paddingVertical: 8 },
   title: { fontSize: 15, fontWeight: '800', color: c.text },
   toolbar: { flexDirection: 'row', gap: 8, paddingHorizontal: 10, paddingVertical: 8 },
   tool: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 11, paddingVertical: 8, borderRadius: r.md, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff', maxWidth: 150 },
   toolOn: { borderColor: c.accent, backgroundColor: c.accentSoft },
-  toolT: { fontSize: 12.5, fontWeight: '700', color: c.text, flexShrink: 1 },
+  toolT: { fontSize: 13, fontWeight: '700', color: c.text, flexShrink: 1 },
   noShrink: { flexGrow: 0, flexShrink: 0 }, // a chip row above a tall list must not be squeezed to a sliver
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: r.pill, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff', maxWidth: 220 },
   chipOn: { backgroundColor: c.accent, borderColor: c.accent },

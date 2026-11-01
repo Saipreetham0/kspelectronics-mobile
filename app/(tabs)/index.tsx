@@ -153,7 +153,7 @@ export default function Home() {
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <Animated.View style={{ zIndex: 2, transform: [{ translateY: lift }] }}>
-      <LinearGradient colors={festive ? ['#ffd9a0', '#fff0d6', '#ffffff'] : ['#d6e5ff', '#ebf2ff', '#ffffff']} style={s.head}>
+      <LinearGradient colors={festive ? ['#ffd9a0', '#fff0d6', '#ffffff'] : [c.heroTop, c.accentTint, '#ffffff']} style={s.head}>
         <SafeAreaView edges={['top']}>
           <Animated.View style={{ opacity: topO }} pointerEvents={searchMode ? 'none' : 'auto'}>
           <View onLayout={(e) => { const h = Math.ceil(e.nativeEvent.layout.height); if (h > 0 && h !== topFull) setTopFull(h); }}>
@@ -176,13 +176,13 @@ export default function Home() {
           </Animated.View>
           <Animated.View style={[s.search, { minHeight: barH, borderColor: barBorder }]}>
             <View style={{ width: 22, height: 22 }}>
-              <Animated.View pointerEvents="none" style={{ position: 'absolute', opacity: notSearch }}><Ionicons name="search" size={22} color="#777" /></Animated.View>
+              <Animated.View pointerEvents="none" style={{ position: 'absolute', opacity: notSearch }}><Ionicons name="search" size={22} color={c.muted} /></Animated.View>
               <Animated.View pointerEvents={searchMode ? 'auto' : 'none'} style={{ position: 'absolute', opacity: searchP }}>
                 <Pressable onPress={() => { setQ(''); Keyboard.dismiss(); setFocused(false); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="Back"><Ionicons name="arrow-back" size={22} color={c.text} /></Pressable>
               </Animated.View>
             </View>
             <TextInput style={[s.input, { height: barH - 2, fontSize: barFont }]} value={q} onChangeText={setQ} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onSubmitEditing={search} returnKeyType="search" accessibilityLabel="Search products" />
-            {q ? <Pressable onPress={() => setQ('')} hitSlop={12} accessibilityRole="button" accessibilityLabel="Clear search"><Ionicons name="close-circle" size={20} color="#aaa" /></Pressable> : null}
+            {q ? <Pressable onPress={() => setQ('')} hitSlop={12} accessibilityRole="button" accessibilityLabel="Clear search"><Ionicons name="close-circle" size={20} color={c.muted} /></Pressable> : null}
             {!q && <AnimatedText pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" numberOfLines={1} style={[s.hint, { fontSize: barFont, opacity: fade, transform: [{ translateY: slide }] }]}>Search "{HINTS[hint]}"</AnimatedText>}
           </Animated.View>
         </SafeAreaView>
@@ -261,13 +261,13 @@ const s = StyleSheet.create({
   tab: { width: 88, alignItems: 'center', paddingHorizontal: 2 },
   tabImg: { width: 52, height: 52, borderRadius: 26, overflow: 'hidden', backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' },
   tabName: { fontSize: 11, textAlign: 'center', marginTop: 5, color: c.text, fontWeight: '600', lineHeight: 13 },
-  eta: { fontSize: 20, fontWeight: '900', color: c.text, letterSpacing: -0.3 },
-  where: { fontSize: 13, color: '#3b3b3b', marginTop: 2, fontWeight: '600' },
+  eta: { fontSize: 20, fontWeight: '800', color: c.text, letterSpacing: -0.3 },
+  where: { fontSize: 13, color: c.text2, marginTop: 2, fontWeight: '600' },
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   search: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: r.lg, paddingHorizontal: 14, minHeight: 50, marginTop: 10, borderWidth: 1, borderColor: c.line },
   input: { flex: 1, fontSize: 15, color: c.text, height: 50 },
-  hint: { position: 'absolute', left: 48, right: 44, color: '#6b7280', fontSize: 15 },
-  h: { fontSize: 18, fontWeight: '900', color: c.text },
+  hint: { position: 'absolute', left: 48, right: 44, color: c.muted, fontSize: 15 },
+  h: { fontSize: 17, fontWeight: '800', color: c.text },
   rowHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 16, marginBottom: 8 },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   recentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.line },
@@ -278,5 +278,5 @@ const s = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, paddingTop: 12 },
   tile: { width: '25%', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 4 },
   tileImg: { width: 70, height: 70, borderRadius: 18, overflow: 'hidden', backgroundColor: c.surface },
-  tileName: { fontSize: 11.5, textAlign: 'center', marginTop: 6, color: c.text, fontWeight: '600', lineHeight: 14 },
+  tileName: { fontSize: 12, textAlign: 'center', marginTop: 6, color: c.text, fontWeight: '600', lineHeight: 14 },
 });

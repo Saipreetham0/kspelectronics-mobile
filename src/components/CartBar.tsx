@@ -47,7 +47,7 @@ const s = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.accent, borderRadius: r.pill, padding: 6, ...shadow },
   thumbs: { flexDirection: 'row' },
   thumb: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', borderWidth: 2, borderColor: c.accent },
-  title: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  title: { color: '#fff', fontWeight: '800', fontSize: 15 },
   sub: { color: '#fff', fontSize: 13, marginTop: 1 },
   go: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(0,0,0,0.2)', alignItems: 'center', justifyContent: 'center' },
 });

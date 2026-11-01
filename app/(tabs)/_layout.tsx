@@ -16,7 +16,7 @@ import FreeShipStrip, { STRIP_H, useFreeShip } from '@/components/FreeShipStrip'
 import { useFetch } from '@/useFetch';
 import { c } from '@/theme';
 
-const INACTIVE = '#6b7280';
+const INACTIVE = c.muted;
 const TABS: Record<string, { Glyph: Icon; label: (narrow: boolean) => string }> = {
   index: { Glyph: House, label: () => 'Home' },
   shop: { Glyph: SquaresFour, label: () => 'Categories' },
@@ -44,7 +44,7 @@ function Tab({ Glyph, text, focused, size, fs, badge, onPress, onLongPress, a11y
         </Bump>
         {badge ? (
           <View style={{ position: 'absolute', top: -5, right: -11, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, backgroundColor: c.deal, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
-            <RNText allowFontScaling={false} style={{ color: c.text, fontFamily: 'Inter_800ExtraBold', fontSize: 10 }}>{badge > 99 ? '99+' : badge}</RNText>
+            <RNText allowFontScaling={false} style={{ color: c.text, fontFamily: 'Inter_800ExtraBold', fontSize: 11 }}>{badge > 99 ? '99+' : badge}</RNText>
           </View>
         ) : null}
       </Animated.View>

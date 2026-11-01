@@ -11,7 +11,7 @@ export default function RiderCard({ rider, eta, drop }: { rider: Rider; eta?: st
   return (
     <View style={{ marginTop: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontWeight: '900', color: c.accent, fontSize: 18 }}>{rider.name.trim()[0]?.toUpperCase() ?? '?'}</Text></View>
+        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontWeight: '800', color: c.accent, fontSize: 17 }}>{rider.name.trim()[0]?.toUpperCase() ?? '?'}</Text></View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontWeight: '800' }}>{rider.name}</Text>
           <Text style={{ color: c.muted, fontSize: 12 }}>{eta ? `Arriving ${eta}` : 'On the way to you'}</Text>

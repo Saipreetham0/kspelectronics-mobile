@@ -119,18 +119,18 @@ export default function Orders() {
       {/* Search Bar */}
       <View style={s.searchContainer}>
         <View style={s.searchBox}>
-          <Ionicons name="search" size={18} color="#888" style={{ marginRight: 8 }} />
+          <Ionicons name="search" size={18} color={c.placeholder} style={{ marginRight: 8 }} />
           <TextInput
             style={s.searchInput}
             placeholder="Search by order # or product name..."
-            placeholderTextColor="#888"
+            placeholderTextColor={c.placeholder}
             value={search}
             onChangeText={setSearch}
             returnKeyType="search"
           />
           {search ? (
             <Pressable onPress={() => setSearch('')} hitSlop={10}>
-              <Ionicons name="close-circle" size={18} color="#888" />
+              <Ionicons name="close-circle" size={18} color={c.placeholder} />
             </Pressable>
           ) : null}
         </View>
@@ -164,7 +164,7 @@ export default function Orders() {
           <View style={{ marginTop: 30 }}>
             <Center>
               <Ionicons name="search-outline" size={48} color={c.muted} style={{ marginBottom: 12 }} />
-              <Text style={{ fontSize: 16, fontWeight: '700', color: c.text, marginBottom: 6 }}>No matching orders</Text>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: c.text, marginBottom: 6 }}>No matching orders</Text>
               <Text style={{ color: c.muted, textAlign: 'center', marginBottom: 16, maxWidth: 280 }}>
                 We couldn't find any orders matching your search or filter.
               </Text>
@@ -182,7 +182,7 @@ export default function Orders() {
         renderItem={({ item: o }) => (
           <Card>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontWeight: '800', fontSize: 16 }}>#{o.number}</Text>
+              <Text style={{ fontWeight: '800', fontSize: 15 }}>#{o.number}</Text>
               <Text
                 style={[
                   s.statusPill,
@@ -196,7 +196,7 @@ export default function Orders() {
               {new Date(o.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} · {o.total}
             </Text>
             {o.items.map((i) => (
-              <Text key={i.id} numberOfLines={1} style={{ color: '#444', lineHeight: 22 }}>
+              <Text key={i.id} numberOfLines={1} style={{ color: c.text2, lineHeight: 22 }}>
                 {decodeHtml(i.name)} × {i.quantity}
               </Text>
             ))}
@@ -231,7 +231,7 @@ const s = StyleSheet.create({
   fill: { flex: 1, backgroundColor: c.surface },
   searchContainer: { backgroundColor: '#fff', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: c.line },
   searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: r.md, paddingHorizontal: 12, height: 42 },
-  searchInput: { flex: 1, fontSize: 14, color: c.text, height: '100%' },
+  searchInput: { flex: 1, fontSize: 15, color: c.text, height: '100%' },
   chipRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: r.pill, backgroundColor: c.surface, borderWidth: 1, borderColor: c.line },
   chipActive: { backgroundColor: c.accentSoft, borderColor: c.accent },
@@ -239,6 +239,6 @@ const s = StyleSheet.create({
   chipTextActive: { color: c.accent },
   statusPill: { fontSize: 12, fontWeight: '800', textTransform: 'capitalize', paddingHorizontal: 8, paddingVertical: 3, borderRadius: r.sm },
   statusCompleted: { color: c.success, backgroundColor: c.greenSoft },
-  statusCancelled: { color: c.danger, backgroundColor: '#fdecec' },
+  statusCancelled: { color: c.danger, backgroundColor: c.dangerSoft },
   statusProcessing: { color: c.accent, backgroundColor: c.accentSoft },
 });

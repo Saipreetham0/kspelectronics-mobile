@@ -23,7 +23,7 @@ type Props = {
 };
 
 const Sum = ({ k, v, color }: { k: string; v: string; color?: string }) => (
-  <View style={s.line}><Text style={{ color: color ?? '#555' }}>{k}</Text><Text style={{ fontWeight: '600', color: color ?? c.text }}>{v}</Text></View>
+  <View style={s.line}><Text style={{ color: color ?? c.text2 }}>{k}</Text><Text style={{ fontWeight: '600', color: color ?? c.text }}>{v}</Text></View>
 );
 
 export default function OrderSummary({ items, totals: t, quote, quoting, pinOk, saved, mrp, itemsNow, noRates, whatsapp, pincode }: Props) {
@@ -35,14 +35,14 @@ export default function OrderSummary({ items, totals: t, quote, quoting, pinOk, 
       {items.map((i) => <View key={i.key} style={s.line}><Image source={i.images[0]?.thumbnail || i.images[0]?.src} style={s.thumb} contentFit="contain" /><Text style={{ flex: 1 }} numberOfLines={2}>{decodeHtml(i.name)} <Text style={{ color: c.muted }}>× {i.quantity}</Text></Text><Text style={{ fontWeight: '700' }}>{minorToInr(Number(i.prices.price) * i.quantity, i.prices.currency_minor_unit)}</Text></View>)}
       <View style={s.hr} />
       <View style={s.line}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Text style={{ color: '#555' }}>Items total</Text>{saved > 0 && <View style={s.savedChip}><Text style={s.savedChipT}>Saved {minorToInr(saved, m)}</Text></View>}</View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Text style={{ color: c.text2 }}>Items total</Text>{saved > 0 && <View style={s.savedChip}><Text style={s.savedChipT}>Saved {minorToInr(saved, m)}</Text></View>}</View>
         <Text style={{ fontWeight: '600' }}>{mrp > itemsNow && <Text style={{ color: c.muted, textDecorationLine: 'line-through', fontWeight: '400' }}>{minorToInr(mrp, m)} </Text>}{minorToInr(withTax(t.total_items, t.total_items_tax), m)}</Text>
       </View>
       {Number(t.total_discount) > 0 && <Sum k="Discount" v={`−${minorToInr(withTax(t.total_discount, t.total_discount_tax), m)}`} color={c.success} />}
       <Sum k="Shipping" v={!pinOk ? 'Enter pincode' : quoting ? '…' : !quote ? 'Unavailable' : noRates ? 'Not deliverable' : withTax(t.total_shipping, t.total_shipping_tax) > 0 ? minorToInr(withTax(t.total_shipping, t.total_shipping_tax), m) : 'Free'} color={noRates ? c.danger : undefined} />
       {noRates && <Pressable onPress={() => Linking.openURL(`https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hi, can you deliver to pincode ${pincode}?`)}`).catch(() => {})} style={s.rate} accessibilityRole="link"><Text style={{ color: c.accent, fontWeight: '800' }}>Ask us on WhatsApp about this pincode</Text></Pressable>}
       <View style={s.hr} />
-      <View style={s.line}><Text style={{ fontSize: 18, fontWeight: '900' }}>Grand total</Text><Text style={{ fontSize: 18, fontWeight: '900' }}>{minorToInr(t.total_price, m)}</Text></View>
+      <View style={s.line}><Text style={{ fontSize: 17, fontWeight: '800' }}>Grand total</Text><Text style={{ fontSize: 17, fontWeight: '800' }}>{minorToInr(t.total_price, m)}</Text></View>
       <Text style={{ color: c.muted, fontSize: 12, marginTop: -2, marginBottom: 6 }}>Includes GST {minorToInr(t.total_tax, m)}</Text>
       {saved > 0 && <View style={s.savings}><Text style={s.savingsT}>Your total savings</Text><Text style={s.savingsT}>{minorToInr(saved, m)}</Text></View>}
     </Card>

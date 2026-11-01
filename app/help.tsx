@@ -43,9 +43,9 @@ export default function Help() {
         {FAQ.map((f, i) => (
           <View key={f.q} style={s.faq}>
             <Pressable onPress={() => setOpen(open === i ? -1 : i)} accessibilityRole="button" accessibilityState={{ expanded: open === i }} style={s.faqHead}>
-              <Text style={{ flex: 1, fontWeight: '700' }}>{f.q}</Text><Text style={{ color: c.muted, fontSize: 18 }}>{open === i ? '−' : '+'}</Text>
+              <Text style={{ flex: 1, fontWeight: '700' }}>{f.q}</Text><Text style={{ color: c.muted, fontSize: 17 }}>{open === i ? '−' : '+'}</Text>
             </Pressable>
-            {open === i && <Text style={{ color: '#444', lineHeight: 21, paddingBottom: 12 }}>{f.a}</Text>}
+            {open === i && <Text style={{ color: c.text2, lineHeight: 21, paddingBottom: 12 }}>{f.a}</Text>}
           </View>
         ))}
       </Card>
@@ -59,7 +59,7 @@ export default function Help() {
       {sent.length > 0 && (
         <Card>
           <H>Your recent messages</H>
-          {sent.map((m) => <View key={m.at} style={{ marginBottom: 10 }}><Text style={{ color: c.muted, fontSize: 12 }}>Sent {new Date(m.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}. We reply by email.</Text><Text numberOfLines={2} style={{ color: '#444' }}>{m.text}</Text></View>)}
+          {sent.map((m) => <View key={m.at} style={{ marginBottom: 10 }}><Text style={{ color: c.muted, fontSize: 12 }}>Sent {new Date(m.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}. We reply by email.</Text><Text numberOfLines={2} style={{ color: c.text2 }}>{m.text}</Text></View>)}
         </Card>
       )}
       <Card>

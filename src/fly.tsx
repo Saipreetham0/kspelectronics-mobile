@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NATIVE } from '@/native';
 import { reduceMotion } from '@/components/motion';
+import { c } from '@/theme';
 
 type Rect = { x: number; y: number; width: number; height: number };
 type Flight = { id: number; src: string; from: Rect };
@@ -44,7 +45,7 @@ function Flying({ f, target, onDone }: { f: Flight; target: { x: number; y: numb
   const x0 = f.from.x + f.from.width / 2 - SIZE / 2, y0 = f.from.y + f.from.height / 2 - SIZE / 2;
   const x1 = target.x - SIZE / 2, y1 = target.y - SIZE / 2;
   return (
-    <Animated.View style={{ position: 'absolute', left: 0, top: 0, width: SIZE, height: SIZE, borderRadius: 12, overflow: 'hidden', backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb',
+    <Animated.View style={{ position: 'absolute', left: 0, top: 0, width: SIZE, height: SIZE, borderRadius: 12, overflow: 'hidden', backgroundColor: '#fff', borderWidth: 1, borderColor: c.line,
       opacity: t.interpolate({ inputRange: [0, 0.85, 1], outputRange: [1, 1, 0] }),
       transform: [{ translateX: t.interpolate({ inputRange: [0, 1], outputRange: [x0, x1] }) }, { translateY: t.interpolate({ inputRange: [0, 1], outputRange: [y0, y1] }) }, { scale: t.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }) }] }}>
       <Image source={f.src} style={{ width: '100%', height: '100%' }} contentFit="contain" />

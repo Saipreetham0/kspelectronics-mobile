@@ -15,8 +15,8 @@ export default function ModeToggle() {
     return (
       <Pressable key={m} onPress={() => !off && setMode(m)} disabled={off} style={[s.tab, on && s.on]} accessibilityRole="tab"
         accessibilityState={{ selected: on, disabled: off }} accessibilityLabel={off ? `${label}, not available at this location` : label}>
-        <Ionicons name={icon} size={15} color={on ? '#fff' : off ? '#b0b5bd' : c.text} />
-        <Text style={[s.t, on && { color: '#fff' }, off && { color: '#b0b5bd' }]}>{label}</Text>
+        <Ionicons name={icon} size={15} color={on ? '#fff' : off ? c.disabled : c.text} />
+        <Text style={[s.t, on && { color: '#fff' }, off && { color: c.disabled }]}>{label}</Text>
       </Pressable>
     );
   };
@@ -32,6 +32,6 @@ const s = StyleSheet.create({
   wrap: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: r.pill ?? 999, padding: 3, gap: 3, marginTop: 10 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 36, borderRadius: 999 },
   on: { backgroundColor: c.accent },
-  t: { fontWeight: '800', fontSize: 13.5, color: c.text },
+  t: { fontWeight: '800', fontSize: 13, color: c.text },
   note: { color: c.muted, fontSize: 12, marginTop: 6, marginLeft: 4 },
 });

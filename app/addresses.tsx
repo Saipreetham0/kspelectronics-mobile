@@ -37,7 +37,7 @@ export default function Addresses() {
               <MapPin size={22} weight={on ? 'fill' : 'regular'} color={on ? c.accent : c.muted} />
               <View style={{ flex: 1 }}>
                 <Text style={s.label}>{a.label}{on ? '  ·  Delivering here' : ''}</Text>
-                <Text style={{ color: '#444', marginTop: 2 }}>{a.name}{a.phone ? ` · ${a.phone}` : ''}</Text>
+                <Text style={{ color: c.text2, marginTop: 2 }}>{a.name}{a.phone ? ` · ${a.phone}` : ''}</Text>
                 <Text style={{ color: c.muted, marginTop: 2 }} numberOfLines={3}>{a.line}, {a.loc.city} {a.loc.pin}</Text>
               </View>
             </Pressable>
@@ -53,5 +53,5 @@ export default function Addresses() {
 
 const s = StyleSheet.create({
   row: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  label: { fontSize: 16, fontWeight: '800', color: c.text, borderRadius: r.sm },
+  label: { fontSize: 15, fontWeight: '800', color: c.text, borderRadius: r.sm },
 });

@@ -41,7 +41,7 @@ export default function ProductCard({ product: p, width, index = 0 }: { product:
         <View style={s.add}><AddButton product={p} compact /></View>
       </View>
       <Pressable onPress={() => toggle(p.id)} hitSlop={8} style={s.heart} accessibilityRole="button" accessibilityLabel={saved ? 'Remove from wishlist' : 'Add to wishlist'}>
-        <Pop on={saved}><Heart size={18} weight={saved ? 'fill' : 'regular'} color={saved ? c.danger : '#9aa0a6'} /></Pop>
+        <Pop on={saved}><Heart size={18} weight={saved ? 'fill' : 'regular'} color={saved ? c.danger : c.borderStrong} /></Pop>
       </Pressable>
       {bought && <View style={s.bought} pointerEvents="none"><Text style={s.boughtT}>Bought earlier</Text></View>}
       <Tap onPress={() => router.push(`/product/${p.slug}`)} scaleTo={0.97}>
@@ -80,5 +80,5 @@ const s = StyleSheet.create({
   etaT: { fontSize: 11, fontWeight: '700', color: c.muted },
   left: { fontSize: 11, fontWeight: '800', color: c.dealText },
   bought: { position: 'absolute', top: 14, left: 14, backgroundColor: c.greenSoft, borderTopLeftRadius: r.sm, borderBottomRightRadius: r.sm, paddingHorizontal: 7, paddingVertical: 3 },
-  boughtT: { fontSize: 10, fontWeight: '800', color: c.greenDark },
+  boughtT: { fontSize: 11, fontWeight: '800', color: c.greenDark },
 });

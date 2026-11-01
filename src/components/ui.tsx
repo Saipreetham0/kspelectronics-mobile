@@ -45,7 +45,7 @@ export function Field({ label, error, inputRef, ...p }: TextInputProps & { label
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={s.label}>{label}</Text>
-      <TextInput ref={inputRef} placeholderTextColor="#767676" accessibilityLabel={label} {...p} style={[s.input, error ? { borderColor: c.danger } : null]} />
+      <TextInput ref={inputRef} placeholderTextColor={c.placeholder} accessibilityLabel={label} {...p} style={[s.input, error ? { borderColor: c.danger } : null]} />
       {error ? <Text style={s.err} accessibilityRole="alert" accessibilityLiveRegion="polite">{error}</Text> : null}
     </View>
   );
@@ -62,7 +62,7 @@ export const ErrorBox = ({ message, onRetry }: { message: string; onRetry?: () =
 const s = StyleSheet.create({
   btn: { minHeight: 48, borderRadius: r.md, borderWidth: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
   btnText: { fontSize: 15, fontWeight: '700' },
-  label: { fontSize: 13, color: '#555', marginBottom: 6 },
+  label: { fontSize: 13, color: c.text2, marginBottom: 6 },
   input: { borderWidth: 1, borderColor: c.line, borderRadius: r.md, paddingHorizontal: 14, minHeight: 48, fontSize: 15, color: c.text, backgroundColor: '#fff' },
   err: { color: c.danger, fontSize: 12, marginTop: 4 },
   card: { borderWidth: 1, borderColor: c.line, borderRadius: r.lg, padding: 16, backgroundColor: '#fff', marginBottom: 14 },

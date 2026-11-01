@@ -85,11 +85,11 @@ export default function Profile() {
         {del ? (
           <>
             {delBy === 'pw' ? (<>
-              <Text style={{ color: '#444', marginBottom: 10, lineHeight: 20 }}>Enter your password to confirm. Your login, saved details and wishlist are removed. Orders already placed stay with the shop for its tax records.</Text>
+              <Text style={{ color: c.text2, marginBottom: 10, lineHeight: 20 }}>Enter your password to confirm. Your login, saved details and wishlist are removed. Orders already placed stay with the shop for its tax records.</Text>
               <Field label="Password" value={delPw} onChangeText={setDelPw} secureTextEntry autoComplete="current-password" />
               <Button title="Delete my account" loading={busy === 'del'} disabled={!delPw} onPress={confirmDelete} style={{ backgroundColor: c.danger, borderColor: c.danger }} />
             </>) : (<>
-              <Text style={{ color: '#444', marginBottom: 10, lineHeight: 20 }}>Confirm with a code sent to the mobile number on your account. Your login, saved details and wishlist are removed. Orders already placed stay with the shop for its tax records.</Text>
+              <Text style={{ color: c.text2, marginBottom: 10, lineHeight: 20 }}>Confirm with a code sent to the mobile number on your account. Your login, saved details and wishlist are removed. Orders already placed stay with the shop for its tax records.</Text>
               <Field label="Mobile number" value={delPhone} onChangeText={(v) => { setDelPhone(tenDigits(v)); setCodeSent(false); }} keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" placeholder="10-digit mobile" />
               {codeSent && <Field label="Code" value={delCode} onChangeText={(v) => setDelCode(v.replace(/\D/g, '').slice(0, 6))} keyboardType="number-pad" textContentType="oneTimeCode" autoComplete="sms-otp" maxLength={6} placeholder="••••••" />}
               {codeSent

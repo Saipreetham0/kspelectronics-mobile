@@ -52,8 +52,8 @@ export default function PaymentMethods({ methods, selected, onSelect, failed, on
 
 const s = StyleSheet.create({
   method: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderWidth: 1, borderColor: c.line, borderRadius: r.md, marginBottom: 10 },
-  methodOn: { borderColor: c.accent, backgroundColor: '#f2f6ff' },
+  methodOn: { borderColor: c.accent, backgroundColor: c.accentTint },
   icon: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#bbb', alignItems: 'center', justifyContent: 'center' },
+  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: c.borderStrong, alignItems: 'center', justifyContent: 'center' },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: c.accent },
 });

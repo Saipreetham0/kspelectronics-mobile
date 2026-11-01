@@ -234,7 +234,7 @@ export default function Checkout() {
 
   if (!ready) return null;
   const items = cart?.items ?? [];
-  if (!items.length) return <Center><Text style={{ fontSize: 18, fontWeight: '800', marginBottom: 14 }}>Your cart is empty</Text><Button title="Continue shopping" onPress={() => router.replace('/(tabs)/shop')} /></Center>;
+  if (!items.length) return <Center><Text style={{ fontSize: 17, fontWeight: '800', marginBottom: 14 }}>Your cart is empty</Text><Button title="Continue shopping" onPress={() => router.replace('/(tabs)/shop')} /></Center>;
 
   const detailsOk = ['email', 'phone', 'firstName', 'lastName', 'address', 'city', 'state', 'pincode'].every((k) => !errors[k]);
   const showSummary = !editing && detailsOk;
@@ -342,14 +342,14 @@ export default function Checkout() {
         </View>
         {!user && !showSummary && (
           <Pressable onPress={showLogin} style={s.loginBar} accessibilityRole="button" accessibilityLabel="Have an account? Log in to use your saved address">
-            <Text style={{ flex: 1, color: '#444', fontSize: 13 }}>Have an account? Use your saved address.</Text><Text style={{ color: c.accent, fontWeight: '800', fontSize: 13 }}>Log in</Text>
+            <Text style={{ flex: 1, color: c.text2, fontSize: 13 }}>Have an account? Use your saved address.</Text><Text style={{ color: c.accent, fontWeight: '800', fontSize: 13 }}>Log in</Text>
           </Pressable>
         )}
         {showSummary ? (
           <Card>
             <View style={s.line}><H>Deliver to</H><Pressable onPress={() => setEditing(true)} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} accessibilityRole="button" accessibilityLabel="Edit delivery details"><Text style={{ color: c.accent, fontWeight: '800' }}>Edit</Text></Pressable></View>
             <Text style={{ fontWeight: '800' }}>{`${form.firstName} ${form.lastName}`.trim()} · {form.phone}</Text>
-            <Text style={{ color: '#444', marginTop: 2 }}>{oneLine(form)}</Text>
+            <Text style={{ color: c.text2, marginTop: 2 }}>{oneLine(form)}</Text>
             <Text style={{ color: c.muted, fontSize: 12, marginTop: 2 }}>{form.email}</Text>
             {(pinNote.delivery ?? '').startsWith("We couldn") ? <Text style={{ color: c.danger, fontSize: 12, marginTop: 4 }} accessibilityLiveRegion="polite">{pinNote.delivery} Tap Edit to fix it.</Text> : null}
             <Pressable onPress={() => setPinOpen(true)} style={[s.drop, { marginTop: 12, marginBottom: 0 }]} accessibilityRole="button" accessibilityLabel="Search or pin your drop location">
@@ -357,7 +357,7 @@ export default function Checkout() {
               <Text style={{ flex: 1, fontWeight: '700' }}>{form.drop ? 'Drop location pinned' : 'Pin your drop location (optional)'}</Text>
               <Text style={{ color: c.accent, fontWeight: '800' }}>{form.drop ? 'Change' : 'Set'}</Text>
             </Pressable>
-            {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Moped size={22} weight="fill" color={c.greenDark} /><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: '#444', fontSize: 12 }}>Choose the ⚡ Quick option under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
+            {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Moped size={22} weight="fill" color={c.greenDark} /><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: c.text2, fontSize: 12 }}>Choose the ⚡ Quick option under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
           </Card>
         ) : (
           <>
@@ -377,7 +377,7 @@ export default function Checkout() {
             </View>
             <Text style={{ color: c.accent, fontWeight: '800' }}>{form.drop ? 'Change' : 'Set'}</Text>
           </Pressable>
-          {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Moped size={22} weight="fill" color={c.greenDark} /><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: '#444', fontSize: 12 }}>Choose the ⚡ Quick option under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
+          {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Moped size={22} weight="fill" color={c.greenDark} /><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: c.text2, fontSize: 12 }}>Choose the ⚡ Quick option under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
           {user ? (() => {
             const ship = fromWc(acct?.shipping);
             return (
@@ -388,7 +388,7 @@ export default function Checkout() {
                   <Pressable key={title} onPress={() => setForm((f) => ({ ...f, ...a, phone: f.phone || raw?.phone || '', drop: f.drop && a.pincode === dropPin ? f.drop : undefined }))} style={s.savedAddr} accessibilityRole="button" accessibilityLabel={`Use saved ${title}`}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontWeight: '800' }}>{title}</Text>
-                      <Text style={{ color: '#444', marginTop: 2 }} numberOfLines={3}>{[`${a.firstName} ${a.lastName}`.trim(), oneLine(a)].filter(Boolean).join('\n')}</Text>
+                      <Text style={{ color: c.text2, marginTop: 2 }} numberOfLines={3}>{[`${a.firstName} ${a.lastName}`.trim(), oneLine(a)].filter(Boolean).join('\n')}</Text>
                     </View>
                     <Text style={{ color: c.accent, fontWeight: '800' }}>Use</Text>
                   </Pressable>
@@ -412,7 +412,7 @@ export default function Checkout() {
         <DeliverySlots pincode={form.pincode} value={form.slot} onChange={(slot, slotLabel) => setForm((f) => (f.slot === slot ? f : { ...f, slot, slotLabel }))} />
         <Card onLayout={(e) => { cardY.current.billing = e.nativeEvent.layout.y; }}>
           <Pressable onPress={toggleGst} style={s.switchRow} accessibilityRole="checkbox" accessibilityState={{ checked: wantGst }}>
-            <View style={[s.box, wantGst && { backgroundColor: c.accent, borderColor: c.accent }]}>{wantGst && <Text style={{ color: '#fff', fontWeight: '900' }}>✓</Text>}</View>
+            <View style={[s.box, wantGst && { backgroundColor: c.accent, borderColor: c.accent }]}>{wantGst && <Text style={{ color: '#fff', fontWeight: '800' }}>✓</Text>}</View>
             <View style={{ flex: 1, marginLeft: 12 }}><Text style={{ fontSize: 15, fontWeight: '700' }}>Issue GST invoice</Text><Text style={{ color: c.muted, fontSize: 12 }}>Tick to add your company name, GSTIN and billing address.</Text></View>
           </Pressable>
           {wantGst && (
@@ -421,12 +421,12 @@ export default function Checkout() {
               {gst.s === 'loading' && <Text style={s.gstNote}>Checking this GSTIN…</Text>}
               {gst.s === 'notfound' && <Text style={[s.gstNote, { color: c.danger }]}>This GSTIN is not registered. Check the number.</Text>}
               {gst.s === 'ok' && gst.info && (
-                <View style={[s.gstCard, !gst.info.active && { borderColor: c.danger, backgroundColor: '#fdecec' }]} accessibilityLiveRegion="polite">
+                <View style={[s.gstCard, !gst.info.active && { borderColor: c.danger, backgroundColor: c.dangerSoft }]} accessibilityLiveRegion="polite">
                   <Text style={{ color: c.muted, fontSize: 11, fontWeight: '700' }}>BILLING DETAILS FROM THE GST REGISTRY</Text>
                   <Text style={{ fontWeight: '800', marginTop: 2 }}>{gst.info.legalName || gst.info.tradeName}</Text>
                   {gst.info.tradeName && gst.info.tradeName !== gst.info.legalName ? <Text style={{ color: c.muted, fontSize: 12 }}>{gst.info.tradeName}</Text> : null}
                   <Text style={{ color: gst.info.active ? c.success : c.danger, fontWeight: '800', fontSize: 12, marginTop: 4 }}>{gst.info.active ? '✓ Active GSTIN' : `GSTIN is ${gst.info.status || 'not active'}: an invoice to it may not be valid`}</Text>
-                  <Text style={{ color: '#444', marginTop: 4, fontSize: 13 }}>{[gst.info.address, gst.info.pincode].filter(Boolean).join(' · ')}</Text>
+                  <Text style={{ color: c.text2, marginTop: 4, fontSize: 13 }}>{[gst.info.address, gst.info.pincode].filter(Boolean).join(' · ')}</Text>
                 </View>
               )}
               {(gst.s === 'down' || gst.s === 'off') && GSTIN_RE.test(gstin) && (<>
@@ -470,7 +470,7 @@ export default function Checkout() {
       {!kb && <SafeAreaView edges={['bottom']} style={s.foot}>
         {error ? <Text style={{ color: c.danger, paddingHorizontal: 14, paddingTop: 8, fontSize: 13 }}>{error}</Text> : null}
         <View style={s.footAddr}>
-          <Text style={{ flex: 1, fontSize: 13, color: '#444' }} numberOfLines={2}>
+          <Text style={{ flex: 1, fontSize: 13, color: c.text2 }} numberOfLines={2}>
             {form.address || form.city ? <><Text style={{ fontWeight: '800' }}>Delivering to </Text>{form.address ? `${form.address}, ` : ''}{form.city}{form.pincode ? ` · ${form.pincode}` : ''}</> : <Text style={{ color: c.muted }}>Add your delivery address above</Text>}
           </Text>
         </View>
@@ -505,10 +505,10 @@ export default function Checkout() {
 }
 
 const s = StyleSheet.create({
-  lbl: { fontSize: 13, color: '#555', marginBottom: 6 },
+  lbl: { fontSize: 13, color: c.text2, marginBottom: 6 },
   select: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: c.line, borderRadius: r.md, paddingHorizontal: 14, minHeight: 48, marginBottom: 14 },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#bbb', alignItems: 'center', justifyContent: 'center' },
+  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: c.borderStrong, alignItems: 'center', justifyContent: 'center' },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: c.accent },
   line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 8 },
   hr: { height: 1, backgroundColor: c.line, marginVertical: 8 },
@@ -517,7 +517,7 @@ const s = StyleSheet.create({
   chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: r.pill, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff' },
   chipOn: { borderColor: c.accent, backgroundColor: c.accent },
   chipT: { fontSize: 13, fontWeight: '600', color: c.text },
-  box: { width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: '#bbb', alignItems: 'center', justifyContent: 'center' },
+  box: { width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: c.borderStrong, alignItems: 'center', justifyContent: 'center' },
   foot: { backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: c.line },
   footAddr: { flexDirection: 'row', paddingHorizontal: 14, paddingTop: 10 },
   footRow: { flexDirection: 'row', alignItems: 'center', padding: 12 },

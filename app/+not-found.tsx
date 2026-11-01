@@ -28,18 +28,18 @@ export default function NotFoundScreen() {
 const s = StyleSheet.create({
   code: {
     fontSize: 56,
-    fontWeight: '900',
+    fontWeight: '800',
     color: c.accent,
     marginBottom: 8,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
     color: c.text,
     marginBottom: 8,
   },
   desc: {
-    fontSize: 14,
+    fontSize: 15,
     color: c.muted,
     textAlign: 'center',
     maxWidth: 280,

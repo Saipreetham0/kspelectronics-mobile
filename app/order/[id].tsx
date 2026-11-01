@@ -78,7 +78,7 @@ export default function OrderDetail() {
           {o.delivery.live?.status ? (
             <View style={{ marginTop: 10, padding: 12, borderRadius: r.md, backgroundColor: c.greenSoft }}>
               <Text style={{ fontWeight: '800', color: c.greenDark }}>{o.delivery.live.status}</Text>
-              {o.delivery.live.activities.slice(0, 4).map((a, n) => <Text key={n} numberOfLines={2} style={{ color: '#444', fontSize: 13, marginTop: 4 }}>{a.activity.replace(/\s+/g, ' ').trim()}{a.location ? ` · ${a.location}` : ''}</Text>)}
+              {o.delivery.live.activities.slice(0, 4).map((a, n) => <Text key={n} numberOfLines={2} style={{ color: c.text2, fontSize: 13, marginTop: 4 }}>{a.activity.replace(/\s+/g, ' ').trim()}{a.location ? ` · ${a.location}` : ''}</Text>)}
             </View>
           ) : null}
           {o.delivery.live?.rider ? <RiderCard rider={o.delivery.live.rider} eta={o.delivery.live.eta} drop={o.delivery.live.drop ?? undefined} /> : null}
@@ -97,8 +97,8 @@ export default function OrderDetail() {
         ))}
         <View style={s.hr} />
         {Number(o.discount) > 0 && <View style={s.row}><Text style={{ color: c.success }}>Discount</Text><Text style={{ color: c.success }}>−{money(o.discount)}</Text></View>}
-        <View style={s.row}><Text style={{ color: '#555' }}>Delivery</Text><Text>{Number(o.shippingTotal) > 0 ? money(o.shippingTotal) : 'Free'}</Text></View>
-        <View style={s.row}><Text style={{ fontWeight: '900', fontSize: 16 }}>Total</Text><Text style={{ fontWeight: '900', fontSize: 16 }}>{money(o.total)}</Text></View>
+        <View style={s.row}><Text style={{ color: c.text2 }}>Delivery</Text><Text>{Number(o.shippingTotal) > 0 ? money(o.shippingTotal) : 'Free'}</Text></View>
+        <View style={s.row}><Text style={{ fontWeight: '800', fontSize: 15 }}>Total</Text><Text style={{ fontWeight: '800', fontSize: 15 }}>{money(o.total)}</Text></View>
         <Text style={{ color: c.muted, fontSize: 12, marginTop: 2 }}>Includes GST {money(o.tax)}</Text>
       </Card>
 
@@ -118,7 +118,7 @@ export default function OrderDetail() {
       <Card>
         <Text style={s.h}>Delivery address</Text>
         <Text style={{ fontWeight: '700', marginTop: 6 }}>{o.address.name}</Text>
-        <Text style={{ color: '#444' }}>{o.address.line}, {o.address.city} {o.address.pincode}</Text>
+        <Text style={{ color: c.text2 }}>{o.address.line}, {o.address.city} {o.address.pincode}</Text>
         {o.address.phone ? <Text style={{ color: c.muted, marginTop: 2 }}>{o.address.phone}</Text> : null}
       </Card>
 
@@ -171,10 +171,10 @@ export default function OrderDetail() {
   );
 }
 const s = StyleSheet.create({
-  h: { fontSize: 16, fontWeight: '800', color: c.text },
+  h: { fontSize: 15, fontWeight: '800', color: c.text },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
   pill: { fontSize: 12, fontWeight: '800', color: c.accent, backgroundColor: c.accentSoft, paddingHorizontal: 10, paddingVertical: 4, borderRadius: r.pill, overflow: 'hidden' },
-  good: { color: c.success, backgroundColor: c.greenSoft }, bad: { color: c.danger, backgroundColor: '#fdecec' },
+  good: { color: c.success, backgroundColor: c.greenSoft }, bad: { color: c.danger, backgroundColor: c.dangerSoft },
   item: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
   img: { width: 52, height: 52, borderRadius: r.sm, backgroundColor: c.surface },
   hr: { height: 1, backgroundColor: c.line, marginVertical: 12 },

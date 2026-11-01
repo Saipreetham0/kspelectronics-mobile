@@ -49,13 +49,13 @@ export default function Reorder() {
     return (
       <View style={{ flex: 1, backgroundColor: '#fff' }}>
         <View style={{ padding: 20, alignItems: 'center' }}>
-          <Text style={{ fontSize: 19, fontWeight: '900', color: c.text, textAlign: 'center' }}>Buy your favourites again in one tap</Text>
+          <Text style={{ fontSize: 20, fontWeight: '800', color: c.text, textAlign: 'center' }}>Buy your favourites again in one tap</Text>
           <Text style={{ color: c.muted, textAlign: 'center', marginTop: 6, marginBottom: 14, lineHeight: 20 }}>Log in and everything you ordered before shows up here, grouped by category.</Text>
           <Button title="Log in" onPress={() => router.push('/(tabs)/account')} />
         </View>
         {popular.data && popular.data.length > 0 && (
           <View>
-            <Text style={{ fontSize: 16, fontWeight: '800', marginHorizontal: 16, marginBottom: 6 }}>Popular right now</Text>
+            <Text style={{ fontSize: 15, fontWeight: '800', marginHorizontal: 16, marginBottom: 6 }}>Popular right now</Text>
             <FlatList horizontal data={popular.data} keyExtractor={(p) => String(p.id)} showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 11 }} renderItem={({ item, index }) => <ProductCard product={item} width={150} index={index} />} />
           </View>
         )}
@@ -99,11 +99,11 @@ function Section({ title, groups }: { title: string; groups: Group[] }) {
 }
 
 const s = StyleSheet.create({
-  h: { fontSize: 20, fontWeight: '900', color: c.text, marginBottom: 12 },
+  h: { fontSize: 20, fontWeight: '800', color: c.text, marginBottom: 12 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP },
   tile: { backgroundColor: c.accentSoft, borderRadius: r.lg, padding: 6, alignItems: 'center' },
   shots: { flexDirection: 'row', gap: 4, width: '100%', justifyContent: 'center' },
   shot: { flex: 1, aspectRatio: 1, backgroundColor: '#fff', borderRadius: r.sm, overflow: 'hidden', padding: 2, maxWidth: 52 },
-  more: { fontSize: 10, fontWeight: '800', color: c.text, backgroundColor: '#fff', borderRadius: r.pill, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden', marginTop: -9 },
+  more: { fontSize: 11, fontWeight: '800', color: c.text, backgroundColor: '#fff', borderRadius: r.pill, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden', marginTop: -9 },
   name: { fontSize: 13, fontWeight: '700', color: c.text, textAlign: 'center', marginTop: 6 },
 });

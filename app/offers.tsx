@@ -32,8 +32,8 @@ export default function Offers() {
         <Card key={o.code}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontWeight: '900', fontSize: 16 }}>{o.title}</Text>
-              {o.description ? <Text style={{ color: '#444', marginTop: 4 }}>{o.description}</Text> : null}
+              <Text style={{ fontWeight: '800', fontSize: 15 }}>{o.title}</Text>
+              {o.description ? <Text style={{ color: c.text2, marginTop: 4 }}>{o.description}</Text> : null}
               <Text style={{ color: c.muted, fontSize: 12, marginTop: 6 }}>Code <Text style={{ fontWeight: '800', color: c.accent }}>{o.code.toUpperCase()}</Text>{o.minOrder ? ` · on orders above ₹${o.minOrder}` : ''}{o.expires ? ` · until ${new Date(o.expires).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : ''}</Text>
             </View>
             <Button title={applied.has(o.code.toLowerCase()) ? 'Applied' : 'Apply'} variant="outline" disabled={applied.has(o.code.toLowerCase())} loading={busy === o.code} onPress={() => apply(o.code)} style={{ minHeight: 40 }} />

@@ -42,17 +42,17 @@ function SuccessView({ orderId, summary }: { orderId?: string; summary?: Status 
             transform: [{ translateX: burst.interpolate({ inputRange: [0, 1], outputRange: [0, Math.cos(d.angle) * d.dist] }) }, { translateY: burst.interpolate({ inputRange: [0, 1], outputRange: [0, Math.sin(d.angle) * d.dist] }) }] }} />
         ))}
         <Animated.View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: c.greenDark, alignItems: 'center', justifyContent: 'center', transform: [{ scale: ring }] }}>
-          <AnimatedText style={{ fontSize: 50, color: '#fff', fontWeight: '900', transform: [{ scale: tick }] }}>✓</AnimatedText>
+          <AnimatedText style={{ fontSize: 50, color: '#fff', fontWeight: '800', transform: [{ scale: tick }] }}>✓</AnimatedText>
         </Animated.View>
       </View>
       <Animated.View style={{ alignItems: 'center', alignSelf: 'stretch', opacity: text, transform: [{ translateY: text.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
-        <Text style={{ fontSize: 26, fontWeight: '900', color: c.text }}>Order placed!</Text>
+        <Text style={{ fontSize: 28, fontWeight: '800', color: c.text }}>Order placed!</Text>
         <Text style={{ color: c.muted, textAlign: 'center', marginTop: 8, marginBottom: 26, lineHeight: 22 }}>
           Your order {orderId ? `#${orderId} ` : ''}has been received. A confirmation email is on its way.
         </Text>
         {summary && (
           <View style={{ alignSelf: 'stretch', backgroundColor: c.surface, borderRadius: 14, padding: 14, marginBottom: 20 }}>
-            {summary.items.slice(0, 4).map((i) => <Text key={i.id} numberOfLines={1} style={{ color: '#444', lineHeight: 22 }}>{i.name} × {i.quantity}</Text>)}
+            {summary.items.slice(0, 4).map((i) => <Text key={i.id} numberOfLines={1} style={{ color: c.text2, lineHeight: 22 }}>{i.name} × {i.quantity}</Text>)}
             {summary.items.length > 4 && <Text style={{ color: c.muted }}>+ {summary.items.length - 4} more</Text>}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}><Text style={{ color: c.muted }}>{summary.methodTitle}</Text><Text style={{ fontWeight: '800' }}>{summary.currency}{summary.total}</Text></View>
           </View>

@@ -33,7 +33,7 @@ const SLIDES: Slide[] = [
     title: 'Everything for\nMakers & Engineers',
     description: 'Precision 3D printers, official Bambu Lab & Creality filaments, nozzles, resins, and upgrades.',
     highlights: ['Bambu Lab & Creality', 'PLA, PETG & ABS Filaments', 'Spare Parts & Toolheads'],
-    gradient: ['#d6e5ff', '#eef3fc'],
+    gradient: [c.heroTop, c.accentTint],
   },
   {
     id: 'electronics',
@@ -42,7 +42,7 @@ const SLIDES: Slide[] = [
     title: 'Raspberry Pi, Arduino\n& Microcontrollers',
     description: 'Genuine Raspberry Pi 5, ESP32 boards, sensors, motor drivers, displays, and DIY robotics modules.',
     highlights: ['Official Raspberry Pi', 'Sensors & Actuators', 'Fast Prototyping Kits'],
-    gradient: ['#e6f8ee', '#f0fbf5'],
+    gradient: [c.greenSoft, '#f0fbf5'],
   },
   {
     id: 'delivery',
@@ -51,7 +51,7 @@ const SLIDES: Slide[] = [
     title: 'Delivered Fast\nAcross All of India',
     description: 'Tracked express courier pan-India, plus same-day Quick hyperlocal rider delivery in Hyderabad.',
     highlights: ['Same-Day Hyperlocal Rider', 'Live Order Tracking', 'Safe & Verified Packaging'],
-    gradient: ['#fef3c7', '#fffbeb'],
+    gradient: [c.dealSoft, '#fffbeb'],
   },
 ];
 
@@ -241,7 +241,7 @@ const s = StyleSheet.create({
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#1c61e7',
+    shadowColor: c.accent,
     shadowOpacity: 0.12,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 6 },
@@ -265,15 +265,15 @@ const s = StyleSheet.create({
   },
   badgeText: { fontSize: 11, fontWeight: '800', color: c.accent, letterSpacing: 0.5 },
   title: {
-    fontSize: 26,
-    fontWeight: '900',
+    fontSize: 28,
+    fontWeight: '800',
     color: c.text,
     textAlign: 'center',
     lineHeight: 33,
     marginBottom: 10,
   },
   description: {
-    fontSize: 14,
+    fontSize: 15,
     color: c.muted,
     textAlign: 'center',
     lineHeight: 21,
@@ -300,7 +300,7 @@ const s = StyleSheet.create({
   pillText: { fontSize: 12, fontWeight: '700', color: c.text },
   footer: { paddingHorizontal: 22 },
   dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, marginBottom: 20 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#d1d5db' },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.line },
   dotActive: { width: 24, height: 8, borderRadius: 4, backgroundColor: c.accent },
   finalActions: { gap: 10 },
   primaryBtn: { minHeight: 50 },
@@ -318,6 +318,6 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 3,
   },
-  nextBtnText: { color: '#ffffff', fontSize: 16, fontWeight: '800' },
+  nextBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '800' },
 });
 

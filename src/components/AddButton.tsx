@@ -57,11 +57,11 @@ export default function AddButton({ product: p, size = 'sm', block, compact }: {
 const s = StyleSheet.create({
   add: { minWidth: 66, paddingHorizontal: 14, borderRadius: r.sm, borderWidth: 1.2, borderColor: c.accent, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' },
   addText: { color: c.accent, fontWeight: '800', fontSize: 13 },
-  optT: { color: c.accent, fontSize: 9, fontWeight: '600', marginTop: -1 },
+  optT: { color: c.accent, fontSize: 11, fontWeight: '600', marginTop: -1 },
   step: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.accent, borderRadius: r.sm, overflow: 'hidden' },
   sb: { width: 30, height: '100%', alignItems: 'center', justifyContent: 'center' },
-  st: { color: '#fff', fontSize: 18, fontWeight: '800' },
-  sq: { color: '#fff', fontWeight: '800', minWidth: 20, textAlign: 'center', fontSize: 14 },
+  st: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  sq: { color: '#fff', fontWeight: '800', minWidth: 20, textAlign: 'center', fontSize: 15 },
   out: { paddingHorizontal: 8, justifyContent: 'center' },
   outText: { color: c.danger, fontSize: 11, fontWeight: '700' },
 });

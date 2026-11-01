@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { c } from '@/theme';
 
 // The delivery partner (blue) and the drop point (red) on one map, re-fitted each time the rider moves.
 export default function RiderMap({ rider, drop }: { rider: { lat: number; lng: number }; drop?: { lat: number; lng: number } }) {
@@ -12,10 +13,10 @@ export default function RiderMap({ rider, drop }: { rider: { lat: number; lng: n
   return (
     <View style={s.box}>
       <MapView ref={map} style={StyleSheet.absoluteFill} toolbarEnabled={false} initialRegion={{ latitude: rider.lat, longitude: rider.lng, latitudeDelta: 0.02, longitudeDelta: 0.02 }} accessibilityLabel="Map showing your delivery partner">
-        <Marker coordinate={{ latitude: rider.lat, longitude: rider.lng }} title="Delivery partner" pinColor="#1c61e7" />
-        {drop ? <Marker coordinate={{ latitude: drop.lat, longitude: drop.lng }} title="Your drop location" pinColor="#d92d3a" /> : null}
+        <Marker coordinate={{ latitude: rider.lat, longitude: rider.lng }} title="Delivery partner" pinColor={c.accent} />
+        {drop ? <Marker coordinate={{ latitude: drop.lat, longitude: drop.lng }} title="Your drop location" pinColor={c.danger} /> : null}
       </MapView>
     </View>
   );
 }
-const s = StyleSheet.create({ box: { height: 220, borderRadius: 12, overflow: 'hidden', backgroundColor: '#e5e7eb', marginTop: 12 } });
+const s = StyleSheet.create({ box: { height: 220, borderRadius: 12, overflow: 'hidden', backgroundColor: c.line, marginTop: 12 } });

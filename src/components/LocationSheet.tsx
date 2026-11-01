@@ -215,19 +215,19 @@ export default function LocationSheet({ visible, onClose, onChange }: { visible:
           ) : view === 'main' ? (
             <ScrollView ref={mainScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View style={s.search}>
-                <Ionicons name="search" size={20} color="#777" />
+                <Ionicons name="search" size={20} color={c.muted} />
                 <TextInput style={s.input} value={q} onChangeText={setQ} placeholder="Search for area, street name or pincode…" accessibilityLabel="Search for your area or pincode" />
                 {searching && <ActivityIndicator size="small" color={c.loader} />}
               </View>
               {sugg.map((sg) => (
                 <Pressable key={sg.id} onPress={() => pickSuggestion(sg)} style={s.res} accessibilityRole="button">
                   <Ionicons name="location-outline" size={20} color={c.muted} />
-                  <View style={{ flex: 1 }}><Text style={{ fontSize: 14, fontWeight: '700' }}>{sg.text}</Text><Text style={{ fontSize: 12, color: c.muted }} numberOfLines={1}>{sg.secondary}</Text></View>
+                  <View style={{ flex: 1 }}><Text style={{ fontSize: 15, fontWeight: '700' }}>{sg.text}</Text><Text style={{ fontSize: 12, color: c.muted }} numberOfLines={1}>{sg.secondary}</Text></View>
                 </Pressable>
               ))}
               {results.map((l) => (
                 <Pressable key={`${l.pin}${l.area}`} onPress={() => choose(l)} style={s.res} accessibilityRole="button">
-                  <Ionicons name="location-outline" size={20} color={c.muted} /><Text style={{ flex: 1, fontSize: 14 }}>{where(l)}</Text>
+                  <Ionicons name="location-outline" size={20} color={c.muted} /><Text style={{ flex: 1, fontSize: 15 }}>{where(l)}</Text>
                 </Pressable>
               ))}
               {note ? <Text style={s.note} accessibilityLiveRegion="polite">{note}</Text> : null}
@@ -250,8 +250,8 @@ export default function LocationSheet({ visible, onClose, onChange }: { visible:
                 <Pressable key={a.id} onPress={() => choose(a.loc, a.id)} style={[s.addr, on && { borderColor: c.accent }]} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${a.label}: ${a.line}${on ? ', current delivery address' : ''}`}>
                   <View style={s.icon}><Ionicons name={a.label === 'Home' ? 'home' : a.label === 'Work' ? 'briefcase' : 'location'} size={22} color={c.accent} /></View>
                   <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Text style={{ fontSize: 16, fontWeight: '800' }}>{a.label}</Text>{on && <><Ionicons name="checkmark-circle" size={16} color={c.accent} /><Text style={{ color: c.accent, fontSize: 12, fontWeight: '800' }}>Delivering here</Text></>}</View>
-                    <Text style={{ color: '#444', marginTop: 2 }} numberOfLines={2}>{a.line}, {where(a.loc)}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Text style={{ fontSize: 15, fontWeight: '800' }}>{a.label}</Text>{on && <><Ionicons name="checkmark-circle" size={16} color={c.accent} /><Text style={{ color: c.accent, fontSize: 12, fontWeight: '800' }}>Delivering here</Text></>}</View>
+                    <Text style={{ color: c.text2, marginTop: 2 }} numberOfLines={2}>{a.line}, {where(a.loc)}</Text>
                     {a.name ? <Text style={{ color: c.muted, fontSize: 12, marginTop: 2 }}>{a.name} · {a.phone}</Text> : null}
                   </View>
                   <View>
@@ -307,10 +307,10 @@ export default function LocationSheet({ visible, onClose, onChange }: { visible:
 
 const s = StyleSheet.create({
   scrim: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
-  sheet: { width: '100%', maxWidth: 560, alignSelf: 'center', maxHeight: '88%', backgroundColor: '#f6f7f9', borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 16 },
+  sheet: { width: '100%', maxWidth: 560, alignSelf: 'center', maxHeight: '88%', backgroundColor: c.surface, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 16 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  h: { flex: 1, fontSize: 18, fontWeight: '900', color: c.text },
-  x: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#e5e7eb', alignItems: 'center', justifyContent: 'center' },
+  h: { flex: 1, fontSize: 17, fontWeight: '800', color: c.text },
+  x: { width: 30, height: 30, borderRadius: 15, backgroundColor: c.line, alignItems: 'center', justifyContent: 'center' },
   search: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: r.md, paddingHorizontal: 14, minHeight: 50, borderWidth: 1, borderColor: c.line },
   input: { flex: 1, fontSize: 15, color: c.text, height: 50 },
   res: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.line },
@@ -328,5 +328,5 @@ const s = StyleSheet.create({
   act: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   chip: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: r.pill, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff' },
   chipOn: { borderColor: c.accent, backgroundColor: c.accentSoft },
-  chipT: { fontSize: 14, fontWeight: '700', color: c.text },
+  chipT: { fontSize: 15, fontWeight: '700', color: c.text },
 });

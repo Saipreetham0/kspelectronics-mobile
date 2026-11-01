@@ -103,7 +103,7 @@ export default function CartScreen() {
   const undoBar = undo && (
     <View style={s.undo} accessibilityLiveRegion="polite">
       <Text style={{ flex: 1, color: '#fff', fontSize: 13 }} numberOfLines={2}>{undo.label}</Text>
-      <Pressable onPress={() => { const u = undo; setUndo(null); act(u.restore); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="Undo"><Text style={{ color: '#9cc0ff', fontWeight: '800', fontSize: 14 }}>UNDO</Text></Pressable>
+      <Pressable onPress={() => { const u = undo; setUndo(null); act(u.restore); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="Undo"><Text style={{ color: '#9cc0ff', fontWeight: '800', fontSize: 15 }}>UNDO</Text></Pressable>
     </View>
   );
 
@@ -165,13 +165,13 @@ export default function CartScreen() {
             )}
             {/* The shipment header says what is coming and when; where it goes is the sticky bar at the bottom (one place, as on Blinkit). */}
             <Card style={s.shipTop}>
-              <Text style={{ fontSize: 17, fontWeight: '900', color: c.text }}>{eta ? `Arrives by ${eta}` : `Shipment of ${itemCount} item${itemCount > 1 ? 's' : ''}`}</Text>
+              <Text style={{ fontSize: 17, fontWeight: '800', color: c.text }}>{eta ? `Arrives by ${eta}` : `Shipment of ${itemCount} item${itemCount > 1 ? 's' : ''}`}</Text>
               {eta ? <Text style={{ color: c.muted, marginTop: 4 }}>Shipment of {itemCount} item{itemCount > 1 ? 's' : ''}</Text> : null}
             </Card>
             {gone.size > 0 && (
-              <Card style={{ backgroundColor: "#fdecec", borderColor: c.danger }}>
+              <Card style={{ backgroundColor: c.dangerSoft, borderColor: c.danger }}>
                 <Text style={{ fontWeight: '800', color: c.danger }}>{gone.size} item{gone.size > 1 ? 's are' : ' is'} out of stock</Text>
-                <Text style={{ color: '#444', marginTop: 2, fontSize: 13 }}>Remove {gone.size > 1 ? 'them' : 'it'} or move {gone.size > 1 ? 'them' : 'it'} to your wishlist to check out.</Text>
+                <Text style={{ color: c.text2, marginTop: 2, fontSize: 13 }}>Remove {gone.size > 1 ? 'them' : 'it'} or move {gone.size > 1 ? 'them' : 'it'} to your wishlist to check out.</Text>
               </Card>
             )}
           </>
@@ -240,7 +240,7 @@ export default function CartScreen() {
                 <View key={cp.code} style={s.coupon}><Text style={{ fontWeight: '700', color: c.success }}>{cp.code.toUpperCase()} applied</Text><Pressable onPress={() => act(() => removeCoupon(cp.code))} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityRole="button" accessibilityLabel={`Remove coupon ${cp.code}`}><Text style={{ color: c.danger }}>Remove</Text></Pressable></View>
               ))}
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TextInput style={s.input} placeholder="Coupon code" placeholderTextColor="#767676" autoCapitalize="characters" autoCorrect={false} returnKeyType="done" accessibilityLabel="Coupon code" value={code} onChangeText={setCode}
+                <TextInput style={s.input} placeholder="Coupon code" placeholderTextColor={c.placeholder} autoCapitalize="characters" autoCorrect={false} returnKeyType="done" accessibilityLabel="Coupon code" value={code} onChangeText={setCode}
                   onSubmitEditing={() => { if (code.trim() && !couponBusy) apply(); }} />
                 <Button title="Apply" variant="outline" loading={couponBusy} disabled={!code.trim()} onPress={apply} />
               </View>
@@ -250,35 +250,35 @@ export default function CartScreen() {
               <View style={s.billRow}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Ionicons name="document-text-outline" size={16} color={c.muted} />
-                  <Text style={{ color: '#555', fontSize: 14 }}>Items total</Text>
+                  <Text style={{ color: c.text2, fontSize: 15 }}>Items total</Text>
                   {saved >= 1 && <View style={s.chip}><Text style={s.chipT}>Saved {minorToInr(saved * 10 ** m, m)}</Text></View>}
                 </View>
-                <Text style={{ fontWeight: '700', fontSize: 14 }}>{minorToInr(withTax(t.total_items, t.total_items_tax), m)}</Text>
+                <Text style={{ fontWeight: '700', fontSize: 15 }}>{minorToInr(withTax(t.total_items, t.total_items_tax), m)}</Text>
               </View>
               {Number(t.total_discount) > 0 && (
                 <View style={s.billRow}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Ionicons name="pricetag-outline" size={16} color={c.success} />
-                    <Text style={{ color: c.success, fontSize: 14, fontWeight: '600' }}>Coupon discount</Text>
+                    <Text style={{ color: c.success, fontSize: 15, fontWeight: '600' }}>Coupon discount</Text>
                   </View>
-                  <Text style={{ fontWeight: '700', color: c.success, fontSize: 14 }}>−{minorToInr(withTax(t.total_discount, t.total_discount_tax), m)}</Text>
+                  <Text style={{ fontWeight: '700', color: c.success, fontSize: 15 }}>−{minorToInr(withTax(t.total_discount, t.total_discount_tax), m)}</Text>
                 </View>
               )}
               <View style={s.billRow}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Ionicons name="bicycle-outline" size={16} color={c.muted} />
-                  <Text style={{ color: '#555', fontSize: 14 }}>Delivery</Text>
+                  <Text style={{ color: c.text2, fontSize: 15 }}>Delivery</Text>
                 </View>
-                <Text style={{ fontWeight: '700', color: shipKnown && shipping <= 0 ? c.success : c.text, fontSize: 14 }}>
+                <Text style={{ fontWeight: '700', color: shipKnown && shipping <= 0 ? c.success : c.text, fontSize: 15 }}>
                   {shipKnown ? (shipping > 0 ? minorToInr(shipping, m) : 'FREE') : 'Calculated at checkout'}
                 </Text>
               </View>
               <View style={{ height: 1, backgroundColor: c.line, marginVertical: 8 }} />
               <View style={s.billRow}>
-                <Text style={{ fontSize: 16, fontWeight: '900', color: c.text }}>Grand total</Text>
-                <Text style={{ fontSize: 16, fontWeight: '900', color: c.text }}>{minorToInr(t.total_price, m)}</Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: c.text }}>Grand total</Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: c.text }}>{minorToInr(t.total_price, m)}</Text>
               </View>
-              <Text style={{ color: c.muted, fontSize: 11.5, marginTop: 2 }}>Includes GST {minorToInr(t.total_tax, m)}</Text>
+              <Text style={{ color: c.muted, fontSize: 12, marginTop: 2 }}>Includes GST {minorToInr(t.total_tax, m)}</Text>
               {saved >= 1 && (
                 <View style={s.receiptSavings}>
                   <View style={{ flex: 1 }}>
@@ -307,14 +307,14 @@ export default function CartScreen() {
                 </Text>
               </View>
             </View>
-            <Text style={{ fontSize: 12.5, fontWeight: '800', color: c.accent }}>Change</Text>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: c.accent }}>Change</Text>
           </Pressable>
 
           {/* Tier 2: Total & Checkout CTA */}
           <View style={s.bar}>
             <View>
-              <Text style={{ color: c.muted, fontSize: 10.5, fontWeight: '800', letterSpacing: 0.5 }}>TOTAL</Text>
-              <Text style={{ fontSize: 19, fontWeight: '900', color: c.text }}>{minorToInr(t.total_price, m)}</Text>
+              <Text style={{ color: c.muted, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>TOTAL</Text>
+              <Text style={{ fontSize: 20, fontWeight: '800', color: c.text }}>{minorToInr(t.total_price, m)}</Text>
             </View>
             <Button title={gone.size ? 'Remove unavailable items' : 'Proceed to checkout  →'} loading={syncing} disabled={gone.size > 0} style={{ flex: 1, marginLeft: 16 }} onPress={() => router.push('/checkout')} />
           </View>
@@ -346,7 +346,7 @@ function Qty({ item, onSet }: { item: CartItem; onSet: (n: number) => void }) {
 }
 
 const Row = ({ k, v, color }: { k: string; v: string; color?: string }) => (
-  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}><Text style={{ color: color ?? '#555' }}>{k}</Text><Text style={{ fontWeight: '600', color: color ?? c.text }}>{v}</Text></View>
+  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}><Text style={{ color: color ?? c.text2 }}>{k}</Text><Text style={{ fontWeight: '600', color: color ?? c.text }}>{v}</Text></View>
 );
 
 const s = StyleSheet.create({
@@ -357,7 +357,7 @@ const s = StyleSheet.create({
   track: { height: 6, borderRadius: 3, backgroundColor: '#fff', marginTop: 8, overflow: 'hidden' },
   fill: { height: 6, backgroundColor: c.accent },
   img: { width: 84, height: 84, borderRadius: r.sm, backgroundColor: c.surface },
-  name: { fontSize: 14, fontWeight: '600', color: c.text, lineHeight: 18 },
+  name: { fontSize: 15, fontWeight: '600', color: c.text, lineHeight: 18 },
   var: { fontSize: 12, color: c.muted, marginTop: 2 },
   wishlistLink: { color: c.muted, fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' },
   price: { fontSize: 15, fontWeight: '800', color: c.text },
@@ -367,22 +367,22 @@ const s = StyleSheet.create({
   itemFoot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 10 },
   stepperPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.accent, borderRadius: r.sm, paddingHorizontal: 2 }, // the same brand blue as the product cards' stepper
   stepBtn: { width: 30, height: 32, alignItems: 'center', justifyContent: 'center' },
-  stepSymbol: { color: '#ffffff', fontSize: 16, fontWeight: '800' },
-  qt: { fontSize: 13.5, fontWeight: '800', color: '#ffffff' },
-  h: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
+  stepSymbol: { color: '#ffffff', fontSize: 15, fontWeight: '800' },
+  qt: { fontSize: 13, fontWeight: '800', color: '#ffffff' },
+  h: { fontSize: 15, fontWeight: '800', marginBottom: 10 },
   qk: { flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start', marginTop: 3 },
-  qkT: { color: c.accent, fontWeight: '800', fontSize: 11.5 },
+  qkT: { color: c.accent, fontWeight: '800', fontSize: 12 },
   coupon: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   input: { flex: 1, borderWidth: 1, borderColor: c.line, borderRadius: r.md, paddingHorizontal: 12, minHeight: 48, fontSize: 15, color: c.text, backgroundColor: '#fff' },
   billRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  receiptSavings: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#eaf2ff', borderRadius: r.sm, paddingHorizontal: 12, paddingVertical: 10, marginTop: 10, borderWidth: 1, borderColor: '#d1e3ff' },
+  receiptSavings: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: c.accentTint, borderRadius: r.sm, paddingHorizontal: 12, paddingVertical: 10, marginTop: 10, borderWidth: 1, borderColor: c.accentSoft },
   receiptSavingsTitle: { fontSize: 13, fontWeight: '800', color: c.accent },
   receiptSavingsSub: { fontSize: 11, color: '#4a6da7', marginTop: 1 },
-  receiptSavingsAmt: { fontSize: 15, fontWeight: '900', color: c.accent },
+  receiptSavingsAmt: { fontSize: 15, fontWeight: '800', color: c.accent },
   barWrap: { backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: c.line },
-  locStrip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#f9fafb', borderBottomWidth: 1, borderBottomColor: c.line },
+  locStrip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.line },
   chip: { backgroundColor: c.accentSoft, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
   chipT: { fontSize: 12, fontWeight: '800', color: c.accent },
   bar: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#fff' },
-  undo: { position: 'absolute', left: 12, right: 12, bottom: 92, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#1f1f1f', borderRadius: r.md, paddingHorizontal: 16, paddingVertical: 14, elevation: 6, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
+  undo: { position: 'absolute', left: 12, right: 12, bottom: 92, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.text, borderRadius: r.md, paddingHorizontal: 16, paddingVertical: 14, elevation: 6, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
 });

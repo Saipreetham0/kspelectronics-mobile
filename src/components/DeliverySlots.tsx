@@ -42,6 +42,6 @@ const s = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   slot: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: r.md, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff', minWidth: 120 },
   on: { borderColor: c.accent, backgroundColor: c.accentSoft },
-  t: { fontWeight: '800', color: c.text, fontSize: 14 },
+  t: { fontWeight: '800', color: c.text, fontSize: 15 },
   sub: { color: c.muted, fontSize: 12, marginTop: 2 },
 });

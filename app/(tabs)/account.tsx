@@ -26,7 +26,7 @@ export default function Account() {
 
   // Blinkit's profile: a soft gradient header, then white grouped cards on a pale page.
   const header = (title: string, sub?: string, initial?: string) => (
-    <LinearGradient colors={['#d6e5ff', '#eef3fc', c.surface]} style={[s.head, { paddingTop: insets.top + 24 }]}>
+    <LinearGradient colors={[c.heroTop, c.accentTint, c.surface]} style={[s.head, { paddingTop: insets.top + 24 }]}>
       <View style={s.avatar}>{initial ? <Text style={s.avatarT}>{initial}</Text> : <Text style={s.avatarT}>?</Text>}</View>
       <Text style={s.name}>{title}</Text>
       {sub ? <Text style={s.sub}>{sub}</Text> : null}
@@ -116,7 +116,7 @@ function Row({ Glyph, label, onPress, danger, last }: { Glyph: Icon; label: stri
     <Pressable onPress={onPress} style={({ pressed }) => [s.row, !last && s.rowLine, pressed && { backgroundColor: c.surface }]} accessibilityRole="button">
       <Glyph size={22} color={danger ? c.danger : c.text} />
       <Text style={[s.rowT, danger && { color: c.danger }]}>{label}</Text>
-      {!danger && <CaretRight size={16} color="#b4b8c0" />}
+      {!danger && <CaretRight size={16} color={c.borderStrong} />}
     </Pressable>
   );
 }
@@ -125,14 +125,14 @@ const s = StyleSheet.create({
   head: { alignItems: 'center', paddingHorizontal: 20, paddingBottom: 22 },
   avatar: { width: 96, height: 96, borderRadius: 48, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   avatarT: { fontSize: 38, fontWeight: '800', color: c.accent },
-  name: { fontSize: 24, fontWeight: '900', color: c.text, marginTop: 14, textAlign: 'center' },
+  name: { fontSize: 24, fontWeight: '800', color: c.text, marginTop: 14, textAlign: 'center' },
   sub: { fontSize: 13, color: c.muted, marginTop: 4, textAlign: 'center' },
   body: { paddingHorizontal: 12 },
   quick: { flexDirection: 'row', gap: 10, marginBottom: 14 },
   quickCard: { flex: 1, backgroundColor: '#fff', borderRadius: r.lg, paddingVertical: 16, paddingHorizontal: 6, alignItems: 'center', gap: 8 },
   quickT: { fontSize: 13, fontWeight: '700', color: c.text, textAlign: 'center' },
   section: { backgroundColor: '#fff', borderRadius: r.lg, marginBottom: 14, overflow: 'hidden' },
-  sectionT: { fontSize: 18, fontWeight: '900', color: c.text, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 10 },
+  sectionT: { fontSize: 17, fontWeight: '800', color: c.text, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 10 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, minHeight: 54 },
   rowLine: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.line },
   rowT: { flex: 1, fontSize: 15, fontWeight: '600', color: c.text },

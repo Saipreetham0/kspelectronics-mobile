@@ -50,7 +50,7 @@ export default function Track() {
         <>
           <Card>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 20, fontWeight: '900' }}>#{res.number}</Text>
+              <Text style={{ fontSize: 20, fontWeight: '800' }}>#{res.number}</Text>
               <Text style={{ color: c.accent, fontWeight: '800', textTransform: 'capitalize' }}>{res.status.replace(/-/g, ' ')}</Text>
             </View>
             <Text style={{ color: c.muted, marginTop: 4 }}>{new Date(res.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} · {res.total}{res.destination ? ` · ${res.destination}` : ''}</Text>
@@ -59,10 +59,10 @@ export default function Track() {
             <Card>
               {res.stages.map((s, i) => (
                 <View key={s.title} style={{ flexDirection: 'row', gap: 12, marginBottom: i < res.stages.length - 1 ? 16 : 0 }}>
-                  <View style={{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: s.done ? c.accent : '#fff', borderWidth: 2, borderColor: s.done || s.current ? c.accent : '#cbd5e1' }}>
+                  <View style={{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: s.done ? c.accent : '#fff', borderWidth: 2, borderColor: s.done || s.current ? c.accent : c.line }}>
                     <Text style={{ color: s.done ? '#fff' : c.accent, fontWeight: '800', fontSize: 12 }}>{s.done ? '✓' : i + 1}</Text>
                   </View>
-                  <View style={{ flex: 1 }}><Text style={{ fontWeight: '700', color: s.done || s.current ? c.text : '#64748b' }}>{s.title}</Text><Text style={{ color: '#64748b', fontSize: 13 }}>{s.note}</Text></View>
+                  <View style={{ flex: 1 }}><Text style={{ fontWeight: '700', color: s.done || s.current ? c.text : c.muted }}>{s.title}</Text><Text style={{ color: c.muted, fontSize: 13 }}>{s.note}</Text></View>
                 </View>
               ))}
             </Card>
@@ -75,7 +75,7 @@ export default function Track() {
                 <View style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: c.greenSoft }}>
                   <Text style={{ fontWeight: '800', color: c.greenDark }}>{res.live.status}</Text>
                   {res.live.activities.slice(0, 4).map((a, n) => (
-                    <Text key={n} style={{ color: '#444', fontSize: 13, marginTop: 4 }} numberOfLines={2}>{a.activity.replace(/\s+/g, ' ').trim()}{a.location ? ` · ${a.location}` : ''}</Text>
+                    <Text key={n} style={{ color: c.text2, fontSize: 13, marginTop: 4 }} numberOfLines={2}>{a.activity.replace(/\s+/g, ' ').trim()}{a.location ? ` · ${a.location}` : ''}</Text>
                   ))}
                 </View>
               ) : null}
