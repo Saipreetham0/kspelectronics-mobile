@@ -24,13 +24,15 @@ const info = (id: string) => METHODS[id] ?? fallback(id);
 export const payName = (id: string) => info(id).name;
 export const payShort = (id: string) => info(id).short;
 
-type Props = { methods: string[]; selected: string; onSelect: (id: string) => void };
+type Props = { methods: string[]; selected: string; onSelect: (id: string) => void; failed?: boolean; onRetry?: () => void };
 
-export default function PaymentMethods({ methods, selected, onSelect }: Props) {
+export default function PaymentMethods({ methods, selected, onSelect, failed, onRetry }: Props) {
   return (
     <Card>
       <H>Payment</H>
-      {methods.length === 0 && <Text style={{ color: c.muted }}>Loading payment options…</Text>}
+      {methods.length === 0 && (failed
+        ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }} accessibilityLiveRegion="polite"><Text style={{ flex: 1, color: c.danger }}>Couldn't load payment options. Check your connection.</Text>{onRetry ? <Pressable onPress={onRetry} hitSlop={10} accessibilityRole="button"><Text style={{ color: c.accent, fontWeight: '800' }}>Try again</Text></Pressable> : null}</View>
+        : <Text style={{ color: c.muted }}>Loading payment options…</Text>)}
       {methods.map((id) => {
         const m = info(id), on = selected === id;
         return (

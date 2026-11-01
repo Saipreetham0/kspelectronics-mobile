@@ -3,6 +3,8 @@ import { Keyboard, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollVie
 import type { ScrollViewInstance, TextInputInstance as RNTextInput } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { router } from 'expo-router';
+import { Lightning, MapPin, MapTrifold, Moped } from 'phosphor-react-native';
+import { Image } from 'expo-image';
 import { Button, Card, Center, Field, H } from '@/components/ui';
 import { api, ApiError } from '@/api';
 import { Addr, CheckoutForm, emptyForm, IN_STATES, validate } from '@/checkoutForm';
@@ -63,6 +65,7 @@ export default function Checkout() {
   const [needAddr, setNeedAddr] = useState(false); // the delivery area changed, so the street line was cleared
   // One "Full name" box instead of first + last: the first word is the first name, the rest the last name (WooCommerce wants both).
   const [fullName, setFullName] = useState('');
+  const [placeEdit, setPlaceEdit] = useState(false); // city and state opened for editing (they are folded into one line once the pincode fills them)
   useEffect(() => { const joined = `${form.firstName} ${form.lastName}`.trim(); setFullName((cur) => (cur.trim().replace(/\s+/g, ' ') === joined ? cur : joined)); }, [form.firstName, form.lastName]);
   useEffect(() => {
     storage.get(CONTACT).then((v) => { if (!v) return; const k = JSON.parse(v) as Partial<CheckoutForm>;
@@ -112,13 +115,17 @@ export default function Checkout() {
     }).catch(() => {});
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
+  // The store answers an empty list when it can't reach WordPress: that is shown as an error with a retry, not as "Loading…" for ever.
+  const [methodsFailed, setMethodsFailed] = useState(false);
+  const loadMethods = React.useCallback(() => {
     if (!cartToken) return;
+    setMethodsFailed(false);
     api<{ methods: string[]; razorpayNative?: boolean }>('/api/checkout', { cartToken }).then((d) => {
-      setMethods(d.methods); setNative(Boolean(d.razorpayNative));
+      setMethods(d.methods); setNative(Boolean(d.razorpayNative)); setMethodsFailed(!d.methods.length);
       setMethod((m) => m || (d.razorpayNative && d.methods.includes('razorpay') ? 'razorpay' : d.methods[0]) || '');
-    }).catch(() => {});
+    }).catch(() => setMethodsFailed(true));
   }, [cartToken]);
+  useEffect(() => { loadMethods(); }, [loadMethods]);
 
   // The pincode decides the city and state: once six digits are typed, they are filled in from India Post's directory (delivery and billing alike).
   // What the lookup found is shown under the field; typing the pincode again re-fills them, but city and state can still be edited afterwards.
@@ -290,6 +297,7 @@ export default function Checkout() {
   };
 
   // A plain function that returns the fields (called, not rendered as <Component/>): a component defined inside the screen is a new type on every render, which rebuilt the inputs and closed the keyboard after each character.
+  const placeFolded = !placeEdit && pinOk && Boolean(form.city.trim()) && !errors.city && !errors.state && Boolean(pinNote.delivery) && !pinNote.delivery.startsWith('We couldn');
   const addrFields = (pre: '' | 'b.') => {
     const v = (k: keyof Addr) => (pre ? form.billing[k] : form[k]);
     const on = (k: keyof Addr) => (pre ? setB(k) : set(k));
@@ -309,10 +317,12 @@ export default function Checkout() {
         )}
         {/* The pincode comes first: it fills in the city and state below. */}
         <Field label="Pincode" value={v('pincode')} onChangeText={(t) => { typedPin.current[pre ? 'billing' : 'delivery'] = t; on('pincode')(t); }} error={err(`${pre}pincode`)} keyboardType="number-pad" maxLength={6} autoComplete="postal-code" textContentType="postalCode" {...(pre ? null : fld('pincode'))} />
-        {pinNote[pre ? 'billing' : 'delivery'] ? <Text style={{ color: pinNote[pre ? 'billing' : 'delivery'].startsWith('We couldn') ? c.danger : c.success, fontSize: 12, marginTop: -8, marginBottom: 12 }} accessibilityLiveRegion="polite">{pinNote[pre ? 'billing' : 'delivery']}</Text> : null}
+        {pinNote[pre ? 'billing' : 'delivery'] ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: -8, marginBottom: 12 }}><Text style={{ flex: 1, color: pinNote[pre ? 'billing' : 'delivery'].startsWith('We couldn') ? c.danger : c.success, fontSize: 12 }} accessibilityLiveRegion="polite">{pinNote[pre ? 'billing' : 'delivery']}</Text>{!pre && placeFolded ? <Pressable onPress={() => setPlaceEdit(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Edit city and state"><Text style={{ color: c.accent, fontWeight: '800', fontSize: 12 }}>Edit</Text></Pressable> : null}</View> : null}
+        {!pre && placeFolded ? null : (<>
         <Field label="City" value={v('city')} onChangeText={on('city')} error={err(`${pre}city`)} textContentType="addressCity" {...(pre ? null : fld('city'))} />
         <Text style={s.lbl}>State</Text>
         <Pressable style={s.select} onPress={() => setPicker(pre ? 'b.state' : 'state')} accessibilityRole="button" accessibilityLabel={`State: ${IN_STATES.find(([x]) => x === v('state'))?.[1] ?? 'not chosen'}. Tap to change`}><Text style={{ fontSize: 15 }}>{IN_STATES.find(([x]) => x === v('state'))?.[1]}</Text><Text style={{ color: c.muted }}>▾</Text></Pressable>
+        </>)}
         <Field label="Address (house no., street, area)" value={v('address')} onChangeText={on('address')} error={err(`${pre}address`)} autoComplete="street-address" textContentType="streetAddressLine1" {...(pre ? null : fld('address'))} />
         {!pre && needAddr && !form.address ? <Text style={{ color: c.accent, fontSize: 12, fontWeight: '700', marginTop: -8, marginBottom: 12 }} accessibilityLiveRegion="polite">You changed your delivery area. Add the house number and street for it.</Text> : null}
       </>
@@ -322,6 +332,14 @@ export default function Checkout() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.surface }}>
       <ScrollView ref={scroller} contentContainerStyle={{ padding: 12, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+        <View style={s.topSum}>
+          <View style={{ flexDirection: 'row' }}>{items.slice(0, 3).map((i, n) => <Image key={i.key} source={i.images[0]?.thumbnail || i.images[0]?.src} style={[s.topThumb, { marginLeft: n ? -10 : 0 }]} contentFit="contain" />)}</View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontWeight: '800' }}>{items.reduce((n, i) => n + i.quantity, 0)} item{items.reduce((n, i) => n + i.quantity, 0) > 1 ? 's' : ''} · {minorToInr(t.total_price, m)}</Text>
+            {saved >= 1 ? <Text style={{ color: c.success, fontSize: 12, fontWeight: '700' }}>You save {minorToInr(saved, m)}</Text> : null}
+          </View>
+          <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Edit cart"><Text style={{ color: c.accent, fontWeight: '800' }}>Edit cart</Text></Pressable>
+        </View>
         {!user && !showSummary && (
           <Pressable onPress={showLogin} style={s.loginBar} accessibilityRole="button" accessibilityLabel="Have an account? Log in to use your saved address">
             <Text style={{ flex: 1, color: '#444', fontSize: 13 }}>Have an account? Use your saved address.</Text><Text style={{ color: c.accent, fontWeight: '800', fontSize: 13 }}>Log in</Text>
@@ -335,11 +353,11 @@ export default function Checkout() {
             <Text style={{ color: c.muted, fontSize: 12, marginTop: 2 }}>{form.email}</Text>
             {(pinNote.delivery ?? '').startsWith("We couldn") ? <Text style={{ color: c.danger, fontSize: 12, marginTop: 4 }} accessibilityLiveRegion="polite">{pinNote.delivery} Tap Edit to fix it.</Text> : null}
             <Pressable onPress={() => setPinOpen(true)} style={[s.drop, { marginTop: 12, marginBottom: 0 }]} accessibilityRole="button" accessibilityLabel="Search or pin your drop location">
-              <Text style={{ fontSize: 20 }}>{form.drop ? '📍' : '🗺️'}</Text>
+              {form.drop ? <MapPin size={22} weight="fill" color={c.accent} /> : <MapTrifold size={22} color={c.accent} />}
               <Text style={{ flex: 1, fontWeight: '700' }}>{form.drop ? 'Drop location pinned' : 'Pin your drop location (optional)'}</Text>
               <Text style={{ color: c.accent, fontWeight: '800' }}>{form.drop ? 'Change' : 'Set'}</Text>
             </Pressable>
-            {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Text style={{ fontSize: 18 }}>🛵</Text><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: '#444', fontSize: 12 }}>Choose the ⚡ Quick option under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
+            {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Moped size={22} weight="fill" color={c.greenDark} /><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: '#444', fontSize: 12 }}>Choose the ⚡ Quick option under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
           </Card>
         ) : (
           <>
@@ -352,14 +370,14 @@ export default function Checkout() {
           <H>Delivery address</H>
           {/* The drop point on Google Maps: what a hyperlocal rider navigates to. */}
           <Pressable onPress={() => setPinOpen(true)} style={s.drop} accessibilityRole="button" accessibilityLabel="Search or pin your drop location">
-            <Text style={{ fontSize: 22 }}>{form.drop ? '📍' : '🗺️'}</Text>
+            {form.drop ? <MapPin size={24} weight="fill" color={c.accent} /> : <MapTrifold size={24} color={c.accent} />}
             <View style={{ flex: 1 }}>
               <Text style={{ fontWeight: '800' }}>{form.drop ? 'Drop location pinned' : 'Pin your drop location (optional)'}</Text>
               <Text style={{ color: c.muted, fontSize: 12 }} numberOfLines={2}>{form.drop ? `${form.city}${form.pincode ? ` · ${form.pincode}` : ''} — tap to change on the map` : 'Helps the delivery partner find you, and unlocks rider delivery where it is available.'}</Text>
             </View>
             <Text style={{ color: c.accent, fontWeight: '800' }}>{form.drop ? 'Change' : 'Set'}</Text>
           </Pressable>
-          {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Text style={{ fontSize: 18 }}>🛵</Text><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: '#444', fontSize: 12 }}>Choose the ⚡ Quick option under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
+          {rider?.available && sameDay && form.drop && <View style={s.rider} accessibilityRole="text" accessibilityLabel="Same-day rider delivery is available: choose it under Delivery option"><Moped size={22} weight="fill" color={c.greenDark} /><View style={{ flex: 1 }}><Text style={{ fontWeight: '800', color: c.greenDark }}>Rider delivery available</Text><Text style={{ color: '#444', fontSize: 12 }}>Choose the ⚡ Quick option under Delivery option and a rider brings it to your pinned location.</Text></View></View>}
           {user ? (() => {
             const ship = fromWc(acct?.shipping);
             return (
@@ -386,7 +404,7 @@ export default function Checkout() {
           <Text style={s.lbl}>Delivery instructions</Text>
           <View style={s.chips}>
             {NOTES.map((n) => { const on = form.notes.includes(n); return (
-              <Pressable key={n} onPress={() => toggleNote(n)} style={[s.chip, on && s.chipOn]} accessibilityRole="checkbox" accessibilityState={{ checked: on }}><Text style={[s.chipT, on && { color: c.accent }]}>{on ? '✓ ' : ''}{n}</Text></Pressable>
+              <Pressable key={n} onPress={() => toggleNote(n)} style={[s.chip, on && s.chipOn]} accessibilityRole="checkbox" accessibilityState={{ checked: on }}><Text style={[s.chipT, on && { color: '#fff' }]}>{on ? '✓ ' : ''}{n}</Text></Pressable>
             ); })}
           </View>
           <Field label="Order notes (optional)" value={form.notes} onChangeText={setQuiet('notes')} multiline placeholder="Anything else the delivery partner should know…" />
@@ -424,12 +442,12 @@ export default function Checkout() {
             {rates!.shipping_rates.map((x) => (
             <Pressable key={x.rate_id} onPress={() => pickRate(rates.package_id, x.rate_id)} style={s.rate} accessibilityRole="radio" accessibilityState={{ selected: x.selected }}>
               <View style={[s.radio, x.selected && { borderColor: c.accent }]}>{x.selected && <View style={s.radioDot} />}</View>
-              <Text style={{ flex: 1 }}>{x.quick ? '⚡ ' : ''}{decodeHtml(x.name)}</Text><Text style={{ fontWeight: '700' }}>{Number(x.price) > 0 ? minorToInr(x.price, m) : 'Free'}</Text>
+              {x.quick ? <Lightning size={14} weight="fill" color={c.accent} /> : null}<Text style={{ flex: 1 }}>{decodeHtml(x.name)}</Text><Text style={{ fontWeight: '700' }}>{Number(x.price) > 0 ? minorToInr(x.price, m) : 'Free'}</Text>
             </Pressable>
             ))}
           </Card>
         )}
-        <PaymentMethods methods={shownMethods} selected={method} onSelect={setMethod} />
+        <PaymentMethods methods={shownMethods} selected={method} onSelect={setMethod} failed={methodsFailed} onRetry={loadMethods} />
         <OrderSummary
           items={items}
           totals={t}
@@ -497,7 +515,7 @@ const s = StyleSheet.create({
   rate: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: r.pill, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff' },
-  chipOn: { borderColor: c.accent, backgroundColor: c.accentSoft },
+  chipOn: { borderColor: c.accent, backgroundColor: c.accent },
   chipT: { fontSize: 13, fontWeight: '600', color: c.text },
   box: { width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: '#bbb', alignItems: 'center', justifyContent: 'center' },
   foot: { backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: c.line },
@@ -505,6 +523,8 @@ const s = StyleSheet.create({
   footRow: { flexDirection: 'row', alignItems: 'center', padding: 12 },
   drop: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: r.md, borderWidth: 1, borderColor: c.line, backgroundColor: c.surface, marginBottom: 14 },
   link: { color: c.accent, fontWeight: '700', textDecorationLine: 'underline' },
+  topSum: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: r.md, backgroundColor: '#fff', borderWidth: 1, borderColor: c.line, marginBottom: 12 },
+  topThumb: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#fff', borderWidth: 1, borderColor: c.line },
   loginBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, borderRadius: r.md, backgroundColor: c.accentSoft, marginBottom: 12 },
   savedAddr: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: r.md, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff', marginBottom: 8 },
   gstNote: { color: c.muted, fontSize: 12, marginTop: -8, marginBottom: 12 },
