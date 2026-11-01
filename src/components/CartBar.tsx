@@ -11,7 +11,8 @@ import { c, r, shadow } from '@/theme';
 
 // Floating green bar above the tab bar (Blinkit's "View cart"): slides up when the cart has items.
 // note: the free-delivery nudge shown under the item count ("₹450 away from free delivery" / "Free delivery unlocked").
-export default function CartBar({ bottom, hidden, note, unlocked }: { bottom: number; hidden?: boolean; note?: string; unlocked?: boolean }) {
+// pct: how far the cart is towards free delivery (0 to 1), drawn as a thin line under the text (Swiggy-style).
+export default function CartBar({ bottom, hidden, note, unlocked, pct }: { bottom: number; hidden?: boolean; note?: string; unlocked?: boolean; pct?: number }) {
   const { cart, itemCount } = useStore();
   // Hidden = pushed fully below the screen edge (its own height plus the gap it floats above the tab bar), and faded out with it.
   const away = bottom + 110;
@@ -28,7 +29,7 @@ export default function CartBar({ bottom, hidden, note, unlocked }: { bottom: nu
   if (!cart) return null;
   return (
     <Animated.View pointerEvents={show ? 'auto' : 'none'} style={[s.wrap, { bottom, opacity: y.interpolate({ inputRange: [0, away * 0.4, away], outputRange: [1, 0, 0], extrapolate: 'clamp' }), transform: [{ translateY: y }, { scale: bounce }] }]}>
-      <Pressable onPress={() => router.push('/(tabs)/cart')} style={({ pressed }) => [s.bar, pressed && { opacity: 0.92 }]} accessibilityRole="button" accessibilityLabel={`View cart, ${itemCount} item${itemCount > 1 ? 's' : ''}${note ? `. ${note}` : ''}`}>
+      <Pressable onPress={() => router.push('/cart')} style={({ pressed }) => [s.bar, pressed && { opacity: 0.92 }]} accessibilityRole="button" accessibilityLabel={`View cart, ${itemCount} item${itemCount > 1 ? 's' : ''}${note ? `. ${note}` : ''}`}>
         <View style={s.thumbs}>
           {cart.items.slice(0, 2).map((i, n) => <Image key={i.key} source={i.images[0]?.thumbnail} style={[s.thumb, { marginLeft: n ? -14 : 0, zIndex: 2 - n }]} contentFit="contain" />)}
         </View>
@@ -37,6 +38,7 @@ export default function CartBar({ bottom, hidden, note, unlocked }: { bottom: nu
           <Bump trigger={itemCount} style={{ alignSelf: 'flex-start' }}><Text style={s.sub} numberOfLines={1}>{itemCount} item{itemCount > 1 ? 's' : ''}{note ? <Text style={unlocked ? s.unlocked : null}>{`  ·  ${note}`}</Text> : null}</Text></Bump>
         </View>
         <View style={s.go}><Ionicons name="chevron-forward" size={20} color="#fff" /></View>
+        {pct != null && !unlocked ? <View style={s.track} pointerEvents="none"><View style={[s.fill, { width: `${Math.round(Math.max(0.04, Math.min(1, pct)) * 100)}%` }]} /></View> : null}
       </Pressable>
     </Animated.View>
   );
@@ -50,6 +52,8 @@ const s = StyleSheet.create({
   thumb: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', borderWidth: 2, borderColor: c.accent },
   title: { color: '#fff', fontWeight: '800', fontSize: 15 },
   sub: { color: '#fff', fontSize: 13, marginTop: 1 },
+  track: { position: 'absolute', left: 22, right: 22, bottom: 3, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.28)', overflow: 'hidden' },
+  fill: { height: 3, borderRadius: 2, backgroundColor: '#c8f7d9' },
   unlocked: { color: '#c8f7d9', fontWeight: '700' },
   go: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(0,0,0,0.2)', alignItems: 'center', justifyContent: 'center' },
 });

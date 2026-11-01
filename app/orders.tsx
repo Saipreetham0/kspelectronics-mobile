@@ -42,7 +42,7 @@ export default function Orders() {
         `${added} of ${o.items.length} items were added. The rest are unavailable or need an option picked.`
       );
     }
-    router.push('/(tabs)/cart');
+    router.push('/cart');
   };
 
   const load = async (isRefresh = false) => {

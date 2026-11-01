@@ -66,7 +66,7 @@ export default function Pay() {
     doneRef.current = true;
     setPayRequest(null);
     if (!req) {
-      router.replace('/(tabs)/cart');
+      router.replace('/cart');
       return;
     }
     router.replace({
@@ -219,7 +219,7 @@ export default function Pay() {
     return (
       <Center>
         <Text style={{ marginBottom: 12 }}>Nothing to pay.</Text>
-        <Button title="Back to cart" onPress={() => router.replace('/(tabs)/cart')} />
+        <Button title="Back to cart" onPress={() => router.replace('/cart')} />
       </Center>
     );
   }

@@ -31,7 +31,7 @@ export default function OrderSummary({ items, totals: t, quote, quoting, pinOk, 
 
   return (
     <Card>
-      <View style={s.line}><H>Order summary</H><Pressable onPress={() => router.push('/(tabs)/cart')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Edit cart"><Text style={{ color: c.accent, fontWeight: '800' }}>Edit cart</Text></Pressable></View>
+      <View style={s.line}><H>Order summary</H><Pressable onPress={() => router.push('/cart')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Edit cart"><Text style={{ color: c.accent, fontWeight: '800' }}>Edit cart</Text></Pressable></View>
       {items.map((i) => <View key={i.key} style={s.line}><Image source={i.images[0]?.thumbnail || i.images[0]?.src} style={s.thumb} contentFit="contain" /><Text style={{ flex: 1 }} numberOfLines={2}>{decodeHtml(i.name)} <Text style={{ color: c.muted }}>× {i.quantity}</Text></Text><Text style={{ fontWeight: '700' }}>{minorToInr(Number(i.prices.price) * i.quantity, i.prices.currency_minor_unit)}</Text></View>)}
       <View style={s.hr} />
       <View style={s.line}>

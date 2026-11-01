@@ -18,7 +18,7 @@ export default function Offers() {
   const apply = async (code: string) => {
     if (!cart?.items.length) return Alert.alert('Offers', 'Add something to your cart first, then apply the offer.');
     setBusy(code);
-    try { await applyCoupon(code); Alert.alert('Offer applied', `${code.toUpperCase()} is on your cart.`, [{ text: 'View cart', onPress: () => router.replace('/(tabs)/cart') }, { text: 'OK' }]); }
+    try { await applyCoupon(code); Alert.alert('Offer applied', `${code.toUpperCase()} is on your cart.`, [{ text: 'View cart', onPress: () => router.replace('/cart') }, { text: 'OK' }]); }
     catch (e) { Alert.alert('Could not apply', (e as Error).message); }
     setBusy('');
   };

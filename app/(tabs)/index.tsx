@@ -112,6 +112,33 @@ function PriceBands() {
   );
 }
 
+// Shop by brand (Swiggy's "Featured favourites"): the brands KSP stocks in depth, as round badges in each brand's colour.
+// Slugs are WooCommerce brand slugs, each checked to have products; a brand with only one or two products isn't worth a badge.
+const BRANDS: { slug: string; name: string; bg: string }[] = [
+  { slug: 'bambu-lab', name: 'Bambu Lab', bg: '#00ae42' },
+  { slug: 'raspberry-pi', name: 'Raspberry Pi', bg: '#c51a4a' },
+  { slug: 'creality', name: 'Creality', bg: '#1d1d1b' },
+  { slug: 'elegoo', name: 'Elegoo', bg: '#1f4fa3' },
+  { slug: 'espressif', name: 'Espressif', bg: '#e7352c' },
+  { slug: 'arduino', name: 'Arduino', bg: '#00979c' },
+];
+function ShopByBrand() {
+  return (
+    <View style={{ marginTop: 22 }}>
+      <View style={s.rowHead}><Text style={s.h}>Shop by brand</Text></View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, gap: 14 }}>
+        {BRANDS.map((b) => (
+          <Tap key={b.slug} onPress={() => { track('banner_tap', { id: `brand-${b.slug}` }); router.push({ pathname: '/(tabs)/shop', params: { brand: b.slug, brandName: b.name } }); }} scaleTo={0.93} accessibilityRole="button" accessibilityLabel={`${b.name} products`}>
+            <View style={[s.brand, { backgroundColor: b.bg }]}>
+              <Text style={s.brandT} numberOfLines={2} adjustsFontSizeToFit>{b.name.split(' ').join('\n')}</Text>
+            </View>
+          </Tap>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 // The rows on Home, top to bottom: each leaves out products an earlier row already shows.
 const ROWS = ['viewed', 'deals', 'like', 'bambu', 'best', 'new'] as const;
 
@@ -246,6 +273,7 @@ export default function Home() {
         {viewed.length > 0 && <Row title="Recently viewed" all={false} path={`/api/catalog/products?include=${viewed.join(',')}&per_page=12`} refreshKey={key} onIds={report('viewed')} />}
         <Row title={festive ? 'Diwali top deals' : 'Top deals'} path={`/api/catalog/products?on_sale=true&in_stock=true&per_page=30${quick}`} rank={byDiscount} refreshKey={key} exclude={before('deals')} onIds={report('deals')} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { list: '1', onsale: '1' } })} />
         <PriceBands />
+        <ShopByBrand />
         {later && (<>
           {viewed.length > 0 && <MoreLike id={viewed[0]} refreshKey={key} exclude={before('like')} onIds={report('like')} />}
           <Row title="Bambu Lab" path="/api/catalog/products?brand=bambu-lab&in_stock=true&orderby=popularity&per_page=16" refreshKey={key} exclude={before('bambu')} onIds={report('bambu')} onAll={() => router.push({ pathname: '/(tabs)/shop', params: { brand: 'bambu-lab', brandName: 'Bambu Lab' } })} />
@@ -310,6 +338,8 @@ const s = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.surface, borderRadius: r.pill, paddingHorizontal: 12, paddingVertical: 8 },
   chipT: { fontSize: 13, color: c.text, fontWeight: '600' },
   more: { color: c.accent, fontWeight: '800', fontSize: 13 },
+  brand: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', padding: 8, borderWidth: 3, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
+  brandT: { color: '#fff', fontSize: 12, fontWeight: '800', textAlign: 'center', lineHeight: 14 },
   band: { flexDirection: 'row', alignItems: 'center', borderRadius: r.pill, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff', overflow: 'hidden' },
   bandLead: { fontSize: 13, fontWeight: '600', color: c.text2, paddingLeft: 14, paddingRight: 6, paddingVertical: 9 },
   bandHot: { fontSize: 13, fontWeight: '800', color: '#fff', backgroundColor: c.accent, paddingHorizontal: 12, paddingVertical: 9 },

@@ -31,7 +31,7 @@ export default function OrderFailed() {
         {k === 'unconfirmed' && orderId && key
           ? <Button title="Check payment status" onPress={() => router.replace({ pathname: '/order-success', params: { orderId, key } })} />
           : <Button title="Try again" onPress={() => router.replace('/checkout')} />}
-        <Button title="Back to cart" variant="outline" onPress={() => router.replace('/(tabs)/cart')} />
+        <Button title="Back to cart" variant="outline" onPress={() => router.replace('/cart')} />
         <Button title="Chat with us on WhatsApp" variant="whatsapp" onPress={chat} />
       </View>
     </Center>
