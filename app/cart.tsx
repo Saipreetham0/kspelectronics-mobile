@@ -277,7 +277,8 @@ export default function CartScreen() {
               <View style={s.billRow}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Ionicons name="document-text-outline" size={16} color={c.muted} />
-                  <Text style={{ color: c.text2, fontSize: 15 }}>Items total</Text>                </View>
+                  <Text style={{ color: c.text2, fontSize: 15 }}>Items total</Text>
+                </View>
                 <Text style={{ fontWeight: '700', fontSize: 15 }}>{minorToInr(withTax(t.total_items, t.total_items_tax), m)}</Text>
               </View>
               {Number(t.total_discount) > 0 && (
