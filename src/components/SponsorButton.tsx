@@ -4,10 +4,12 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Text } from '@/components/Text';
 import { useAppConfig } from '@/appConfig';
+import { logoOf, useBrands } from '@/brands';
 import type { RemoteSponsor } from '@/appConfig';
 import { isHttps, openHttps } from '@/links';
 import { track } from '@/analytics';
 import { NATIVE } from '@/native';
+import { c } from '@/theme';
 
 export const SPONSOR_SIZE = 56;
 
@@ -18,9 +20,10 @@ const live = (s: RemoteSponsor, now = Date.now()) => (!s.from || Date.parse(s.fr
 // The sponsor to show: the store's (while its dates run), otherwise the built-in one; nothing when the store sends null.
 export function useSponsor(): RemoteSponsor | null {
   const cfg = useAppConfig().sponsor;
+  const logo = logoOf(useBrands(), BUILT_IN.brand ?? '');
   if (cfg === null) return null;
   if (cfg && cfg.id && cfg.label && live(cfg)) return cfg;
-  return BUILT_IN;
+  return logo ? { ...BUILT_IN, image: logo, bg: '#ffffff' } : BUILT_IN; // the brand's own logo from WordPress, on white
 }
 
 // JioMart's round brand button beside the tab bar: a logo (or the brand name) in a ring that pulses gently a few times, then rests.
@@ -52,7 +55,7 @@ export default function SponsorButton({ sponsor }: { sponsor: RemoteSponsor }) {
   const words = sponsor.label.split(/\s+/);
   return (
     <Pressable onPress={open} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Sponsored: ${sponsor.label}`} style={({ pressed }) => [s.wrap, pressed && { transform: [{ scale: 0.94 }] }]}>
-      <Animated.View pointerEvents="none" style={[s.ring, { borderColor: bg, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] }) }] }]} />
+      <Animated.View pointerEvents="none" style={[s.ring, { borderColor: bg.toLowerCase() === '#ffffff' ? c.accent : bg, /* a white badge (logo) would pulse invisibly */ opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] }) }] }]} />
       <View style={[s.badge, { backgroundColor: bg }]}>
         {isHttps(sponsor.image)
           ? <Image source={sponsor.image} style={s.logo} contentFit="contain" accessibilityIgnoresInvertColors />

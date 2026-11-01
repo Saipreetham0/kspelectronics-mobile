@@ -24,6 +24,7 @@ import { addRecent, clearRecent, getRecent } from '@/recentSearches';
 import { useFetch } from '@/useFetch';
 import { useScreen } from '@/useScreen';
 import { getViewed } from '@/recentlyViewed';
+import { useBrands } from '@/brands';
 import type { Category, Product } from '@/types';
 import { track } from '@/analytics';
 import { useTabBarSpace } from '@/tabBarSpace';
@@ -123,15 +124,25 @@ const BRANDS: { slug: string; name: string; bg: string }[] = [
   { slug: 'arduino', name: 'Arduino', bg: '#00979c' },
 ];
 function ShopByBrand() {
+  // The brands' own logos from WordPress when the store sends them: every brand with at least 3 products, KSP's own label left out.
+  // Until then (or offline), the built-in list below as coloured name badges.
+  const all = useBrands();
+  const live = (all ?? []).filter((b) => b.count >= 3 && b.slug !== 'ksp-electronics' && b.image && /^https:\/\//.test(b.image));
+  const list = live.length >= 3
+    ? live.map((b) => ({ slug: b.slug, name: b.name, logo: b.image as string, bg: '#fff' }))
+    : BRANDS.map((b) => ({ ...b, logo: null as string | null }));
   return (
     <View style={{ marginTop: 22 }}>
       <View style={s.rowHead}><Text style={s.h}>Shop by brand</Text></View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, gap: 14 }}>
-        {BRANDS.map((b) => (
+        {list.map((b) => (
           <Tap key={b.slug} onPress={() => { track('banner_tap', { id: `brand-${b.slug}` }); router.push({ pathname: '/(tabs)/shop', params: { brand: b.slug, brandName: b.name } }); }} scaleTo={0.93} accessibilityRole="button" accessibilityLabel={`${b.name} products`}>
             <View style={[s.brand, { backgroundColor: b.bg }]}>
-              <Text style={s.brandT} numberOfLines={2} adjustsFontSizeToFit>{b.name.split(' ').join('\n')}</Text>
+              {b.logo
+                ? <Image source={b.logo} style={s.brandLogo} contentFit="contain" transition={150} accessibilityIgnoresInvertColors />
+                : <Text style={s.brandT} numberOfLines={2} adjustsFontSizeToFit>{b.name.split(' ').join('\n')}</Text>}
             </View>
+            {b.logo ? <Text style={s.brandName} numberOfLines={1}>{b.name}</Text> : null}
           </Tap>
         ))}
       </ScrollView>
@@ -338,7 +349,9 @@ const s = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.surface, borderRadius: r.pill, paddingHorizontal: 12, paddingVertical: 8 },
   chipT: { fontSize: 13, color: c.text, fontWeight: '600' },
   more: { color: c.accent, fontWeight: '800', fontSize: 13 },
-  brand: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', padding: 8, borderWidth: 3, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
+  brand: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', padding: 12, overflow: 'hidden', borderWidth: 1, borderColor: c.line, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
+  brandLogo: { width: '100%', height: '100%' },
+  brandName: { fontSize: 11, fontWeight: '600', color: c.text2, textAlign: 'center', marginTop: 6, width: 72 },
   brandT: { color: '#fff', fontSize: 12, fontWeight: '800', textAlign: 'center', lineHeight: 14 },
   band: { flexDirection: 'row', alignItems: 'center', borderRadius: r.pill, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff', overflow: 'hidden' },
   bandLead: { fontSize: 13, fontWeight: '600', color: c.text2, paddingLeft: 14, paddingRight: 6, paddingVertical: 9 },
