@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { ScrollViewInstance, TextInputInstance as RNTextInput } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import { Button, Card, Center, Field, H } from '@/components/ui';
 import { api, ApiError } from '@/api';
 import { Addr, CheckoutForm, emptyForm, IN_STATES, validate } from '@/checkoutForm';
@@ -13,7 +13,6 @@ import { loadLoc, lookupPin } from '@/location';
 import { selectedAddress } from '@/addresses';
 import LocationSheet from '@/components/LocationSheet';
 import DeliverySlots from '@/components/DeliverySlots';
-import SearchButton from '@/components/SearchButton';
 import { storage } from '@/storage';
 import { SITE_URL, WHATSAPP } from '@/config';
 import { isHttps } from '@/links';
@@ -22,10 +21,11 @@ import type { Account, Cart } from '@/types';
 import { track } from '@/analytics';
 import { c, r } from '@/theme';
 import StatePickerModal from '@/components/checkout/StatePickerModal';
-import PaymentMethods, { payName } from '@/components/checkout/PaymentMethods';
+import PaymentMethods, { payShort } from '@/components/checkout/PaymentMethods';
 import OrderSummary from '@/components/checkout/OrderSummary';
 
 const PENDING = 'ksp_pending_order';
+const CONTACT = 'ksp_contact'; // the name, phone and email from the last order on this phone, so the next checkout opens filled in (cleared on logout)
 type GstInfo = { gstin: string; legalName: string; tradeName: string; status: string; active: boolean; address: string; city: string; pincode: string; state: string };
 const GSTIN_RE = /^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/;
 type WcAddr = Record<string, string>;
@@ -34,7 +34,7 @@ const fromWc = (a?: WcAddr): Addr | null => (a?.address_1 ? { firstName: a.first
 const oneLine = (a: Addr) => `${a.address}, ${a.city}${a.state ? `, ${a.state}` : ''} ${a.pincode}`.trim();
 
 // The order the keyboard's "next" key walks the delivery fields in (state is a picker, so it is skipped).
-const ORDER = ['email', 'phone', 'firstName', 'lastName', 'pincode', 'city', 'address'];
+const ORDER = ['phone', 'email', 'firstName', 'lastName', 'pincode', 'city', 'address'];
 
 export default function Checkout() {
   const { cart, cartToken, user, account, clearLocalCart, ready, showLogin } = useStore();
@@ -61,6 +61,13 @@ export default function Checkout() {
   const inputs = useRef<Record<string, RNTextInput | null>>({});
   const [blurred, setBlurred] = useState<Record<string, boolean>>({}); // fields the shopper has left: their errors show without waiting for "Place order"
   const [needAddr, setNeedAddr] = useState(false); // the delivery area changed, so the street line was cleared
+  // One "Full name" box instead of first + last: the first word is the first name, the rest the last name (WooCommerce wants both).
+  const [fullName, setFullName] = useState('');
+  useEffect(() => { const joined = `${form.firstName} ${form.lastName}`.trim(); setFullName((cur) => (cur.trim().replace(/\s+/g, ' ') === joined ? cur : joined)); }, [form.firstName, form.lastName]);
+  useEffect(() => {
+    storage.get(CONTACT).then((v) => { if (!v) return; const k = JSON.parse(v) as Partial<CheckoutForm>;
+      setForm((f) => ({ ...f, email: f.email || k.email || '', phone: f.phone || k.phone || '', firstName: f.firstName || k.firstName || '', lastName: f.lastName || k.lastName || '' })); }).catch(() => {});
+  }, []);
   const [kb, setKb] = useState(false);
   useEffect(() => {
     const on = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKb(true));
@@ -189,6 +196,7 @@ export default function Checkout() {
 
   // Typing a different pincode than the pinned spot's means the pin no longer matches the address: it is removed, and the shopper is asked to pin again.
   const set = (k: keyof CheckoutForm) => (v: string) => { setEditing(true); setForm((f) => ({ ...f, [k]: v, ...(k === 'pincode' && f.drop && v !== dropPin ? { drop: undefined } : null) })); };
+  const setFull = (v: string) => { setFullName(v); const [first = '', ...rest] = v.trim().split(/\s+/); setEditing(true); setForm((f) => ({ ...f, firstName: first, lastName: rest.join(' ') })); };
   const setB = (k: keyof Addr) => (v: string) => { setEditing(true); setForm((f) => ({ ...f, billing: { ...f.billing, [k]: v } })); };
   // Notes, GSTIN and company are typed without leaving the "Deliver to" summary, so they don't count as editing the address.
   const setQuiet = (k: keyof CheckoutForm) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -242,11 +250,13 @@ export default function Checkout() {
     const billing = wantGst || !acct?.billing?.address_1 ? { billing: { ...wc(form.sameBilling ? form : form.billing), email: form.email, phone: form.phone, company: form.company } } : null;
     api('/api/auth/profile', { method: 'PUT', body: { shipping: { ...wc(form), phone: form.phone }, ...billing } }).catch(() => {});
   };
+  const remember = () => storage.set(CONTACT, JSON.stringify({ email: form.email.trim(), phone: form.phone.trim(), firstName: form.firstName.trim(), lastName: form.lastName.trim() })).catch(() => {});
   const place = async () => {
     if (placingRef.current) return;
     track('begin_checkout', { items: items.length, method });
     setTouched(true);
-    const bad = ORDER.find((k) => errors[k]) ?? Object.keys(errors)[0];
+    const bad0 = ORDER.find((k) => errors[k]) ?? Object.keys(errors)[0];
+    const bad = bad0 === 'lastName' ? 'firstName' : bad0;
     if (bad && !focusField(bad)) { const card = bad === 'email' || bad === 'phone' ? 'contact' : bad === 'gstin' || bad.startsWith('b.') ? 'billing' : 'delivery'; scroller.current?.scrollTo({ y: Math.max(0, (cardY.current[card] ?? 0) - 8), animated: true }); }
     const gstProblem = !wantGst ? '' : !gstin ? 'Enter your GSTIN, or untick "Issue GST invoice".' : !GSTIN_RE.test(gstin) ? 'Enter a valid 15-character GSTIN.'
       : gst.s === 'loading' ? 'Checking your GSTIN… try again in a moment.' : gst.s === 'notfound' ? 'This GSTIN is not registered. Check the number.' : gst.s !== 'ok' && !form.company.trim() ? 'Enter the company name for your GST invoice.' : '';
@@ -261,12 +271,12 @@ export default function Checkout() {
         const prev = Number(await storage.get(PENDING).catch(() => 0)) || 0;
         const d = await api<PayRequest>('/api/pay/razorpay/create', { method: 'POST', body: { token: cartToken, form, previousOrderId: prev } });
         await storage.set(PENDING, String(d.orderId)).catch(() => {}); // the order exists already: a failed note must not look like a failed order
-        saveToAccount();
+        saveToAccount(); remember();
         await setPayRequest(d);
         router.push('/pay');
       } else {
         const d = await api<{ orderId: number; orderKey?: string; redirect: string | null }>('/api/checkout', { method: 'POST', body: { token: cartToken, form, paymentMethod: method } });
-        saveToAccount();
+        saveToAccount(); remember();
         if (d.redirect && !/order-received/.test(d.redirect)) {
           // Pay-later and other redirect gateways: the shopper pays on their page, and this screen waits for the order to turn paid (or failed).
           if (!isHttps(d.redirect)) throw new Error('Could not open the payment page. Please try again or choose another payment method.');
@@ -285,6 +295,7 @@ export default function Checkout() {
     const on = (k: keyof Addr) => (pre ? setB(k) : set(k));
     return (
       <>
+        {pre ? (
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ flex: 1 }}>
             <Field label="First name" value={v('firstName')} onChangeText={on('firstName')} error={err(`${pre}firstName`)} autoComplete="given-name" textContentType="givenName" {...(pre ? null : fld('firstName'))} />
@@ -293,6 +304,9 @@ export default function Checkout() {
             <Field label="Last name" value={v('lastName')} onChangeText={on('lastName')} error={err(`${pre}lastName`)} autoComplete="family-name" textContentType="familyName" {...(pre ? null : fld('lastName'))} />
           </View>
         </View>
+        ) : (
+          <Field label="Full name" value={fullName} onChangeText={setFull} error={err('firstName') || (err('lastName') ? 'Enter your first and last name' : undefined)} autoCapitalize="words" autoComplete="name" textContentType="name" {...fld('firstName')} />
+        )}
         {/* The pincode comes first: it fills in the city and state below. */}
         <Field label="Pincode" value={v('pincode')} onChangeText={(t) => { typedPin.current[pre ? 'billing' : 'delivery'] = t; on('pincode')(t); }} error={err(`${pre}pincode`)} keyboardType="number-pad" maxLength={6} autoComplete="postal-code" textContentType="postalCode" {...(pre ? null : fld('pincode'))} />
         {pinNote[pre ? 'billing' : 'delivery'] ? <Text style={{ color: pinNote[pre ? 'billing' : 'delivery'].startsWith('We couldn') ? c.danger : c.success, fontSize: 12, marginTop: -8, marginBottom: 12 }} accessibilityLiveRegion="polite">{pinNote[pre ? 'billing' : 'delivery']}</Text> : null}
@@ -307,8 +321,12 @@ export default function Checkout() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.surface }}>
-      <Stack.Screen options={{ headerRight: () => <SearchButton /> }} />
       <ScrollView ref={scroller} contentContainerStyle={{ padding: 12, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+        {!user && !showSummary && (
+          <Pressable onPress={showLogin} style={s.loginBar} accessibilityRole="button" accessibilityLabel="Have an account? Log in to use your saved address">
+            <Text style={{ flex: 1, color: '#444', fontSize: 13 }}>Have an account? Use your saved address.</Text><Text style={{ color: c.accent, fontWeight: '800', fontSize: 13 }}>Log in</Text>
+          </Pressable>
+        )}
         {showSummary ? (
           <Card>
             <View style={s.line}><H>Deliver to</H><Pressable onPress={() => setEditing(true)} hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }} accessibilityRole="button" accessibilityLabel="Edit delivery details"><Text style={{ color: c.accent, fontWeight: '800' }}>Edit</Text></Pressable></View>
@@ -326,12 +344,12 @@ export default function Checkout() {
         ) : (
           <>
         <Card onLayout={(e) => { cardY.current.contact = e.nativeEvent.layout.y; }}>
-          <H>1. Contact</H>
-          <Field label="Email" value={form.email} onChangeText={set('email')} error={err('email')} autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress" {...fld('email')} />
+          <H>Contact</H>
           <Field label="Mobile number" value={form.phone} onChangeText={set('phone')} error={err('phone')} keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" placeholder="10-digit mobile" {...fld('phone')} />
+          <Field label="Email (for your invoice)" value={form.email} onChangeText={set('email')} error={err('email')} autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress" {...fld('email')} />
         </Card>
         <Card onLayout={(e) => { cardY.current.delivery = e.nativeEvent.layout.y; }}>
-          <H>2. Delivery address</H>
+          <H>Delivery address</H>
           {/* The drop point on Google Maps: what a hyperlocal rider navigates to. */}
           <Pressable onPress={() => setPinOpen(true)} style={s.drop} accessibilityRole="button" accessibilityLabel="Search or pin your drop location">
             <Text style={{ fontSize: 22 }}>{form.drop ? '📍' : '🗺️'}</Text>
@@ -359,11 +377,7 @@ export default function Checkout() {
                 ))}
               </View>
             );
-          })() : (
-            <Pressable onPress={showLogin} style={s.savedAddr} accessibilityRole="button" accessibilityLabel="Log in to use your saved addresses">
-              <Text style={{ flex: 1, color: '#444' }}>Log in to use the shipping address saved in your account, or just fill it in below.</Text><Text style={{ color: c.accent, fontWeight: '800' }}>Log in</Text>
-            </Pressable>
-          )}
+          })() : null}
           {addrFields('')}
         </Card>
           </>
@@ -408,14 +422,14 @@ export default function Checkout() {
           <Card>
             <H>Delivery option</H>
             {rates!.shipping_rates.map((x) => (
-            <Pressable key={x.rate_id} onPress={() => pickRate(rates.package_id, x.rate_id)} style={s.rate}>
+            <Pressable key={x.rate_id} onPress={() => pickRate(rates.package_id, x.rate_id)} style={s.rate} accessibilityRole="radio" accessibilityState={{ selected: x.selected }}>
               <View style={[s.radio, x.selected && { borderColor: c.accent }]}>{x.selected && <View style={s.radioDot} />}</View>
               <Text style={{ flex: 1 }}>{x.quick ? '⚡ ' : ''}{decodeHtml(x.name)}</Text><Text style={{ fontWeight: '700' }}>{Number(x.price) > 0 ? minorToInr(x.price, m) : 'Free'}</Text>
             </Pressable>
             ))}
           </Card>
         )}
-        <PaymentMethods methods={shownMethods} selected={method} onSelect={setMethod} native={native} />
+        <PaymentMethods methods={shownMethods} selected={method} onSelect={setMethod} />
         <OrderSummary
           items={items}
           totals={t}
@@ -445,7 +459,7 @@ export default function Checkout() {
         <View style={s.footRow}>
           <View style={{ minWidth: 96, maxWidth: '38%' }}>
             <Text style={{ fontSize: 11, color: c.muted }} numberOfLines={1}>PAY USING</Text>
-            <Text style={{ fontSize: 13, fontWeight: '700' }} numberOfLines={2}>{method ? (native && method === 'razorpay' ? 'UPI / Card / Netbanking' : payName(method)) : '…'}</Text>
+            <Text style={{ fontSize: 13, fontWeight: '700' }} numberOfLines={1}>{method ? payShort(method) : '…'}</Text>
           </View>
           <Button title={quoting ? 'Updating total…' : `${minorToInr(t.total_price, m)}  ·  Place order`} loading={placing} onPress={place} style={{ flex: 1, marginLeft: 12 }} />
         </View>
@@ -491,6 +505,7 @@ const s = StyleSheet.create({
   footRow: { flexDirection: 'row', alignItems: 'center', padding: 12 },
   drop: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: r.md, borderWidth: 1, borderColor: c.line, backgroundColor: c.surface, marginBottom: 14 },
   link: { color: c.accent, fontWeight: '700', textDecorationLine: 'underline' },
+  loginBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, borderRadius: r.md, backgroundColor: c.accentSoft, marginBottom: 12 },
   savedAddr: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: r.md, borderWidth: 1, borderColor: c.line, backgroundColor: '#fff', marginBottom: 8 },
   gstNote: { color: c.muted, fontSize: 12, marginTop: -8, marginBottom: 12 },
   gstCard: { padding: 12, borderRadius: r.md, borderWidth: 1, borderColor: c.success, backgroundColor: c.greenSoft, marginTop: -4, marginBottom: 14 },

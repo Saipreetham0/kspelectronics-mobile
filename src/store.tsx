@@ -144,7 +144,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       clearAddresses(),
       clearLoc(),
       setPayRequest(null), // an unfinished payment's order key must not outlive the login
-      ...['ksp_recent_searches', 'ksp_recent_products', 'ksp_wishlist', 'ksp_messages', 'ksp_cart_prices', 'ksp_pending_order'].map((k) => storage.del(k).catch(() => {}))
+      ...['ksp_recent_searches', 'ksp_recent_products', 'ksp_wishlist', 'ksp_messages', 'ksp_cart_prices', 'ksp_pending_order', 'ksp_contact'].map((k) => storage.del(k).catch(() => {}))
     ]);
   };
   const account = () => api<Account>('/api/auth/me');
