@@ -30,30 +30,8 @@ The `.easignore` file keeps `.env` (which holds server secrets on this machine) 
 - Order details, cancel, return request, track order, order again.
 - Poor network and offline banner, rotate the phone, large font size.
 
-## 3. Google Play listing
-- **Name:** KSP Electronics
-- **Short description (80):** 3D printers, Raspberry Pi, Arduino, ESP32 and electronics, delivered across India.
-- **Full description:** Shop 3D printers and filaments (Bambu Lab, Creality and more), Raspberry Pi, Arduino and ESP32 boards, sensors, engineering project kits and tools from KSP Electronics, Hyderabad. Same-day delivery in Hyderabad and delivery across India. Prices include GST, pay by UPI, cards, netbanking or cash on delivery, and get a GST invoice for your business. Track orders, reorder in one tap, and get help on WhatsApp.
-- **Category:** Shopping. **Contact email:** sales@kspelectronics.in. **Website:** https://kspelectronics.in
-- **Privacy policy URL:** https://kspelectronics.in/privacy-policy/
-- **Account deletion URL (Play requires a web page):** a page on the website that explains how to delete an account, for example a section on `/contact/`. Create it before submitting.
-- **Assets (You):** 512x512 icon (use `assets/icon.png` resized), a 1024x500 feature graphic, at least 4 phone screenshots (Home, Categories, Product, Cart, Checkout).
-- **Content rating:** answer the questionnaire as a shopping app with no user-generated content that others can see. Reviews are moderated before they show.
-- **Target audience:** 18 and over.
-
-## 4. Data safety form (what the app collects)
-| Data | Collected | Why | Shared with |
-|---|---|---|---|
-| Name, email, phone, address | Yes | Orders, delivery, account | Delivery partners, payment processor |
-| Approximate and precise location | Yes, only when you tap "Use current location" | Find your pincode and the delivery spot | Not shared |
-| Purchase history | Yes | Orders, reorder | Not shared |
-| Payment info | Not stored by the app: handled by Razorpay | Payment | Razorpay |
-| App activity (searches) | Only on the phone (recent searches) | Convenience | Not shared |
-| Crash logs and diagnostics | Yes, if `EXPO_PUBLIC_SENTRY_DSN` is set (no name, email or address attached) | App stability | Sentry |
-| App activity (screens viewed, add to cart, checkout started, search used) | Yes, if `EXPO_PUBLIC_POSTHOG_KEY` is set. Anonymous per-install id, no personal data | Improving the app | PostHog |
-| Push notification token | Yes, if the shopper allows notifications | Order updates | Expo push service |
-| Device or other IDs | The anonymous analytics id above | Analytics | PostHog |
-- Data is encrypted in transit (https). Users can request deletion in the app (Account > Profile and security > Delete my account).
+## 3. Google Play listing and data safety
+Every Play Console field (listing text, screenshots, content rating, data safety, app content, release notes, Hindi and Telugu listings, ASO) is in [docs/PLAY_STORE_LISTING.md](docs/PLAY_STORE_LISTING.md), ready to paste.
 
 ## 5. Production setup (once)
 Everything below is switched on by a value in the EAS build environment (`eas env:create`, or `.env` for a local build). Nothing is sent until its value is set.
@@ -73,12 +51,5 @@ Releases: `npm run check` (typecheck and tests) must pass; CI runs the same on e
 - Phone OTP login needs an SMS provider.
 - Bump `version` in `app.json` for each store release; `versionCode` rises automatically (`autoIncrement`).
 
-## 7. App Store / Play Store listing (ASO)
-- **Title (30 characters):** `KSP Electronics: Maker Store` . **Subtitle (iOS, 30):** `3D printers, Pi, Arduino, ESP32`.
-- **Keywords (iOS, 100 characters, no spaces after commas):** `raspberry pi,arduino,esp32,3d printer,filament,bambu lab,sensors,electronics,components,maker,diy kit,hyderabad`
-- **First two lines of the description matter most** (they show before "more"): "Shop 3D printers, Raspberry Pi, Arduino, ESP32 and electronic components. Same-day delivery in Hyderabad, GST invoice, UPI and COD."
-- **Screenshots (5-8, portrait):** 1 Home with categories, 2 a product page with price and "Add", 3 cart with the savings line, 4 checkout with UPI, 5 live order tracking, 6 Order again, 7 search suggestions. Put a short headline on each ("Same-day in Hyderabad", "Prices include GST", "Track your rider live"). Use real products, no placeholder text.
-- **Preview video (15-30 s):** open the app, search "Raspberry Pi", add to cart, check out with UPI, show the order screen. No audio needed.
-- **Ratings:** the app asks for a store rating only after a 4-5 star review of a product, at most every 90 days. Reply to every review in the console.
-- **Localised listings:** add Hindi and Telugu listing text in the consoles even though the app itself is English-only for now.
-- **After launch:** watch search terms in Play Console / App Store Connect and move the ones people use into the title, keywords and first lines.
+## 7. Store listing (ASO)
+Every Play Console field (listing text, screenshots, content rating, data safety, app content, release notes, Hindi and Telugu listings, ASO) is in [docs/PLAY_STORE_LISTING.md](docs/PLAY_STORE_LISTING.md), ready to paste.
