@@ -169,6 +169,7 @@ Not collected: contacts, photos, files, calendar, audio, health and fitness, web
 |---|---|
 | Build | `eas build --platform android --profile production` (.aab, `versionCode` auto-increments) |
 | Submit | `eas submit --platform android --profile production` (goes to the **internal** track as a draft, per `eas.json`) |
+| First bundle (1.0.0, versionCode 1) | Built locally with `cd android && ./gradlew :app:bundleRelease` and signed with the **upload key in `~/.ksp-keys/`** (`ksp-upload.jks` plus its password file; upload certificate SHA-256 `EE:14:EF:B7:…:F6:B8`). Back up both files somewhere safe. To build with EAS later, import that key with `eas credentials` (Android > production > upload keystore), or Play will reject the bundle as signed with the wrong key. The release signing block in `android/app/build.gradle` is lost on `expo prebuild --clean`, so re-add it after a clean prebuild |
 | Countries | India |
 | Release name | `1.0.0` |
 
