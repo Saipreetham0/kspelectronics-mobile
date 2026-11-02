@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { NATIVE } from '@/native';
 import { Animated, Platform, Pressable, StyleSheet, Text as RNText, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Tabs } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/tabs';
-import { ClockCounterClockwise, House, SealPercent, SquaresFour } from 'phosphor-react-native';
-import type { Icon } from 'phosphor-react-native';
+import { ClockCounterClockwise, House, SealPercent, SquaresFour } from '@/icons';
+import type { Icon } from '@/icons';
 import { TAB_BAR_H, useTabBarGap, useTabBarSpace } from '@/tabBarSpace';
 import SponsorButton, { SPONSOR_SIZE, useSponsor } from '@/components/SponsorButton';
 import CartBar from '@/components/CartBar';
@@ -30,8 +29,8 @@ function Tab({ Glyph, text, focused, size, fs, onPress, onLongPress, a11y }: {
   const pop = useRef(new Animated.Value(1)).current;
   const lift = useRef(new Animated.Value(focused ? 1 : 0)).current;
   useEffect(() => {
-    Animated.spring(lift, { toValue: focused ? 1 : 0, useNativeDriver: NATIVE, damping: 14, stiffness: 220 }).start();
-    if (focused) Animated.sequence([Animated.timing(pop, { toValue: 1.22, duration: 110, useNativeDriver: NATIVE }), Animated.spring(pop, { toValue: 1, useNativeDriver: NATIVE, damping: 6, stiffness: 250 })]).start();
+    Animated.spring(lift, { toValue: focused ? 1 : 0, useNativeDriver: true, damping: 14, stiffness: 220 }).start();
+    if (focused) Animated.sequence([Animated.timing(pop, { toValue: 1.22, duration: 110, useNativeDriver: true }), Animated.spring(pop, { toValue: 1, useNativeDriver: true, damping: 6, stiffness: 250 })]).start();
   }, [focused, pop, lift]);
   const color = focused ? c.accent : INACTIVE;
   return (
@@ -59,8 +58,8 @@ function TabBar({ state, descriptors, emitter, navigateToTab, gap, width, room }
   const IND = 28;
   useEffect(() => {
     if (!tabW) return;
-    if (active >= 0) Animated.spring(x, { toValue: active * tabW + (tabW - IND) / 2, useNativeDriver: NATIVE, damping: 18, stiffness: 200 }).start();
-    Animated.timing(shown, { toValue: active >= 0 ? 1 : 0, duration: 150, useNativeDriver: NATIVE }).start();
+    if (active >= 0) Animated.spring(x, { toValue: active * tabW + (tabW - IND) / 2, useNativeDriver: true, damping: 18, stiffness: 200 }).start();
+    Animated.timing(shown, { toValue: active >= 0 ? 1 : 0, duration: 150, useNativeDriver: true }).start();
   }, [active, tabW, x, shown]);
   const size = Math.round(Math.max(22, Math.min(27, width * 0.06)));
   const fs = width < 340 ? 10 : width < 400 ? 10.5 : width >= 700 ? 13 : 11.5;

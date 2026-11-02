@@ -12,7 +12,7 @@ Notifications.setNotificationHandler({ handleNotification: async () => ({ should
 // ask=false registers only when permission was already given (every launch); ask=true shows the system prompt (right after an order, when it makes sense).
 export async function registerPush(ask: boolean) {
   try {
-    if (Platform.OS === 'web' || !Device.isDevice) return;
+    if (!Device.isDevice) return;
     if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('orders', { name: 'Order updates', importance: Notifications.AndroidImportance.HIGH });
     let { status, canAskAgain } = await Notifications.getPermissionsAsync();
     if (status !== 'granted' && ask && canAskAgain) status = (await Notifications.requestPermissionsAsync()).status;

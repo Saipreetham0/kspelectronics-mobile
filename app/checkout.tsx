@@ -3,7 +3,7 @@ import { Keyboard, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollVie
 import type { ScrollViewInstance, TextInputInstance as RNTextInput } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { router } from 'expo-router';
-import { Lightning, MapPin, MapTrifold, Moped } from 'phosphor-react-native';
+import { Lightning, MapPin, MapTrifold, Moped } from '@/icons';
 import { Image } from 'expo-image';
 import { Button, Card, Center, Field, H } from '@/components/ui';
 import { api, ApiError } from '@/api';

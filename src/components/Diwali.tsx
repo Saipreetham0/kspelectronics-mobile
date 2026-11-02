@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/Text';
-import { NATIVE } from '@/native';
 
 // Diwali 2026 is on 8 November: the festive look runs from 20 October to 15 November. EXPO_PUBLIC_DIWALI=on|off forces it either way.
 export const diwaliOn = () => {
@@ -20,8 +19,8 @@ function Spark({ glyph, x, delay, dur, size, h }: { glyph: string; x: number; de
   useEffect(() => {
     const a = Animated.loop(Animated.sequence([
       Animated.delay(delay),
-      Animated.timing(t, { toValue: 1, duration: dur, easing: Easing.linear, useNativeDriver: NATIVE }),
-      Animated.timing(t, { toValue: 0, duration: 0, useNativeDriver: NATIVE }),
+      Animated.timing(t, { toValue: 1, duration: dur, easing: Easing.linear, useNativeDriver: true }),
+      Animated.timing(t, { toValue: 0, duration: 0, useNativeDriver: true }),
     ]));
     a.start();
     return () => a.stop();

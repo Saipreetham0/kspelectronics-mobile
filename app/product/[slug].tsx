@@ -15,7 +15,7 @@ import { decodeHtml, minorToInr } from '@/format';
 import { useStore } from '@/store';
 import { useFetch } from '@/useFetch';
 import type { Product, Swatches } from '@/types';
-import { CaretDown, Export, Heart, Minus, Plus, Star, X } from 'phosphor-react-native';
+import { CaretDown, Export, Heart, Minus, Plus, Star, X } from '@/icons';
 import { SITE_URL } from '@/config';
 import { useWishlist } from '@/wishlist';
 import { useFly } from '@/fly';

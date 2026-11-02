@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { NATIVE } from '@/native';
 import { AccessibilityInfo, Animated, Pressable, PressableProps, StyleProp, ViewStyle } from 'react-native';
 
 // Small motion helpers built on core Animated (works in Expo Go, native builds and web).
@@ -15,7 +14,7 @@ export function Reveal({ index = 0, children, style }: { index?: number; childre
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (reduce) { v.setValue(1); return; }
-    Animated.timing(v, { toValue: 1, duration: 320, delay: Math.min(index, 8) * 45, useNativeDriver: NATIVE }).start();
+    Animated.timing(v, { toValue: 1, duration: 320, delay: Math.min(index, 8) * 45, useNativeDriver: true }).start();
   }, [v, index]);
   return <Animated.View style={[style, { opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>{children}</Animated.View>;
 }
@@ -23,7 +22,7 @@ export function Reveal({ index = 0, children, style }: { index?: number; childre
 /** Springs from small to full size on mount (e.g. ADD turning into the stepper). */
 export function PopIn({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   const v = useRef(new Animated.Value(0.75)).current;
-  useEffect(() => { if (reduce) { v.setValue(1); return; } Animated.spring(v, { toValue: 1, useNativeDriver: NATIVE, damping: 9, stiffness: 220 }).start(); }, [v]);
+  useEffect(() => { if (reduce) { v.setValue(1); return; } Animated.spring(v, { toValue: 1, useNativeDriver: true, damping: 9, stiffness: 220 }).start(); }, [v]);
   return <Animated.View style={[style, { transform: [{ scale: v }] }]}>{children}</Animated.View>;
 }
 
@@ -34,7 +33,7 @@ export function Bump({ trigger, children, style }: { trigger: unknown; children:
   useEffect(() => {
     if (first.current) { first.current = false; return; }
     if (reduce) return;
-    Animated.sequence([Animated.timing(v, { toValue: 1.22, duration: 90, useNativeDriver: NATIVE }), Animated.spring(v, { toValue: 1, useNativeDriver: NATIVE, damping: 6, stiffness: 260 })]).start();
+    Animated.sequence([Animated.timing(v, { toValue: 1.22, duration: 90, useNativeDriver: true }), Animated.spring(v, { toValue: 1, useNativeDriver: true, damping: 6, stiffness: 260 })]).start();
   }, [trigger, v]);
   return <Animated.View style={[style, { transform: [{ scale: v }] }]}>{children}</Animated.View>;
 }
@@ -43,7 +42,7 @@ export function Bump({ trigger, children, style }: { trigger: unknown; children:
 // `fill`: the pressable fills its parent (a sized tile); without it, it hugs its content.
 export function Tap({ children, style, scaleTo = 0.96, fill, ...p }: PressableProps & { style?: StyleProp<ViewStyle>; scaleTo?: number; fill?: boolean }) {
   const v = useRef(new Animated.Value(1)).current;
-  const to = (n: number) => Animated.spring(v, { toValue: n, useNativeDriver: NATIVE, speed: 40, bounciness: 6 }).start();
+  const to = (n: number) => Animated.spring(v, { toValue: n, useNativeDriver: true, speed: 40, bounciness: 6 }).start();
   return (
     <Pressable {...p} style={fill ? { flex: 1 } : undefined} onPressIn={(e) => { to(scaleTo); p.onPressIn?.(e); }} onPressOut={(e) => { to(1); p.onPressOut?.(e); }}>
       <Animated.View style={[style, { transform: [{ scale: v }] }]}>{children as React.ReactNode}</Animated.View>
@@ -58,7 +57,7 @@ export function Pop({ on, children, style }: { on: boolean; children: React.Reac
   useEffect(() => {
     if (first.current) { first.current = false; return; }
     if (reduce || !on) return; // pop when saved, not when removed
-    Animated.sequence([Animated.timing(v, { toValue: 0.7, duration: 80, useNativeDriver: NATIVE }), Animated.spring(v, { toValue: 1, useNativeDriver: NATIVE, damping: 4, stiffness: 240 })]).start();
+    Animated.sequence([Animated.timing(v, { toValue: 0.7, duration: 80, useNativeDriver: true }), Animated.spring(v, { toValue: 1, useNativeDriver: true, damping: 4, stiffness: 240 })]).start();
   }, [on, v]);
   return <Animated.View style={[style, { transform: [{ scale: v }] }]}>{children}</Animated.View>;
 }
@@ -66,6 +65,6 @@ export function Pop({ on, children, style }: { on: boolean; children: React.Reac
 /** Fades (and rises a few points) when it mounts: panels that open over a page, such as the search results. */
 export function FadeIn({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   const v = useRef(new Animated.Value(reduce ? 1 : 0)).current;
-  useEffect(() => { if (!reduce) Animated.timing(v, { toValue: 1, duration: 200, useNativeDriver: NATIVE }).start(); }, [v]);
+  useEffect(() => { if (!reduce) Animated.timing(v, { toValue: 1, duration: 200, useNativeDriver: true }).start(); }, [v]);
   return <Animated.View style={[style, { opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}>{children}</Animated.View>;
 }

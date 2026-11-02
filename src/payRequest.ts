@@ -1,7 +1,6 @@
 // Hand-off between the checkout and payment screens (kept out of the URL: it holds the payment order details).
 // Persisted to the OS keychain so that if the JS runtime is purged while the app is backgrounded during payment,
 // the pay screen can restore the request on mount instead of showing "Nothing to pay."
-import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
 export type PayRequest = { orderId: number; orderKey: string; rzpOrderId: string; amount: number; currency: string; keyId: string; prefill: { name: string; email: string; contact: string } };
@@ -13,17 +12,15 @@ let current: PayRequest | null = null;
 
 const store = {
   save: async (p: PayRequest) => {
-    if (Platform.OS === 'web') { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch { /* private mode */ } return; }
     await SecureStore.setItemAsync(KEY, JSON.stringify(p)).catch(() => {});
   },
   load: async (): Promise<PayRequest | null> => {
     try {
-      const raw = Platform.OS === 'web' ? localStorage.getItem(KEY) : await SecureStore.getItemAsync(KEY);
+      const raw = await SecureStore.getItemAsync(KEY);
       return raw ? (JSON.parse(raw) as PayRequest) : null;
     } catch { return null; }
   },
   clear: async () => {
-    if (Platform.OS === 'web') { try { localStorage.removeItem(KEY); } catch { /* ignore */ } return; }
     await SecureStore.deleteItemAsync(KEY).catch(() => {});
   },
 };

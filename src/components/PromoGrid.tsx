@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Truck } from 'phosphor-react-native';
+import { Truck } from '@/icons';
 import { Text } from '@/components/Text';
 import { Reveal, Tap } from './motion';
 import { diwaliOn } from './Diwali';

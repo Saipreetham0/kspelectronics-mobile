@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { MapPin } from 'phosphor-react-native';
+import { MapPin } from '@/icons';
 import { Text } from '@/components/Text';
 import { Card } from '@/components/ui';
 import { listAddresses, removeAddress, selectAddress, selectedAddressId } from '@/addresses';

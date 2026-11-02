@@ -8,7 +8,6 @@ import { logoOf, useBrands } from '@/brands';
 import type { RemoteSponsor } from '@/appConfig';
 import { isHttps, openHttps } from '@/links';
 import { track } from '@/analytics';
-import { NATIVE } from '@/native';
 import { c } from '@/theme';
 
 export const SPONSOR_SIZE = 56;
@@ -34,8 +33,8 @@ export default function SponsorButton({ sponsor }: { sponsor: RemoteSponsor }) {
     AccessibilityInfo.isReduceMotionEnabled().then((reduce) => {
       if (reduce) return;
       loop = Animated.loop(Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 1100, useNativeDriver: NATIVE }),
-        Animated.timing(pulse, { toValue: 0, duration: 0, useNativeDriver: NATIVE }),
+        Animated.timing(pulse, { toValue: 1, duration: 1100, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 0, useNativeDriver: true }),
         Animated.delay(900),
       ]), { iterations: 3 });
       loop.start();

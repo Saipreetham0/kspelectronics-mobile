@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Heart, Lightning, Star } from 'phosphor-react-native';
+import { Heart, Lightning, Star } from '@/icons';
 import type { Product } from '@/types';
 import { decodeHtml, minorToInr } from '@/format';
 import { useWishlist } from '@/wishlist';

@@ -5,8 +5,8 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Bell, CaretRight, ClockCounterClockwise, Headset, Heart, Info, LockSimple, MapPin, Package, ShareNetwork, SignOut, Tag, Truck, User, UserCircle, WhatsappLogo } from 'phosphor-react-native';
-import type { Icon } from 'phosphor-react-native';
+import { ArrowLeft, Bell, CaretRight, ClockCounterClockwise, Headset, Heart, Info, LockSimple, MapPin, Package, ShareNetwork, SignOut, Tag, Truck, User, UserCircle, WhatsappLogo } from '@/icons';
+import type { Icon } from '@/icons';
 import { Text } from '@/components/Text';
 import { Button, Spinner } from '@/components/ui';
 import { Tap } from '@/components/motion';
@@ -14,7 +14,6 @@ import { useStore } from '@/store';
 import { useFlag } from '@/appConfig';
 import { SITE_URL, WHATSAPP } from '@/config';
 import { POLICIES } from '@/policies';
-import { NATIVE } from '@/native';
 import { c, r } from '@/theme';
 
 const chat = () => Linking.openURL(`https://wa.me/${WHATSAPP}`).catch(() => {});
@@ -42,7 +41,7 @@ export default function Account() {
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
       <Animated.ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false} scrollEventThrottle={16}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y } } }], { useNativeDriver: NATIVE })}>
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y } } }], { useNativeDriver: true })}>
         <LinearGradient colors={[c.heroTop, c.accentTint, c.surface]} style={[s.head, { paddingTop: top + 56 }]}>
           <View style={s.avatar}>
             {user ? <Text style={s.avatarT}>{user.name.trim()[0]?.toUpperCase() ?? ''}</Text> : <UserCircle size={64} weight="duotone" color={c.accent} />}

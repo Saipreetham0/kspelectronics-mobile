@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { NATIVE } from '@/native';
 import { Animated, Easing, FlatList, Keyboard, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, TextInput, AnimatedText } from '@/components/Text';
 import { Image } from 'expo-image';
@@ -191,7 +190,7 @@ export default function Home() {
   const borderP = React.useRef(new Animated.Value(0)).current; // JS: a colour can't be driven natively
   useEffect(() => {
     const cfg = { toValue: searchMode ? 1 : 0, duration: 240, easing: Easing.out(Easing.cubic) };
-    Animated.timing(searchP, { ...cfg, useNativeDriver: NATIVE }).start();
+    Animated.timing(searchP, { ...cfg, useNativeDriver: true }).start();
     Animated.timing(borderP, { ...cfg, useNativeDriver: false }).start();
   }, [searchMode, searchP, borderP]);
   const { lift, topO, notSearch } = useMemo(() => {
@@ -214,10 +213,10 @@ export default function Home() {
   useEffect(() => {
     if (!isFocused || searchMode) return; // no timers while another tab or the search is showing
     const t = setInterval(() => {
-      Animated.parallel([Animated.timing(fade, { toValue: 0, duration: 180, useNativeDriver: NATIVE }), Animated.timing(slide, { toValue: -12, duration: 180, useNativeDriver: NATIVE })]).start(() => {
+      Animated.parallel([Animated.timing(fade, { toValue: 0, duration: 180, useNativeDriver: true }), Animated.timing(slide, { toValue: -12, duration: 180, useNativeDriver: true })]).start(() => {
         setHint((h) => (h + 1) % HINTS.length);
         slide.setValue(12);
-        Animated.parallel([Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: NATIVE }), Animated.timing(slide, { toValue: 0, duration: 220, useNativeDriver: NATIVE })]).start();
+        Animated.parallel([Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }), Animated.timing(slide, { toValue: 0, duration: 220, useNativeDriver: true })]).start();
       });
     }, 2600);
     return () => clearInterval(t);
@@ -273,7 +272,7 @@ export default function Home() {
 
       {/* Slides up with the header and is topFull taller, so no gap opens when the header folds. */}
       <Animated.View style={{ flex: 1, marginBottom: -topFull, transform: [{ translateY: lift }] }}>
-      <Animated.ScrollView ref={top} onScrollBeginDrag={() => setLater(true)} scrollEventThrottle={16} onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: NATIVE })} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.loader} />} contentContainerStyle={{ paddingBottom: tabPad + topFull }} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView ref={top} onScrollBeginDrag={() => setLater(true)} scrollEventThrottle={16} onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.loader} />} contentContainerStyle={{ paddingBottom: tabPad + topFull }} showsVerticalScrollIndicator={false}>
         {festive && <DiwaliStrip />}
         <CategoryTabs cats={cats.data} />
         <BannerCarousel cats={cats.data} active={isFocused && !searchMode} />

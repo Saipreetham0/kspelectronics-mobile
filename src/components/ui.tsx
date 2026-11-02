@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { NATIVE } from '@/native';
 import type { TextInputInstance } from 'react-native';
 import { Animated, Pressable, StyleSheet, TextInputProps, View, ViewProps, ViewStyle } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
@@ -11,8 +10,8 @@ export function Dots({ color = c.loader, size = 10 }: { color?: string; size?: n
   useEffect(() => {
     const loops = dots.map((v, i) => Animated.loop(Animated.sequence([
       Animated.delay(i * 140),
-      Animated.timing(v, { toValue: 1, duration: 280, useNativeDriver: NATIVE }),
-      Animated.timing(v, { toValue: 0, duration: 280, useNativeDriver: NATIVE }),
+      Animated.timing(v, { toValue: 1, duration: 280, useNativeDriver: true }),
+      Animated.timing(v, { toValue: 0, duration: 280, useNativeDriver: true }),
       Animated.delay((2 - i) * 140), // equal total length, so the three stay in sequence
     ])));
     loops.forEach((l) => l.start());

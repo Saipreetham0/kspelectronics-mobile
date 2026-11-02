@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
-import { Star } from 'phosphor-react-native';
+import { Star } from '@/icons';
 import { Text } from '@/components/Text';
 import { Button, Field } from '@/components/ui';
 import { api } from '@/api';

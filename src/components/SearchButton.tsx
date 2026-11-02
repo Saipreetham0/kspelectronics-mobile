@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Keyboard, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { MagnifyingGlass } from 'phosphor-react-native';
+import { MagnifyingGlass } from '@/icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, TextInput } from '@/components/Text';

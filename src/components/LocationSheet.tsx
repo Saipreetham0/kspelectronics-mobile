@@ -112,7 +112,7 @@ export default function LocationSheet({ visible, onClose, onChange }: { visible:
   };
 
   // Shows a place on the map to confirm (native with Google Maps set up); otherwise it is simply chosen.
-  const confirm = (p: Loc, mapsOn = maps) => { if (mapsOn && Platform.OS !== 'web' && p.lat != null) { setPending(p); setUnresolved(false); setMapFrom(picking ? 'add' : 'main'); setView('map'); } else choose(p); };
+  const confirm = (p: Loc, mapsOn = maps) => { if (mapsOn && p.lat != null) { setPending(p); setUnresolved(false); setMapFrom(picking ? 'add' : 'main'); setView('map'); } else choose(p); };
   const pickSuggestion = async (sg: Suggestion) => {
     setSearching(true); setNote('');
     try { const p = await api<Loc>(`/api/places/place?id=${encodeURIComponent(sg.id)}&session=${sess}`); confirm(p, maps ?? (await mapsCheck.current)); setSess(session()); }
@@ -269,14 +269,14 @@ export default function LocationSheet({ visible, onClose, onChange }: { visible:
                 <Pressable onPress={() => { setQ(''); setResults([]); setSugg([]); setNote(''); setPicking(true); setView('main'); }} hitSlop={12} accessibilityRole="button" accessibilityLabel="Change the area"><Text style={s.change}>Change</Text></Pressable>
               </View>
               {/* The drop point for hyperlocal delivery: the delivery partner navigates to this pin. */}
-              <Pressable onPress={() => { if (addPlace?.lat != null && Platform.OS !== 'web') { setPending(addPlace); setUnresolved(false); setMapFrom('add'); setView('map'); } else if (maps) setNote('Tap Change above and pick a place to put the pin on.'); }}
+              <Pressable onPress={() => { if (addPlace?.lat != null) { setPending(addPlace); setUnresolved(false); setMapFrom('add'); setView('map'); } else if (maps) setNote('Tap Change above and pick a place to put the pin on.'); }}
                 style={[s.drop, addPlace?.lat == null && maps && hadPin.current ? { borderColor: c.deal, backgroundColor: c.dealSoft } : null]} accessibilityRole="button" accessibilityLabel="Drop location on the map">
                 <Ionicons name={addPlace?.lat != null ? 'location' : 'location-outline'} size={22} color={addPlace?.lat != null ? c.danger : c.muted} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontWeight: '800' }}>{addPlace?.lat != null ? 'Drop location pinned on map' : 'Drop location not pinned'}</Text>
                   <Text style={{ color: c.muted, fontSize: 12 }}>{addPlace?.lat != null ? 'Tap to move the pin' : maps ? hadPin.current ? 'Tap Change above and pick a place' : 'Optional for this address. Tap Change to pin it' : 'Map pin is not available yet'}</Text>
                 </View>
-                {addPlace?.lat != null && Platform.OS !== 'web' && <Text style={s.change}>Move</Text>}
+                {addPlace?.lat != null && <Text style={s.change}>Move</Text>}
               </Pressable>
               {note ? <Text style={s.note}>{note}</Text> : null}
               <Field label="Complete address*" value={line} onChangeText={(v) => { setLine(v); setFerr((x) => ({ ...x, line: '' })); }} error={ferr.line} inputRef={(el) => { formRefs.current.line = el; }} maxLength={200} placeholder="House / flat no., floor, street, landmark" multiline />

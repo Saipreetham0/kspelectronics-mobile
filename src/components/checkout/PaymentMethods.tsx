@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Bank, CalendarCheck, CreditCard, Money, QrCode } from 'phosphor-react-native';
-import type { Icon } from 'phosphor-react-native';
+import { Bank, CalendarCheck, CreditCard, Money, QrCode } from '@/icons';
+import type { Icon } from '@/icons';
 import { Text } from '@/components/Text';
 import { Card, H } from '@/components/ui';
 import { c, r } from '@/theme';

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { NATIVE } from '@/native';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { Image } from 'expo-image';
@@ -22,10 +21,10 @@ export default function CartBar({ bottom, hidden, note, unlocked, pct }: { botto
   const prev = useRef(itemCount);
   // The whole bar nudges when something is added (Blinkit's "item landed in cart" feel).
   useEffect(() => {
-    if (itemCount > prev.current) Animated.sequence([Animated.timing(bounce, { toValue: 1.04, duration: 110, useNativeDriver: NATIVE }), Animated.spring(bounce, { toValue: 1, useNativeDriver: NATIVE, damping: 7, stiffness: 240 })]).start();
+    if (itemCount > prev.current) Animated.sequence([Animated.timing(bounce, { toValue: 1.04, duration: 110, useNativeDriver: true }), Animated.spring(bounce, { toValue: 1, useNativeDriver: true, damping: 7, stiffness: 240 })]).start();
     prev.current = itemCount;
   }, [itemCount, bounce]);
-  useEffect(() => { Animated.spring(y, { toValue: show ? 0 : away, useNativeDriver: NATIVE, damping: 16, stiffness: 160 }).start(); }, [show, y, away]);
+  useEffect(() => { Animated.spring(y, { toValue: show ? 0 : away, useNativeDriver: true, damping: 16, stiffness: 160 }).start(); }, [show, y, away]);
   if (!cart) return null;
   return (
     <Animated.View pointerEvents={show ? 'auto' : 'none'} style={[s.wrap, { bottom, opacity: y.interpolate({ inputRange: [0, away * 0.4, away], outputRange: [1, 0, 0], extrapolate: 'clamp' }), transform: [{ translateY: y }, { scale: bounce }] }]}>

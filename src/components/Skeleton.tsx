@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { NATIVE } from '@/native';
 import { Animated, View, ViewStyle } from 'react-native';
 import { c, r } from '@/theme';
 
@@ -7,7 +6,7 @@ import { c, r } from '@/theme';
 export function Skeleton({ style }: { style?: ViewStyle }) {
   const o = useRef(new Animated.Value(0.5)).current;
   useEffect(() => {
-    const a = Animated.loop(Animated.sequence([Animated.timing(o, { toValue: 1, duration: 700, useNativeDriver: NATIVE }), Animated.timing(o, { toValue: 0.5, duration: 700, useNativeDriver: NATIVE })]));
+    const a = Animated.loop(Animated.sequence([Animated.timing(o, { toValue: 1, duration: 700, useNativeDriver: true }), Animated.timing(o, { toValue: 0.5, duration: 700, useNativeDriver: true })]));
     a.start();
     return () => a.stop();
   }, [o]);

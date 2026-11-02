@@ -2,7 +2,6 @@ import React, { createContext, useCallback, useContext, useRef, useState } from 
 import { Animated, Dimensions, Easing, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { NATIVE } from '@/native';
 import { reduceMotion } from '@/components/motion';
 import { c } from '@/theme';
 
@@ -40,7 +39,7 @@ const SIZE = 64;
 function Flying({ f, target, onDone }: { f: Flight; target: { x: number; y: number }; onDone: () => void }) {
   const t = useRef(new Animated.Value(0)).current;
   React.useEffect(() => {
-    Animated.timing(t, { toValue: 1, duration: 650, easing: Easing.bezier(0.5, 0, 0.8, 0.6), useNativeDriver: NATIVE }).start(onDone);
+    Animated.timing(t, { toValue: 1, duration: 650, easing: Easing.bezier(0.5, 0, 0.8, 0.6), useNativeDriver: true }).start(onDone);
   }, [t, onDone]);
   const x0 = f.from.x + f.from.width / 2 - SIZE / 2, y0 = f.from.y + f.from.height / 2 - SIZE / 2;
   const x1 = target.x - SIZE / 2, y1 = target.y - SIZE / 2;

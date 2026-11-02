@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { NATIVE } from '@/native';
 import { Animated, View } from 'react-native';
 import { Text, AnimatedText } from '@/components/Text';
 import * as Haptics from 'expo-haptics';
@@ -32,9 +31,9 @@ function SuccessView({ orderId, summary }: { orderId?: string; summary?: Status 
   useEffect(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     Animated.sequence([
-      Animated.spring(ring, { toValue: 1, useNativeDriver: NATIVE, damping: 8, stiffness: 140 }),
-      Animated.parallel([Animated.spring(tick, { toValue: 1, useNativeDriver: NATIVE, damping: 6, stiffness: 220 }), Animated.timing(burst, { toValue: 1, duration: 650, useNativeDriver: NATIVE })]),
-      Animated.timing(text, { toValue: 1, duration: 350, useNativeDriver: NATIVE }),
+      Animated.spring(ring, { toValue: 1, useNativeDriver: true, damping: 8, stiffness: 140 }),
+      Animated.parallel([Animated.spring(tick, { toValue: 1, useNativeDriver: true, damping: 6, stiffness: 220 }), Animated.timing(burst, { toValue: 1, duration: 650, useNativeDriver: true })]),
+      Animated.timing(text, { toValue: 1, duration: 350, useNativeDriver: true }),
     ]).start();
   }, [ring, tick, burst, text]);
 
