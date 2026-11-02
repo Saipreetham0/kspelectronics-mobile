@@ -1,43 +1,45 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState, Platform } from 'react-native';
+import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-client';
+import { focusManager, keepPreviousData, QueryClient, useQuery } from '@tanstack/react-query';
 import { api, ApiError } from './api';
 
 const RETRY_MS = [5000, 10000, 20000]; // a store hiccup (WordPress slow, a 502) usually clears within a minute
 
-// GET with loading / error / refetch. Re-runs when the path changes. Only the latest request's answer is used, and nothing is set after unmount.
-// A failure that may be temporary (server error, no connection) is retried on its own a few times; `error` shows only once those are used up.
+// One cache for every GET in the app: the same path asked for by two screens is fetched once, and coming back to a screen shows what it had at once.
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000, // catalogue data: a minute old is fine; it refreshes in the background after that
+      // Only a failure that may be temporary (server error, no connection) is retried; `error` shows once those are used up.
+      retry: (n, e) => e instanceof ApiError && (e.status === 0 || e.status >= 500) && n < RETRY_MS.length,
+      retryDelay: (n) => RETRY_MS[n] ?? RETRY_MS[RETRY_MS.length - 1],
+    },
+  },
+});
+// Coming back to the app counts as "focus": stale screens refresh themselves.
+if (Platform.OS !== 'web') AppState.addEventListener('change', (s) => focusManager.setFocused(s === 'active'));
+
+// Fast launch: the catalogue a shopper last saw is kept on the phone, so Home opens with products at once and refreshes behind them.
+// Only public catalogue answers are kept (never the account, orders or cart), for at most a day, and a new app version starts clean.
+export const persistOptions: Omit<PersistQueryClientOptions, 'queryClient'> = {
+  persister: createAsyncStoragePersister({ storage: AsyncStorage, key: 'ksp_query_cache', throttleTime: 2000 }),
+  maxAge: 24 * 60 * 60 * 1000,
+  buster: Constants.expoConfig?.version ?? '',
+  dehydrateOptions: {
+    shouldDehydrateQuery: (q) => q.state.status === 'success' && typeof q.queryKey[0] === 'string' && /^\/api\/(catalog|offers|app-config)/.test(q.queryKey[0]),
+  },
+};
+
+// GET with loading / error / reload, cached by path. A null path asks for nothing. While a new path loads, the previous answer stays on screen.
 export function useFetch<T>(path: string | null) {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(Boolean(path));
-  const seq = useRef(0);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const load = useCallback((): Promise<void> => {
-    if (!path) return Promise.resolve();
-    const id = ++seq.current;
-    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
-    setLoading(true); setError('');
-    // `seq` moves on when the path changes, on reload and on unmount, so an older request (or its retry) never sets anything.
-    const attempt = (n: number): Promise<void> => api<T>(path).then((d) => {
-      if (id !== seq.current) return;
-      setData(d); setLoading(false);
-    }).catch((e: Error) => {
-      if (id !== seq.current) return;
-      const temporary = e instanceof ApiError && (e.status === 0 || e.status >= 500);
-      if (temporary && n < RETRY_MS.length) {
-        timer.current = setTimeout(() => { if (id === seq.current) attempt(n + 1); }, RETRY_MS[n]);
-        return; // stays "loading" meanwhile
-      }
-      setError(e.message); setLoading(false);
-    });
-    attempt(0);
-    return Promise.resolve();
-  }, [path]);
-  useEffect(() => {
-    load();
-    return () => {
-      seq.current++;
-      if (timer.current) { clearTimeout(timer.current); timer.current = null; }
-    };
-  }, [load]);
-  return { data, error, loading, reload: load };
+  const q = useQuery({ queryKey: [path], queryFn: () => api<T>(path!), enabled: Boolean(path), placeholderData: keepPreviousData });
+  return {
+    data: (q.data ?? null) as T | null,
+    error: q.error ? q.error.message : '',
+    loading: q.isFetching || (Boolean(path) && q.isPending), // pending covers the moment the saved cache is being read back; screens check `loading && !data`, so a background refresh never hides what is shown
+    reload: async () => { await q.refetch(); },
+  };
 }

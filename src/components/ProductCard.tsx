@@ -6,9 +6,8 @@ import { router } from 'expo-router';
 import { Heart, Lightning, Star } from '@/icons';
 import type { Product } from '@/types';
 import { decodeHtml, minorToInr } from '@/format';
-import { useWishlist } from '@/wishlist';
+import { useWished, useWishlist } from '@/wishlist';
 import { useBought } from '@/bought';
-import { useMode } from '@/mode';
 import AddButton from './AddButton';
 import { Pop, Reveal, Tap } from './motion';
 import { c, r } from '@/theme';
@@ -25,8 +24,8 @@ export const priceOf = (p: Product) => {
 // a coloured "% OFF" line, the name and the delivery time.
 export default function ProductCard({ product: p, width, index = 0 }: { product: Product; width?: number; index?: number }) {
   const { now, was, off } = priceOf(p);
-  const { has, toggle } = useWishlist();
-  const saved = has(p.id);
+  const toggle = useWishlist((w) => w.toggle);
+  const saved = useWished(p.id);
   const bought = useBought().has(p.id);
   const quick = Boolean(p.quick); // tagged "quick": a rider can bring it (no time is promised: the real ETA is not known yet)
   // WooCommerce reports the remaining stock once it is low; 0 is ignored (it also shows up on items that can still be ordered).

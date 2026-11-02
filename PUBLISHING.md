@@ -43,7 +43,7 @@ Everything below is switched on by a value in the EAS build environment (`eas en
 | `EAS_PROJECT_ID` | Run `npx eas init` once and add the id it prints to `app.json` under `extra.eas.projectId` (or set this value). It turns on over-the-air updates and push tokens |
 | `GOOGLE_MAPS_ANDROID_KEY`, `GOOGLE_MAPS_IOS_KEY` | Maps. There is no key in the code any more: restrict each key in Google Cloud to this app's package name or bundle id |
 
-Push also needs, outside the app: an FCM (Firebase) key uploaded to EAS for Android (`eas credentials`), an APNs key for iOS, and a store endpoint `POST /api/push/register` (body `{ token, platform }`) that saves the token against the customer, plus code that sends order-status messages to Expo's push API with `data: { url: '/order/<id>' }` so a tap opens the order.
+Push also needs, outside the app: a Firebase project with an Android app `in.kspelectronics.app`; its `google-services.json` goes to EAS as a file env var (`eas env:create --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --visibility secret`, or the file in the project root for a local build), and its FCM V1 service-account key goes to EAS (`eas credentials` → Android → Push Notifications: FCM V1), an APNs key for iOS, and a store endpoint `POST /api/push/register` (body `{ token, platform }`) that saves the token against the customer, plus code that sends order-status messages to Expo's push API with `data: { url: '/order/<id>' }` so a tap opens the order.
 
 Releases: `npm run check` (typecheck and tests) must pass; CI runs the same on every push. After `eas init`, ship a fix without a store review with `npx eas update --channel production --message "what changed"` (it reaches builds of the same app `version`).
 

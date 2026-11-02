@@ -8,6 +8,7 @@ import { useFlag } from '@/appConfig';
 import { tenDigits } from '@/phone';
 import { POLICIES } from '@/policies';
 import { useStore } from '@/store';
+import { queryClient } from '@/useFetch';
 import { c } from '@/theme';
 
 // Your name, your password, and deleting the account (confirmed with the password, or, for a shopper who logs in by mobile number and has none, a code sent by SMS). Every change goes to the WooCommerce customer record the website uses too.
@@ -36,6 +37,7 @@ export default function Profile() {
   const saveName = () => run('name', async () => {
     if (!first.trim()) throw new Error('Enter your first name.');
     await api('/api/auth/profile', { method: 'PUT', body: { firstName: first, lastName: last } });
+    queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
     Alert.alert('Saved', 'Your name is updated.');
   });
   const savePw = () => run('pw', async () => {

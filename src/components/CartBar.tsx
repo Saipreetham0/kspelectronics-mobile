@@ -12,7 +12,7 @@ import { c, r, shadow } from '@/theme';
 // note: the free-delivery nudge shown under the item count ("₹450 away from free delivery" / "Free delivery unlocked").
 // pct: how far the cart is towards free delivery (0 to 1), drawn as a thin line under the text (Swiggy-style).
 export default function CartBar({ bottom, hidden, note, unlocked, pct }: { bottom: number; hidden?: boolean; note?: string; unlocked?: boolean; pct?: number }) {
-  const { cart, itemCount } = useStore();
+  const cart = useStore((st) => st.cart), itemCount = useStore((st) => st.itemCount);
   // Hidden = pushed fully below the screen edge (its own height plus the gap it floats above the tab bar), and faded out with it.
   const away = bottom + 110;
   const y = useRef(new Animated.Value(away)).current;

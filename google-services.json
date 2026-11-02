@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "684640195409",
+    "project_id": "ksp-electronics-store",
+    "storage_bucket": "ksp-electronics-store.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:684640195409:android:a9e2bc60a0b1c2b275f970",
+        "android_client_info": {
+          "package_name": "in.kspelectronics.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPcc_aEHj5B7dad6i9eGFU7mu1hDv2c-o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+

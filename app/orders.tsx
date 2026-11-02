@@ -50,7 +50,7 @@ export default function Orders() {
     else setLoading(true);
     setError('');
     try {
-      const a = await account();
+      const a = await account(isRefresh);
       setOrders(a.orders ?? []);
     } catch (e) {
       setError((e as Error).message);

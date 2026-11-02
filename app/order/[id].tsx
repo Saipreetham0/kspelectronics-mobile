@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { openHttps } from '@/links';
 import { Alert, Linking, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
@@ -6,6 +7,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Text, TextInput } from '@/components/Text';
 import { Button, Card, ErrorBox, Spinner } from '@/components/ui';
 import { api } from '@/api';
+import { queryClient } from '@/useFetch';
 import { decodeHtml } from '@/format';
 import { SITE_URL, WHATSAPP } from '@/config';
 import RiderCard from '@/components/RiderCard';
@@ -26,20 +28,18 @@ const STATUS: Record<string, string> = { pending: 'Waiting for payment', 'on-hol
 // One order: what was bought, where it goes, what was paid, and the actions open to the customer (track, cancel or return, get help).
 export default function OrderDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [o, setO] = useState<Detail | null>(null);
-  const [error, setError] = useState('');
   const [ask, setAsk] = useState<'' | 'cancel' | 'return'>('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
-  const load = useCallback(() => { setError(''); api<Detail>(`/api/orders/${id}`).then(setO).catch((e: Error) => setError(e.message)); }, [id]);
-  useEffect(load, [load]);
   // While a rider is on the way the order is read again every 15 seconds, so the dot on the map moves.
-  const riding = Boolean(o?.delivery?.live?.rider) && o?.status !== 'completed';
-  useEffect(() => {
-    if (!riding) return;
-    const t = setInterval(() => { api<Detail>(`/api/orders/${id}`).then(setO).catch(() => {}); }, 15000);
-    return () => clearInterval(t);
-  }, [riding, id]);
+  const q = useQuery({
+    queryKey: [`/api/orders/${id}`],
+    queryFn: () => api<Detail>(`/api/orders/${id}`),
+    refetchInterval: (query) => (query.state.data?.delivery?.live?.rider && query.state.data.status !== 'completed' ? 15000 : false),
+  });
+  const o = q.data ?? null;
+  const error = q.error && !o ? q.error.message : '';
+  const load = () => { q.refetch(); };
 
   if (error) return <ErrorBox message={error} onRetry={load} />;
   if (!o) return <Spinner />;
@@ -55,7 +55,7 @@ export default function OrderDetail() {
     try {
       const d = await api<{ result: 'cancelled' | 'requested' }>(`/api/orders/${id}`, { method: 'POST', body: { action: ask, reason: reason.trim() } });
       Alert.alert(d.result === 'cancelled' ? 'Order cancelled' : 'Request sent', d.result === 'cancelled' ? 'Your order was cancelled. Any payment is refunded to your account in 5 to 7 working days.' : 'We have your request and will reply on your email or phone shortly.');
-      setAsk(''); setReason(''); load();
+      setAsk(''); setReason(''); load(); queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] }); // the orders list shows the new status
     } catch (e) { Alert.alert('Could not send', (e as Error).message); }
     setBusy(false);
   };

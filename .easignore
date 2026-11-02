@@ -2,8 +2,8 @@
 .env
 .env.*
 !.env.example
-android/
-ios/
+/android/
+/ios/
 .expo/
 node_modules/
 dist/

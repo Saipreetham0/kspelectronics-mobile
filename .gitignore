@@ -2,8 +2,8 @@ node_modules/
 .expo/
 dist/
 web-build/
-android/
-ios/
+/android
+/ios
 .env
 .env.*
 !.env.example
@@ -15,5 +15,3 @@ ios/
 npm-debug.*
 .DS_Store
 
-# Native source of local Expo modules (the generated ios/ and android/ projects above stay ignored)
-!modules/*/ios/

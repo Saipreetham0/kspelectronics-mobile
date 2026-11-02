@@ -3,8 +3,9 @@ import { Inter_400Regular, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold,
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { StoreProvider, useStore } from '@/store';
-import { WishlistProvider } from '@/wishlist';
+import { persistOptions, queryClient } from '@/useFetch';
 import { BoughtProvider } from '@/bought';
 import { FlyProvider } from '@/fly';
 import OfflineBanner from '@/components/OfflineBanner';
@@ -94,7 +95,7 @@ function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StoreProvider><WishlistProvider><BoughtProvider><FlyProvider>
+      <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}><StoreProvider><BoughtProvider><FlyProvider>
         <StatusBar style="dark" />
         <OfflineBanner />
         <Announcement />
@@ -112,7 +113,7 @@ function RootLayout() {
             onFinish={() => setShowSplash(false)}
           />
         )}
-      </FlyProvider></BoughtProvider></WishlistProvider></StoreProvider>
+      </FlyProvider></BoughtProvider></StoreProvider></PersistQueryClientProvider>
     </SafeAreaProvider>
   );
 }

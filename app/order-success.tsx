@@ -8,6 +8,7 @@ import { api, ApiError } from '@/api';
 import { useStore } from '@/store';
 import { track } from '@/analytics';
 import { registerPush } from '@/push';
+import { queryClient } from '@/useFetch';
 import { c } from '@/theme';
 
 type Status = { number: string; status: string; phase: 'paid' | 'waiting' | 'failed'; total: string; currency: string; methodTitle: string; items: { id: number; name: string; quantity: number }[] };
@@ -23,6 +24,7 @@ function SuccessView({ orderId, summary }: { orderId?: string; summary?: Status 
   // Once per success screen. The value and item count are sent (to measure sales); never the order number, which would tie the anonymous id to a customer.
   useEffect(() => {
     track('purchase', { total: summary?.total ?? '', items: summary?.items?.length ?? 0 });
+    queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] }); // the new order shows in Orders and Order Again
     const t = setTimeout(() => registerPush(true), 2500);
     return () => clearTimeout(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

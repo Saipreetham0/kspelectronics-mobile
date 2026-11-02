@@ -61,7 +61,7 @@ function Tile({ cat, width, height, tall }: { cat: Category; width: number; heig
 // Blinkit's home promo block: one tall tile and a 2 × 2 grid on a soft band, each tile a category with a real price hook.
 export default function PromoGrid({ cats }: { cats: Category[] | null }) {
   const { width } = useScreen();
-  const { itemCount } = useStore();
+  const itemCount = useStore((st) => st.itemCount);
   const freeMin = useFreeShipMin();
   if (!cats?.length) return null;
   const withPhoto = cats.filter((x) => x.image?.src);

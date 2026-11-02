@@ -1,5 +1,5 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import * as Haptics from 'expo-haptics';
+import { create } from 'zustand';
 import { track } from './analytics';
 import { storage } from './storage';
 import { useStore } from './store';
@@ -7,39 +7,25 @@ import { useStore } from './store';
 const KEY = 'ksp_wishlist';
 const MAX = 150; // ponytail: SecureStore values cap near 2KB on iOS; 150 ids stays under it. Move to AsyncStorage or the account if people save more.
 
-type Ctx = { ids: number[]; has: (id: number) => boolean; toggle: (id: number) => void };
-const WishCtx = createContext<Ctx | null>(null);
+type Wish = { ids: number[]; has: (id: number) => boolean; toggle: (id: number) => void };
 
 // Device-local wishlist of product ids (guests included); products are fetched by id when the list is opened.
-export function WishlistProvider({ children }: { children: React.ReactNode }) {
-  const [ids, setIds] = useState<number[]>([]);
-  const { user, ready } = useStore();
-  const wasIn = useRef(false);
-  useEffect(() => {
-    if (!ready) return;
-    if (user) wasIn.current = true;
-    else if (wasIn.current) { wasIn.current = false; setIds([]); }
-  }, [user, ready]); // logging out empties the list (storage is cleared by logout)
-  useEffect(() => {
-    if (!ready) return;
-    storage.get(KEY).then((v) => v && setIds(JSON.parse(v))).catch(() => {});
-  }, [ready]);
-  const toggle = useCallback((id: number) => {
+export const useWishlist = create<Wish>()((set, get) => ({
+  ids: [],
+  has: (id) => get().ids.includes(id),
+  toggle: (id) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    setIds((cur) => {
-      const isAdding = !cur.includes(id);
-      track(isAdding ? 'add_to_wishlist' : 'remove_from_wishlist', { id });
-      const next = isAdding ? [id, ...cur].slice(0, MAX) : cur.filter((x) => x !== id);
-      storage.set(KEY, JSON.stringify(next)).catch(() => {});
-      return next;
-    });
-  }, []);
-  const value = useMemo(() => ({ ids, has: (id: number) => ids.includes(id), toggle }), [ids, toggle]);
-  return <WishCtx.Provider value={value}>{children}</WishCtx.Provider>;
-}
+    const cur = get().ids;
+    const isAdding = !cur.includes(id);
+    track(isAdding ? 'add_to_wishlist' : 'remove_from_wishlist', { id });
+    const next = isAdding ? [id, ...cur].slice(0, MAX) : cur.filter((x) => x !== id);
+    set({ ids: next });
+    storage.set(KEY, JSON.stringify(next)).catch(() => {});
+  },
+}));
+// One card's heart: re-renders only when this product is added or removed, not when any other is.
+export const useWished = (id: number) => useWishlist((s) => s.ids.includes(id));
 
-export function useWishlist() {
-  const v = useContext(WishCtx);
-  if (!v) throw new Error('useWishlist outside WishlistProvider');
-  return v;
-}
+storage.get(KEY).then((v) => { if (v) useWishlist.setState({ ids: JSON.parse(v) }); }).catch(() => {});
+// Logging out empties the list (logout clears the saved copy too).
+useStore.subscribe((s, prev) => { if (prev.user && !s.user) useWishlist.setState({ ids: [] }); });

@@ -19,6 +19,8 @@ return {
   },
   android: {
     ...config.android,
+    // FCM (Android push): google-services.json from Firebase. On EAS, upload it as a file env var named GOOGLE_SERVICES_JSON; locally, drop it in the project root.
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON || (require('fs').existsSync('./google-services.json') ? './google-services.json' : undefined),
     config: {
       googleMaps: {
         apiKey: process.env.GOOGLE_MAPS_ANDROID_KEY || process.env.GOOGLE_MAPS_API_KEY || '',
